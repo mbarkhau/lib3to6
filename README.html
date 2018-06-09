@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three2six</title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <h1>three2six</h1>
+    <p>Transpile a single codebase written in modern python to legacy python as part of your build process. Use some of your favourite features of modern python, without compromising compatability to older versions.</p>
+    <p>This project works at a syntax level Your code is translated to syntactically valid python2.7, however it remains your responsibility to write your code so that this syntactic translation is semantically equivalent in both python3 and python2.</p>
+    <section id="project-status-as-of-2018-06-09-experimental">
+        <h2>Project Status (as of 2018-06-09): Experimental</h2>
+        <p>At this point, you should only consider using this if you intend to participate in development.</p>
+    </section>
+    <section id="project-setup">
+        <h2>Project Setup</h2>
+        <pre data-language="python"><span></span><span class="c1"># setup.py</span>
+
+<span class="n">packages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;my_module&quot;</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="s2">&quot;bdist_wheel&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">three2six</span>
+    <span class="n">packages</span><span class="p">,</span> <span class="n">package_dir</span> <span class="o">=</span> <span class="n">three2six</span><span class="o">.</span><span class="n">repackage</span><span class="p">(</span><span class="n">packages</span><span class="p">)</span>
+
+<span class="n">setuptools</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-module&quot;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s2">&quot;0.1.0&quot;</span><span class="p">,</span>
+    <span class="n">packages</span><span class="o">=</span><span class="n">packages</span><span class="p">,</span>
+    <span class="n">package_dir</span><span class="o">=</span><span class="n">package_dir</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span></pre>
+        <pre data-language="python"><span></span><span class="c1"># my_module/__init__.py</span>
+<span class="n">who</span> <span class="o">=</span> <span class="s2">&quot;World&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">f</span><span class="s2">&quot;Hello {who}!&quot;</span><span class="p">)</span></pre>
+        <pre data-language="bash"><span></span>$ python3 --version
+Python <span class="m">3</span>.6.5 :: Anaconda, Inc.
+$ python2 --version
+Python <span class="m">2</span>.7.15 :: Anaconda, Inc.
+
+$ python3 my_module/__init__.py
+Hello World!
+
+$ python2 my_module/__init__.py
+  File <span class="s2">&quot;my_module/__init__.py&quot;</span>, line <span class="m">2</span>
+    print<span class="o">(</span>f<span class="s2">&quot;Hello {who}!&quot;</span><span class="o">)</span>
+                        ^
+SyntaxError: invalid syntax
+
+$ python3 setup.py bdist_wheel
+running bdist_wheel
+running build
+running build_py
+copying /tmp/three2six_qu7ub0bk/my_module/__init__.py -&gt; build/lib/my_module
+...
+
+$ cat build/lib/my_module/__init__.py
+<span class="c1"># -*- coding: utf-8 -*-</span>
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+<span class="nv">who</span> <span class="o">=</span> <span class="s2">&quot;World&quot;</span>
+print<span class="o">(</span>f<span class="s2">&quot;Hello {0}!&quot;</span>.format<span class="o">(</span>who<span class="o">))</span>
+
+$ python3 build/lib/my_module/__init__.py
+Hello World!
+
+$ python2 build/lib/my_module/__init__.py
+Hello World!</pre>
+    </section>
+</body>
+</html>
