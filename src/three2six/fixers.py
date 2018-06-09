@@ -1,10 +1,10 @@
-#!/usr/bin/env python
 # This file is part of the three2six project
 # https://github.com/mbarkhau/three2six
 # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
 #
 # SPDX-License-Identifier:    MIT
 
+import sys
 import ast
 import abc
 import typing as typ
@@ -93,51 +93,53 @@ class RemoveAnnotationsFixer(TransformerFixerBase):
         return node
 
 
-class FStringFixer(TransformerFixerBase):
+if sys.version_info >= (3, 6):
 
-    def _formatted_value_str(
-        self,
-        fmt_val_node: ast.FormattedValue,
-        arg_nodes: typ.List[ast.expr],
-    ) -> str:
-        arg_index = len(arg_nodes)
-        arg_nodes.append(fmt_val_node.value)
+    class FStringFixer(TransformerFixerBase):
 
-        format_spec_node = fmt_val_node.format_spec
-        if format_spec_node is None:
-            format_spec = ""
-        elif not isinstance(format_spec_node, ast.JoinedStr):
-            raise Exception(f"Unexpected Node Type {format_spec_node}")
-        else:
-            format_spec = ":" + self._joined_str_str(format_spec_node, arg_nodes)
+        def _formatted_value_str(
+            self,
+            fmt_val_node: ast.FormattedValue,
+            arg_nodes: typ.List[ast.expr],
+        ) -> str:
+            arg_index = len(arg_nodes)
+            arg_nodes.append(fmt_val_node.value)
 
-        return "{" + str(arg_index) + format_spec + "}"
-
-    def _joined_str_str(
-        self,
-        joined_str_node: ast.JoinedStr,
-        arg_nodes: typ.List[ast.expr],
-    ) -> str:
-        fmt_str = ""
-        for val in joined_str_node.values:
-            if isinstance(val, ast.Str):
-                fmt_str += val.s
-            elif isinstance(val, ast.FormattedValue):
-                fmt_str += self._formatted_value_str(val, arg_nodes)
+            format_spec_node = fmt_val_node.format_spec
+            if format_spec_node is None:
+                format_spec = ""
+            elif not isinstance(format_spec_node, ast.JoinedStr):
+                raise Exception(f"Unexpected Node Type {format_spec_node}")
             else:
-                raise Exception(f"Unexpected Node Type {val}")
-        return fmt_str
+                format_spec = ":" + self._joined_str_str(format_spec_node, arg_nodes)
 
-    def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.Call:
-        arg_nodes: typ.List[ast.expr] = []
+            return "{" + str(arg_index) + format_spec + "}"
 
-        fmt_str = self._joined_str_str(node, arg_nodes)
-        format_attr_node = ast.Attribute(
-            value=ast.Str(s=fmt_str),
-            attr="format",
-            ctx=ast.Load(),
-        )
-        return ast.Call(func=format_attr_node, args=arg_nodes, keywords=[])
+        def _joined_str_str(
+            self,
+            joined_str_node: ast.JoinedStr,
+            arg_nodes: typ.List[ast.expr],
+        ) -> str:
+            fmt_str = ""
+            for val in joined_str_node.values:
+                if isinstance(val, ast.Str):
+                    fmt_str += val.s
+                elif isinstance(val, ast.FormattedValue):
+                    fmt_str += self._formatted_value_str(val, arg_nodes)
+                else:
+                    raise Exception(f"Unexpected Node Type {val}")
+            return fmt_str
+
+        def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.Call:
+            arg_nodes: typ.List[ast.expr] = []
+
+            fmt_str = self._joined_str_str(node, arg_nodes)
+            format_attr_node = ast.Attribute(
+                value=ast.Str(s=fmt_str),
+                attr="format",
+                ctx=ast.Load(),
+            )
+            return ast.Call(func=format_attr_node, args=arg_nodes, keywords=[])
 
 
 class NewStyleClassesFixer(TransformerFixerBase):

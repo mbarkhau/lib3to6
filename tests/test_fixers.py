@@ -1,5 +1,4 @@
 import ast
-import astor
 import pytest
 
 from three2six import transpile

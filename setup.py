@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is part of the three2six project
 # https://github.com/mbarkhau/three2six
 # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
@@ -31,8 +30,8 @@ if "bdist_wheel" in sys.argv:
 
 setuptools.setup(
     name="three2six",
-    version="0.1.0",
-    description="Build wheels from modern python for legacy python",
+    version="0.1.1",
+    description="Transpile modern python to universal python",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",
     author="Manuel Barkhau",
@@ -42,6 +41,11 @@ setuptools.setup(
     zip_safe=True,
     url="https://github.com/mbarkhau/three2six",
     license="MIT",
+    entry_points={
+        "console_scripts": [
+            "three2six=three2six.main:main"
+        ],
+    },
     install_requires=["astor", "pathlib2"],
     classifiers=[
         "Development Status :: 3 - Alpha",
