@@ -30,7 +30,7 @@ if "bdist_wheel" in sys.argv:
 
 setuptools.setup(
     name="three2six",
-    version="0.1.1",
+    version="0.1.2",
     description="Transpile modern python to universal python",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",
