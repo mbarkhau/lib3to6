@@ -60,7 +60,7 @@ demonstrated in the Project Setup.
     from __future__ import division
     from __future__ import absolute_import
     who = "World"
-    print(f"Hello {0}!".format(who))
+    print("Hello {0}!".format(who))
 
     $ three2six hello_world_three.py > hello_world_six.py
     $ python2 hello_world_six.py
@@ -112,7 +112,7 @@ Project Setup
     from __future__ import division
     from __future__ import absolute_import
     who = "World"
-    print(f"Hello {0}!".format(who))
+    print("Hello {0}!".format(who))
 
     $ python3 build/lib/my_module/__init__.py
     Hello World!
