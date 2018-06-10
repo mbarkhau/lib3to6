@@ -61,3 +61,7 @@ test: .dev_install.make_marker README.html
 		test_project/dist/test_module-0.1.0-py2.py3-none-any.whl
 	$(PYTHON27) -c "import test_module"
 	# $(PYTHON36) -m pytest tests/
+
+build: .dev_install.make_marker README.html
+	$(PYTHON36) setup.py bdist_wheel upload
+
