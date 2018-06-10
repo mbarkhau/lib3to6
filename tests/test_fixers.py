@@ -57,9 +57,6 @@ def parsedump_ast(code, mode="exec", **kwargs):
 
 TEST_STRINGS = {
     "preserved_header": (
-        # no explicitfixers, just the header normalization and
-        # default fixers
-        "",
         """
         #!/usr/bin/env python
         # This file is part of the three2six project
@@ -84,13 +81,12 @@ TEST_STRINGS = {
         hello = "world"
         """,
     ),
-    "future_imports": (
-        ",".join([
-            "AbsoluteImportFutureFixer",
-            "DivisionFutureFixer",
-            "PrintFunctionFutureFixer",
-            "UnicodeLiteralsFutureFixer",
-        ]),
+    ",".join([
+        "AbsoluteImportFutureFixer",
+        "DivisionFutureFixer",
+        "PrintFunctionFutureFixer",
+        "UnicodeLiteralsFutureFixer",
+    ]): (
         """
         #!/usr/bin/env python
         '''Module Docstring'''
@@ -105,42 +101,49 @@ TEST_STRINGS = {
         from __future__ import absolute_import
         """,
     ),
-    "remove_annotations": (
-        "RemoveAnnotationsFixer",
+    "RemoveAnnAssignFixer": (
         """
-        def foo(arg: arg_annotation) -> ret_annotation:
-            pass
-
         moduleannattr: moduleattr_annotation
 
         class Bar:
             classannattr: classattr_annotation
             classannassign: classattr_annotation = 22
-
-            def foo(self, arg: arg_annotation) -> ret_annotation:
-                pass
         """,
         """
-        def foo(arg):
-            pass
-
         moduleannattr = None
 
         class Bar:
             classannattr = None
             classannassign = 22
-
-            def foo(self, arg):
+        """,
+    ),
+    "RemoveFunctionDefAnnotationsFixer": (
+        """
+        def foo(arg: arg_annotation) -> ret_annotation:
+            def nested_fn(f: int = 22) -> int:
                 pass
+
+        class Bar:
+            def foo(self, arg: arg_annotation) -> ret_annotation:
+                def nested_fn(f: int = 22) -> int:
+                    pass
+        """,
+        """
+        def foo(arg):
+            def nested_fn(f=22):
+                pass
+
+        class Bar:
+            def foo(self, arg):
+                def nested_fn(f=22):
+                    pass
         """
     ),
-    "fstrings_top_level": (
-        "FStringFixer",
+    "FStringFixer": (
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
-    "fstrings_nested": (
-        "FStringFixer",
+    "FStringFixer": (
         """
         who = "World"
         print(f"Hello {who}!")
@@ -151,8 +154,7 @@ TEST_STRINGS = {
         print("Hello {0}!".format(who))
         """,
     ),
-    "new_style_classes": (
-        "NewStyleClassesFixer",
+    "NewStyleClassesFixer": (
         """
         class Foo:
             pass
@@ -163,8 +165,7 @@ TEST_STRINGS = {
             pass
         """,
     ),
-    "itertools.i(map|zip|filter)": (
-        "ItertoolsBuiltinsFixer,PrintFunctionFutureFixer",
+    "ItertoolsBuiltinsFixer,PrintFunctionFutureFixer": (
         """
         '''Module Docstring'''
         def fn(elem):
@@ -185,7 +186,47 @@ TEST_STRINGS = {
         list(itertools.imap(fn, [1, 2, 3, 4]))
         dict(itertools.izip("abcd", [1, 2, 3, 4]))
         """,
-    )
+    ),
+    "ShortToLongFormSuper": (
+        """
+        class FooClass:
+            def foo_method(self, arg, *args, **kwargs):
+                return super().foo_method(arg, *args, **kwargs)
+        """,
+        """
+        class FooClass:
+            def foo_method(self, arg, *args, **kwargs):
+                return super(FooClass, self).foo_method(arg, *args, **kwargs)
+        """,
+    ),
+    "RemoveFunctionDefAnnotationsFixer,InlineKWOnlyArgs": (
+        """
+        def foo(
+            self,
+            x: int = None,
+            *args: Tuple[str, ...],
+            mykwonly_required: str,
+            mykwonly_none=None,
+            mykwonly_str: str="moep",
+            mykwonly_bool: boolean=True,
+            mykwonly_int: int=22,
+            mykwonly_required2: str,
+            mykwonly_float: float=12.3,
+        ) -> None:
+            pass
+        """,
+        """
+        def foo(self, x=None, *args, **kwargs):
+            mykwonly_required = kwargs["mykwonly_required"]
+            mykwonly_none = kwargs.get("mykwonly_none", None)
+            mykwonly_str = kwargs.get("mykwonly_str", "moep")
+            mykwonly_bool = kwargs.get("mykwonly_bool", True)
+            mykwonly_int = kwargs.get("mykwonly_int", 22)
+            mykwonly_required2 = kwargs["mykwonly_required2"]
+            mykwonly_float = kwargs.get("mykwonly_float", 12.3)
+            pass
+        """,
+    ),
 }
 
 
@@ -210,10 +251,13 @@ def _clean_whitespace(fixture_str):
     return "\n".join(cleaned_lines)
 
 
-@pytest.mark.parametrize("name, fixture", list(TEST_STRINGS.items()))
-def test_fixers(name, fixture):
-    fixers, in_str, expected_str = fixture
-    cfg = {"fixers": fixers}
+@pytest.mark.parametrize("test_name, fixture", list(TEST_STRINGS.items()))
+def test_fixers(test_name, fixture):
+    in_str, expected_str = fixture
+    fixer_names = ",".join((
+        name for name in test_name.split(",") if name.lower() != name
+    ))
+    cfg = {"fixers": fixer_names}
     in_str = _clean_whitespace(in_str)
     expected_str = _clean_whitespace(expected_str)
     expected_data = expected_str.encode("utf-8")
@@ -226,4 +270,17 @@ def test_fixers(name, fixture):
 
     result_data = transpile.transpile_module(cfg, in_data)
     result_str = result_data.decode("utf-8")
+
+    # if fixer_names != "RemoveFunctionDefAnnotationsFixer":
+    #     return
+
+    # print()
+    # print(in_str)
+    # print("###" * 20)
+    # print(parsedump_ast(in_str))
+    # print("###" * 20)
+    # print(parsedump_ast(expected_str))
+    # print("###" * 20)
+    # print(parsedump_ast(result_str))
+
     assert parsedump_ast(expected_str) == parsedump_ast(result_str)

@@ -6,7 +6,6 @@
 
 import sys
 import ast
-import abc
 import typing as typ
 
 from . import common
@@ -64,32 +63,133 @@ class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
     future_name = "unicode_literals"
 
 
+class RemoveFunctionDefAnnotationsFixer(FixerBase):
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+
+            node.returns = None
+            for arg in node.args.args:
+                arg.annotation = None
+            for arg in node.args.kwonlyargs:
+                arg.annotation = None
+            if node.args.vararg:
+                node.args.vararg.annotation = None
+            if node.args.kwarg:
+                node.args.kwarg.annotation = None
+
+        return tree
+
+
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         return self.visit(tree)
 
 
-class RemoveAnnotationsFixer(TransformerFixerBase):
+class RemoveAnnAssignFixer(TransformerFixerBase):
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
-        node.target.annotation = None
+        name_node = node.target
+        if not isinstance(name_node, ast.Name):
+            raise Exception(f"Unexpected Node Type {name_node}")
+
+        node.annotation = None
+        value: ast.expr
         if node.value is None:
             value = ast.NameConstant(value=None)
         else:
             value = node.value
-        return ast.Assign(targets=[node.target], value=value)
+        return ast.Assign(targets=[name_node], value=value)
+
+
+class ShortToLongFormSuper(TransformerFixerBase):
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
+        for maybe_method in ast.walk(node):
+            if not isinstance(maybe_method, ast.FunctionDef):
+                continue
+            method: ast.FunctionDef = maybe_method
+            method_args: ast.arguments = method.args
+            if len(method_args.args) == 0:
+                continue
+            self_arg: ast.arg = method_args.args[0]
+
+            for maybe_super_call in ast.walk(method):
+                if not isinstance(maybe_super_call, ast.Call):
+                    continue
+                func_node = maybe_super_call.func
+                if not (isinstance(func_node, ast.Name) and func_node.id == "super"):
+                    continue
+                super_call = maybe_super_call
+                if len(super_call.args) > 0:
+                    continue
+
+                super_call.args = [
+                    ast.Name(id=node.name, ctx=ast.Load()),
+                    ast.Name(id=self_arg.arg, ctx=ast.Load()),
+                ]
+        return node
+
+
+class InlineKWOnlyArgs(TransformerFixerBase):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
-        node.returns = None
-        for arg in node.args.args:
-            arg.annotation = None
-        for arg in node.args.kwonlyargs:
-            arg.annotation = None
-        if node.args.vararg:
-            node.args.vararg.annotation = None
+        if not node.args.kwonlyargs:
+            return node
+
         if node.args.kwarg:
-            node.args.kwarg.annotation = None
+            kw_name = node.args.kwarg.arg
+        else:
+            kw_name = "kwargs"
+            node.args.kwarg = ast.arg(arg=kw_name, annotation=None)
+
+        # NOTE (mb 2018-06-03): Only use defaults for kwargs
+        #   if they are literals. Everything else would
+        #   change the semantics too much and so we should
+        #   raise an error.
+        kwonlyargs = reversed(node.args.kwonlyargs)
+        kw_defaults = reversed(node.args.kw_defaults)
+        for arg, default in zip(kwonlyargs, kw_defaults):
+            arg_name = arg.arg
+            if default is None:
+                new_node = ast.Assign(
+                    targets=[ast.Name(id=arg_name, ctx=ast.Store())],
+                    value=ast.Subscript(
+                        value=ast.Name(id=kw_name, ctx=ast.Load()),
+                        slice=ast.Index(value=ast.Str(s=arg_name)),
+                        ctx=ast.Load(),
+                    )
+                )
+            else:
+                if not isinstance(default, (ast.Str, ast.Num, ast.NameConstant)):
+                    raise Exception(
+                        f"Keyword only arguments must be immutable. "
+                        f"Found: {default} on {default.lineno}:{node.col_offset} for {arg_name}"
+                    )
+
+                new_node = ast.Assign(
+                    targets=[ast.Name(
+                        id=arg_name,
+                        ctx=ast.Store(),
+                    )],
+                    value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(id=kw_name, ctx=ast.Load()),
+                            attr="get",
+                            ctx=ast.Load(),
+                        ),
+                        args=[ast.Str(s=arg_name), default],
+                        keywords=[],
+                    )
+                )
+
+            node.body.insert(0, new_node)
+
+        node.args.kwonlyargs = []
+
         return node
 
 

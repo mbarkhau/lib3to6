@@ -22,7 +22,6 @@ PYTHON27 := $(PYENV27)/bin/python
 		flake8 mypy pytest pytest-coverage rst2html5 \
 		ipython pudb \
 		astor;
-	# $(PYTHON36) -m pip install .
 	touch .dev_install.make_marker
 
 setup_conda_envs: .setup_conda_envs.make_marker
@@ -38,7 +37,10 @@ clean:
 
 lint: .dev_install.make_marker
 	MYPYPATH=$(PYENV36)/lib/python3.6/site-packages/ \
-	$(PYTHON36) -m mypy --follow-imports=silent src/three2six/
+	$(PYTHON36) -m mypy \
+		--follow-imports=silent \
+		--custom-typeshed-dir=/mnt/c/Users/mbark/typeshed \
+		src/three2six/
 	$(PYTHON36) -m flake8 src/three2six/
 
 README.html: .dev_install.make_marker README.rst
