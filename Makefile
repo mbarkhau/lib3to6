@@ -36,7 +36,7 @@ clean:
 	rm -f .dev_install.make_marker
 
 lint: .dev_install.make_marker
-	MYPYPATH=$(PYENV36)/lib/python3.6/site-packages/ \
+	MYPYPATH=$(PYENV36)/lib/python3.6/site-packages/:stubs/ \
 	$(PYTHON36) -m mypy \
 		--follow-imports=silent \
 		--custom-typeshed-dir=/mnt/c/Users/mbark/typeshed \

@@ -6,13 +6,14 @@
 # SPDX-License-Identifier:    MIT
 
 import sys
+import typing as typ
 import pathlib2 as pl
 
 from . import packaging
 from . import transpile
 
 
-def main(argv=sys.argv[1:]):
+def main(argv: typ.List[str]=sys.argv[1:]):
     # TODO (mb 2018-06-07): option --in-place
     cfg = packaging.eval_build_config()
     for arg in argv:
