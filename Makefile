@@ -49,7 +49,9 @@ README.html: .dev_install.make_marker README.rst
 
 debug_test: .dev_install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -vv --capture=no tests/
+		$(PYTHON36) -m pytest -vv \
+		--exitfirst \
+		--capture=no tests/
 
 test: .dev_install.make_marker README.html
 	PYTHONPATH=src/:$$PYTHONPATH \

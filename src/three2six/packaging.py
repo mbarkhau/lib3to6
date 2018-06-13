@@ -44,6 +44,7 @@ def eval_build_config() -> common.BuildConfig:
         "python_tags"     : python_tags,
         "force_transpile" : "1",
         "fixers"          : "",
+        "checkers"        : "",
     }
 
 

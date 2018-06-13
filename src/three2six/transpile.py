@@ -8,8 +8,10 @@ import re
 import ast
 import astor
 import typing as typ
+
 from . import common
 from . import fixers
+from . import checkers
 
 
 DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
@@ -63,21 +65,43 @@ def transpile_module(cfg: common.BuildConfig, module_source_data: bytes) -> byte
     module_source = module_source_data.decode(coding)
     module_tree = ast.parse(module_source)
 
+    checker_names = [
+        name.strip()
+        for name in cfg["checkers"].split(",")
+        if name.strip()
+    ]
+
+    if not any(checker_names):
+        maybe_classes = {
+            name: getattr(checkers, name)
+            for name in dir(checkers)
+            if not name.endswith("CheckerBase")
+        }
+        checker_names = [
+            name
+            for name, attr in maybe_classes.items()
+            if type(attr) == type and issubclass(attr, checkers.CheckerBase)
+        ]
+
+    for checker_name in checker_names:
+        checker_class = getattr(checkers, checker_name)
+        checker_class()(cfg, module_tree)
+
     fixer_names = [
-        fn.strip()
-        for fn in cfg["fixers"].split(",")
-        if fn.strip()
+        name.strip()
+        for name in cfg["fixers"].split(",")
+        if name.strip()
     ]
 
     if not any(fixer_names):
         maybe_classes = {
-            fn: getattr(fixers, fn)
-            for fn in dir(fixers)
-            if not fn.endswith("FixerBase")
+            name: getattr(fixers, name)
+            for name in dir(fixers)
+            if not name.endswith("FixerBase")
         }
         fixer_names = [
-            fn
-            for fn, attr in maybe_classes.items()
+            name
+            for name, attr in maybe_classes.items()
             if type(attr) == type and issubclass(attr, fixers.FixerBase)
         ]
 

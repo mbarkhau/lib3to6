@@ -19,6 +19,12 @@ class FixerBase:
         raise NotImplementedError()
 
 
+class TransformerFixerBase(FixerBase, ast.NodeTransformer):
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        return self.visit(tree)
+
+
 class FutureImportFixerBase(FixerBase):
 
     future_name: str
@@ -83,12 +89,6 @@ class RemoveFunctionDefAnnotationsFixer(FixerBase):
         return tree
 
 
-class TransformerFixerBase(FixerBase, ast.NodeTransformer):
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        return self.visit(tree)
-
-
 class RemoveAnnAssignFixer(TransformerFixerBase):
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
@@ -96,7 +96,6 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
         if not isinstance(name_node, ast.Name):
             raise Exception(f"Unexpected Node Type {name_node}")
 
-        node.annotation = None
         value: ast.expr
         if node.value is None:
             value = ast.NameConstant(value=None)
