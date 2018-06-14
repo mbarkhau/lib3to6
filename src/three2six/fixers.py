@@ -104,7 +104,7 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
         return ast.Assign(targets=[name_node], value=value)
 
 
-class ShortToLongFormSuper(TransformerFixerBase):
+class ShortToLongFormSuperFixer(TransformerFixerBase):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         for maybe_method in ast.walk(node):
@@ -133,7 +133,7 @@ class ShortToLongFormSuper(TransformerFixerBase):
         return node
 
 
-class InlineKWOnlyArgs(TransformerFixerBase):
+class InlineKWOnlyArgsFixer(TransformerFixerBase):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         if not node.args.kwonlyargs:
@@ -194,7 +194,7 @@ class InlineKWOnlyArgs(TransformerFixerBase):
 
 if sys.version_info >= (3, 6):
 
-    class FStringFixer(TransformerFixerBase):
+    class FStringToStrFormatFixer(TransformerFixerBase):
 
         def _formatted_value_str(
             self,

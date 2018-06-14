@@ -8,6 +8,7 @@ import re
 import ast
 import astor
 import typing as typ
+import typing_extensions as typext
 
 from . import common
 from . import fixers
@@ -60,54 +61,71 @@ def parse_module_header(module_source_data: bytes) -> typ.Tuple[str, str]:
     return coding, header
 
 
+class CheckerOrFixer(typext.Protocol):
+
+    __name__: str
+
+    def __call__(
+        self, cfg: common.BuildConfig, tree: ast.Module
+    ) -> typ.Optional[ast.Module]:
+        ...
+
+
+T = typ.TypeVar("T", CheckerOrFixer, CheckerOrFixer)
+
+
+def iter_fuzzy_selected_classes(names: str, module: object, clazz: T) -> typ.Iterable[T]:
+    assert isinstance(clazz, type)
+    clazz_name = clazz.__name__
+    assert clazz_name.endswith("Base")
+    assert getattr(module, clazz_name) is clazz
+    optional_suffix = clazz_name[:-4]
+
+    def normalize_name(name: str) -> str:
+        name = name.lower().replace("_", "").replace("-", "")
+        if name.endswith(optional_suffix.lower()):
+            name = name[:-len(optional_suffix)]
+        return name
+
+    maybe_classes = {
+        name: getattr(module, name)
+        for name in dir(module)
+        if not name.endswith(clazz_name)
+    }
+    available_classes = {
+        normalize_name(attr_name): attr
+        for attr_name, attr in maybe_classes.items()
+        if type(attr) == type and issubclass(attr, clazz)
+    }
+
+    # Nothing explicitly selected -> all selected
+    if names:
+        selected_names = [
+            normalize_name(name.strip())
+            for name in names.split(",")
+            if name.strip()
+        ]
+    else:
+        selected_names = list(available_classes.keys())
+
+    assert len(selected_names) > 0
+    for name in selected_names:
+        yield available_classes[name]()
+
+
 def transpile_module(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
     coding, header = parse_module_header(module_source_data)
     module_source = module_source_data.decode(coding)
     module_tree = ast.parse(module_source)
 
-    checker_names = [
-        name.strip()
-        for name in cfg["checkers"].split(",")
-        if name.strip()
-    ]
+    for checker in iter_fuzzy_selected_classes(cfg["checkers"], checkers, checkers.CheckerBase):
+        checker(cfg, module_tree)
 
-    if not any(checker_names):
-        maybe_classes = {
-            name: getattr(checkers, name)
-            for name in dir(checkers)
-            if not name.endswith("CheckerBase")
-        }
-        checker_names = [
-            name
-            for name, attr in maybe_classes.items()
-            if type(attr) == type and issubclass(attr, checkers.CheckerBase)
-        ]
-
-    for checker_name in checker_names:
-        checker_class = getattr(checkers, checker_name)
-        checker_class()(cfg, module_tree)
-
-    fixer_names = [
-        name.strip()
-        for name in cfg["fixers"].split(",")
-        if name.strip()
-    ]
-
-    if not any(fixer_names):
-        maybe_classes = {
-            name: getattr(fixers, name)
-            for name in dir(fixers)
-            if not name.endswith("FixerBase")
-        }
-        fixer_names = [
-            name
-            for name, attr in maybe_classes.items()
-            if type(attr) == type and issubclass(attr, fixers.FixerBase)
-        ]
-
-    for fixer_name in fixer_names:
-        fixer_class = getattr(fixers, fixer_name)
-        module_tree = fixer_class()(cfg, module_tree)
+    for fixer in iter_fuzzy_selected_classes(cfg["fixers"], fixers, fixers.FixerBase):
+        maybe_fixed_module = fixer(cfg, module_tree)
+        if maybe_fixed_module is None:
+            raise Exception(f"Error running fixer {type(fixer).__name__}")
+        module_tree = maybe_fixed_module
 
     fixed_module_source = header + "".join(astor.to_source(module_tree))
     return fixed_module_source.encode(coding)

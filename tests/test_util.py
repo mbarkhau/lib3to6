@@ -1,4 +1,5 @@
 import ast
+from three2six import transpile
 
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
@@ -46,28 +47,45 @@ def dump_ast(node, annotate_fields=True, include_attributes=False, indent="  "):
     return _format(node)
 
 
-def parsedump_ast(code, mode="exec", **kwargs):
-    """Parse some code from a string and pretty-print it."""
-    node = ast.parse(code, mode=mode)   # An ode to the code
-    return dump_ast(node, **kwargs)
-
-
-def _clean_whitespace(fixture_str):
+def clean_whitespace(fixture_str):
     if fixture_str.strip().count("\n") == 0:
         return fixture_str.strip()
 
-    fixture_str = fixture_str.lstrip()
-    fixture_lines = fixture_str.splitlines()
-    indent = min(
+    fixture_lines = [
+        line
+        for line in fixture_str.splitlines()
+        if line.strip()
+    ]
+    line_indents = [
         len(line) - len(line.lstrip())
         for line in fixture_lines
-        if len(line) > len(line.lstrip())
-    )
-    indent_str = " " * indent
-    cleaned_lines = []
-    for line in fixture_lines:
-        if line.startswith(indent_str):
-            cleaned_lines.append(line[indent:])
-        else:
-            cleaned_lines.append(line)
-    return "\n".join(cleaned_lines)
+    ]
+    if not any(line_indents) or min(line_indents) == 0:
+        return fixture_str
+
+    indent = min(line_indents)
+    return "\n".join([
+        line[indent:] for line in fixture_lines
+    ])
+
+
+def parsedump_ast(code, mode="exec", **kwargs):
+    """Parse some code from a string and pretty-print it."""
+    node = ast.parse(clean_whitespace(code), mode=mode)
+    return dump_ast(node, **kwargs)
+
+
+def transpile_and_dump(module_str, cfg=None):
+    if cfg is None:
+        cfg = {}
+    if "checkers" not in cfg:
+        cfg["checkers"] = ""
+    if "fixers" not in cfg:
+        cfg["fixers"] = ""
+
+    module_str = clean_whitespace(module_str)
+    module_data = module_str.encode("utf-8")
+    coding, header = transpile.parse_module_header(module_data)
+    result_data = transpile.transpile_module(cfg, module_data)
+    result_str = result_data.decode("utf-8")
+    return coding, header, result_str

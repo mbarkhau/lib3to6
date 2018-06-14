@@ -12,3 +12,7 @@ BuildConfig = typ.Dict[str, str]
 
 class InvalidPackage(Exception):
     pass
+
+
+class CheckError(Exception):
+    pass

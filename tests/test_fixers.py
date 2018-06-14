@@ -4,37 +4,42 @@ from three2six import transpile
 from . import test_util
 
 
+def test_header_preserved():
+    in_str = """
+    #!/usr/bin/env python
+    # This file is part of the three2six project
+    # https://github.com/mbarkhau/three2six
+    # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
+    #
+    # SPDX-License-Identifier:    MIT
+    hello = "world"
+    """
+    expected_str = """
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    # This file is part of the three2six project
+    # https://github.com/mbarkhau/three2six
+    # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
+    #
+    # SPDX-License-Identifier:    MIT
+    from __future__ import unicode_literals
+    from __future__ import print_function
+    from __future__ import division
+    from __future__ import absolute_import
+    hello = "world"
+    """
+    in_coding, in_header, result_str = test_util.transpile_and_dump(in_str)
+    expected_ast = test_util.parsedump_ast(expected_str)
+    result_ast = test_util.parsedump_ast(result_str)
+    assert expected_ast == result_ast
+
+
 TEST_STRINGS = {
-    "preserved_header": (
-        """
-        #!/usr/bin/env python
-        # This file is part of the three2six project
-        # https://github.com/mbarkhau/three2six
-        # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
-        #
-        # SPDX-License-Identifier:    MIT
-        hello = "world"
-        """,
-        """
-        #!/usr/bin/env python
-        # -*- coding: utf-8 -*-
-        # This file is part of the three2six project
-        # https://github.com/mbarkhau/three2six
-        # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
-        #
-        # SPDX-License-Identifier:    MIT
-        from __future__ import unicode_literals
-        from __future__ import print_function
-        from __future__ import division
-        from __future__ import absolute_import
-        hello = "world"
-        """,
-    ),
     ",".join([
-        "AbsoluteImportFutureFixer",
-        "DivisionFutureFixer",
-        "PrintFunctionFutureFixer",
-        "UnicodeLiteralsFutureFixer",
+        "absolute_import_future",
+        "division_future",
+        "print_function_future",
+        "unicode_literals_future",
     ]): (
         """
         #!/usr/bin/env python
@@ -50,7 +55,7 @@ TEST_STRINGS = {
         from __future__ import absolute_import
         """,
     ),
-    "RemoveAnnAssignFixer": (
+    "remove_ann_assign": (
         """
         moduleannattr: moduleattr_annotation
 
@@ -66,7 +71,7 @@ TEST_STRINGS = {
             classannassign = 22
         """,
     ),
-    "RemoveFunctionDefAnnotationsFixer": (
+    "remove_function_def_annotations": (
         """
         def foo(arg: arg_annotation) -> ret_annotation:
             def nested_fn(f: int = 22) -> int:
@@ -88,11 +93,11 @@ TEST_STRINGS = {
                     pass
         """
     ),
-    "FStringFixer": (
+    "f_string_to_str_format": (
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
-    "FStringFixer": (
+    "f_string_to_str_format": (
         """
         who = "World"
         print(f"Hello {who}!")
@@ -103,7 +108,7 @@ TEST_STRINGS = {
         print("Hello {0}!".format(who))
         """,
     ),
-    "NewStyleClassesFixer": (
+    "new_style_classes": (
         """
         class Foo:
             pass
@@ -114,7 +119,7 @@ TEST_STRINGS = {
             pass
         """,
     ),
-    "ItertoolsBuiltinsFixer,PrintFunctionFutureFixer": (
+    "itertools_builtins,print_function_future": (
         """
         '''Module Docstring'''
         def fn(elem):
@@ -136,7 +141,7 @@ TEST_STRINGS = {
         dict(itertools.izip("abcd", [1, 2, 3, 4]))
         """,
     ),
-    "ShortToLongFormSuper": (
+    "short_to_long_form_super": (
         """
         class FooClass:
             def foo_method(self, arg, *args, **kwargs):
@@ -148,7 +153,7 @@ TEST_STRINGS = {
                 return super(FooClass, self).foo_method(arg, *args, **kwargs)
         """,
     ),
-    "RemoveFunctionDefAnnotationsFixer,InlineKWOnlyArgs": (
+    "remove_function_def_annotations,inline_kw_only_args": (
         """
         def foo(
             self,
@@ -179,27 +184,25 @@ TEST_STRINGS = {
 }
 
 
-@pytest.mark.parametrize("test_name, fixture", list(TEST_STRINGS.items()))
-def test_fixers(test_name, fixture):
+@pytest.mark.parametrize("test_desc, fixture", list(TEST_STRINGS.items()))
+def test_fixers(test_desc, fixture):
+    fixer_names = [
+        name
+        for name in test_desc.split(",")
+        if not name.isdigit()
+    ]
+    cfg = {"fixers": ",".join(fixer_names)}
+
     in_str, expected_str = fixture
-    fixer_names = ",".join((
-        name for name in test_name.split(",") if name.lower() != name
-    ))
-    cfg = {"fixers": fixer_names, "checkers": ""}
-    in_str = test_util._clean_whitespace(in_str)
-    expected_str = test_util._clean_whitespace(expected_str)
+    in_coding, in_header, result_str = test_util.transpile_and_dump(in_str, cfg)
+    expected_str = test_util.clean_whitespace(expected_str)
     expected_data = expected_str.encode("utf-8")
     expected_coding, expected_header = transpile.parse_module_header(expected_data)
 
-    in_data = in_str.encode("utf-8")
-    in_coding, in_header = transpile.parse_module_header(in_data)
     assert in_coding == expected_coding
     assert in_header == expected_header
 
-    result_data = transpile.transpile_module(cfg, in_data)
-    result_str = result_data.decode("utf-8")
-
-    # if fixer_names != "RemoveFunctionDefAnnotationsFixer":
+    # if fixer_names != "remove_functiond_def_annotations":
     #     return
 
     # print()
@@ -211,4 +214,6 @@ def test_fixers(test_name, fixture):
     # print("###" * 20)
     # print(test_util.parsedump_ast(result_str))
 
-    assert test_util.parsedump_ast(expected_str) == test_util.parsedump_ast(result_str)
+    expected_ast = test_util.parsedump_ast(expected_str)
+    result_ast = test_util.parsedump_ast(result_str)
+    assert expected_ast == result_ast

@@ -19,7 +19,9 @@ PYTHON27 := $(PYENV27)/bin/python
 .dev_install.make_marker: setup.py
 	$(PYTHON36) -m pip install --upgrade --quiet \
 		wheel twine \
-		flake8 mypy pytest pytest-coverage rst2html5 \
+		flake8 mypy typing-extensions \
+		rst2html5 \
+		pytest pytest-coverage \
 		ipython pudb \
 		astor;
 	touch .dev_install.make_marker
@@ -49,9 +51,9 @@ README.html: .dev_install.make_marker README.rst
 
 debug_test: .dev_install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -vv \
+		$(PYTHON36) -m pytest -v \
 		--exitfirst \
-		--capture=no tests/
+		tests/
 
 test: .dev_install.make_marker README.html
 	PYTHONPATH=src/:$$PYTHONPATH \
