@@ -430,6 +430,22 @@ TEST_STRINGS = {
         del upg_args_3
         """,
     ),
+    "unpacking_generalizations,10": (
+        """
+        x = [*[1, 2], 3] if True else [*[4, 5], 6]
+        """,
+        """
+        upg_args_0 = []
+        upg_args_0.extend([1, 2])
+        upg_args_0.append(3)
+        upg_args_1 = []
+        upg_args_1.extend([4, 5])
+        upg_args_1.append(6)
+        x = list(*upg_args_0) if True else list(*upg_args_1)
+        del upg_args_0
+        del upg_args_1
+        """,
+    ),
     # "generator_return_to_stop_iteration_exception": (
     #     """
     #     """,

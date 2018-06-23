@@ -328,6 +328,10 @@ ListFieldNodeUpdate = typ.Tuple[typ.List[ast.stmt], typ.List[ast.expr], typ.List
 ExpandedUpdate = typ.Tuple[typ.List[ast.stmt], typ.List[ast.Delete]]
 
 
+def is_block_field(field_name: str, field: typ.Any) -> bool:
+    return field_name in STMTLIST_FIELD_NAMES and isinstance(field, list)
+
+
 class UnpackingGeneralizationsFixer(FixerBase):
 
     def __init__(self, *args, **kwargs):
@@ -526,7 +530,10 @@ class UnpackingGeneralizationsFixer(FixerBase):
         sub_fields = sorted(ast.iter_fields(field_node), key=node_field_sort_key)
         for sub_field_name, sub_field in sub_fields:
             # NOTE (mb 2018-06-23): field nodes should not have any body
-            assert sub_field_name not in STMTLIST_FIELD_NAMES
+            assert not is_block_field(sub_field_name, sub_field), f"""
+            Unexpected block field {sub_field_name} for {field_node}
+            """.strip()
+
             if not isinstance(sub_field, (list, ast.AST)):
                 continue
 
@@ -618,8 +625,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
                     if not isinstance(field, (list, ast.AST)):
                         continue
 
-                    if field_name in STMTLIST_FIELD_NAMES:
-                        assert isinstance(field, list)
+                    if is_block_field(field_name, field):
                         node_body = typ.cast(typ.List[ast.stmt], field)
                         self.expand_body_unpackings(node_body)
                     else:
