@@ -63,7 +63,7 @@ class NoThreeOnlyImports(CheckerBase):
         pass
 
 
-class OnlyOpenWithRawModeChecker(CheckerBase):
+class NoOpenWithEncodingChecker(CheckerBase):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):

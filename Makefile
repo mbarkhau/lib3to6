@@ -1,4 +1,4 @@
-.PHONY: clean test lint setup_conda_envs install_all dev_install
+.PHONY: clean test devtest fulltest lint setup_conda_envs install_all dev_install
 
 PYENV36 := $(shell bash -c "conda env list | grep three2six36 | rev | cut -d \" \" -f1 | rev")
 PYENV27 := $(shell bash -c "conda env list | grep three2six27 | rev | cut -d \" \" -f1 | rev")
@@ -46,17 +46,22 @@ mypy: .dev_install.make_marker
 		--follow-imports=silent \
 		src/three2six/
 
+test: .dev_install.make_marker
+	PYTHONPATH=src/:$$PYTHONPATH \
+		$(PYTHON36) -m pytest tests/
+
+debugtest:  .dev_install.make_marker
+	PYTHONPATH=src/:$$PYTHONPATH \
+		$(PYTHON36) -m pytest -v \
+		--capture=no \
+		--exitfirst \
+		tests/
+
 README.html: .dev_install.make_marker README.rst
 	$(PYENV36)/bin/rst2html5 README.rst > README.html.tmp
 	mv README.html.tmp README.html
 
-debug_test: .dev_install.make_marker
-	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -v \
-		--exitfirst \
-		tests/
-
-test: .dev_install.make_marker README.html
+fulltest: .dev_install.make_marker README.html
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON36) -m pytest tests/
 	$(PYTHON36) -m pip uninstall three2six --quiet --yes

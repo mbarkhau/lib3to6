@@ -44,13 +44,14 @@ def test_header_preserved():
     assert expected_ast == result_ast
 
 
-TEST_STRINGS = {
-    ",".join([
-        "absolute_import_future",
-        "division_future",
-        "print_function_future",
-        "unicode_literals_future",
-    ]): (
+TEST_STRINGS = [
+    (
+        [
+            "absolute_import_future",
+            "division_future",
+            "print_function_future",
+            "unicode_literals_future",
+        ],
         """
         #!/usr/bin/env python
         \"\"\"Module Docstring\"\"\"
@@ -65,7 +66,8 @@ TEST_STRINGS = {
         from __future__ import absolute_import
         """,
     ),
-    "remove_ann_assign": (
+    (
+        "remove_ann_assign",
         """
         moduleannattr: moduleattr_annotation
 
@@ -81,7 +83,8 @@ TEST_STRINGS = {
             classannassign = 22
         """,
     ),
-    "remove_function_def_annotations": (
+    (
+        "remove_function_def_annotations",
         """
         def foo(arg: arg_annotation) -> ret_annotation:
             def nested_fn(f: int = 22) -> int:
@@ -103,11 +106,13 @@ TEST_STRINGS = {
                     pass
         """
     ),
-    "f_string_to_str_format": (
+    (
+        "f_string_to_str_format",
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
-    "f_string_to_str_format": (
+    (
+        "f_string_to_str_format",
         """
         who = "World"
         print(f"Hello {who}!")
@@ -117,7 +122,8 @@ TEST_STRINGS = {
         print("Hello {0}!".format(who))
         """,
     ),
-    "new_style_classes": (
+    (
+        "new_style_classes",
         """
         class Foo:
             pass
@@ -127,7 +133,8 @@ TEST_STRINGS = {
             pass
         """,
     ),
-    "itertools_builtins,print_function_future,1": (
+    (
+        "itertools_builtins,print_function_future",
         """
         \"\"\"Module Docstring\"\"\"
         def fn(elem):
@@ -148,7 +155,8 @@ TEST_STRINGS = {
         dict(itertools.izip("abcd", [1, 2, 3, 4]))
         """,
     ),
-    "itertools_builtins,2": (
+    (
+        "itertools_builtins",
         """
         def fn(elem):
             list(map(fn, [1, 2, 3, 4]))
@@ -164,7 +172,8 @@ TEST_STRINGS = {
             return elem * 2
         """,
     ),
-    "itertools_builtins,3": (
+    (
+        "itertools_builtins",
         """
         def fn(elem):
             def fn_nested():
@@ -178,7 +187,8 @@ TEST_STRINGS = {
                 list(itertools.imap(moep, itertools.izip("abcd", [1, 2, 3, 4])))
         """,
     ),
-    "short_to_long_form_super": (
+    (
+        "short_to_long_form_super",
         """
         class FooClass:
             def foo_method(self, arg, *args, **kwargs):
@@ -190,7 +200,8 @@ TEST_STRINGS = {
                 return super(FooClass, self).foo_method(arg, *args, **kwargs)
         """,
     ),
-    "remove_function_def_annotations,inline_kw_only_args": (
+    (
+        "remove_function_def_annotations,inline_kw_only_args",
         """
         def foo(
             self,
@@ -218,7 +229,8 @@ TEST_STRINGS = {
             pass
         """,
     ),
-    "unpacking_generalizations,1": (
+    (
+        "unpacking_generalizations",
         """
         print(*[1])
         print(*[1], 2)
@@ -241,7 +253,8 @@ TEST_STRINGS = {
         del upg_args_1
         """,
     ),
-    "unpacking_generalizations,2": (
+    (
+        "unpacking_generalizations",
         """
         def foo():
             print(*[1], *[2], 3)
@@ -256,7 +269,8 @@ TEST_STRINGS = {
             del upg_args_0
         """,
     ),
-    "unpacking_generalizations,3": (
+    (
+        "unpacking_generalizations",
         """
         dict(**{"x": 1})
 
@@ -286,7 +300,8 @@ TEST_STRINGS = {
         del upg_kwargs_1
         """,
     ),
-    "unpacking_generalizations,4": (
+    (
+        "unpacking_generalizations",
         """
         {**{'x': 2}, 'x': 1}
         """,
@@ -298,7 +313,8 @@ TEST_STRINGS = {
         del upg_kwargs_0
         """,
     ),
-    "unpacking_generalizations,5": (
+    (
+        "unpacking_generalizations",
         """
         [*[1, 2], 3, *[4, 5]]
         {*[1, 2], 3, *[4, 5]}
@@ -327,7 +343,8 @@ TEST_STRINGS = {
         del upg_args_2
         """,
     ),
-    "unpacking_generalizations,6": (
+    (
+        "unpacking_generalizations",
         """
         for x in [*[1, 2, 3], 4]:
             for y in foo(*[1, 2, 3], 4, *[5, 6, 7], **{"foo": 1}, bar=2, **{"baz": 3}):
@@ -358,21 +375,23 @@ TEST_STRINGS = {
         del upg_args_2
         """,
     ),
-    "unpacking_generalizations,7": (
+    (
+        "unpacking_generalizations",
         """
-        with foo(*[1,2,3], 4) as x:
+        with foo(*[1, 2, 3], 4) as x:
             pass
         """,
         """
         upg_args_0 = []
-        upg_args_0.extend([1,2,3])
+        upg_args_0.extend([1, 2, 3])
         upg_args_0.append(4)
         with foo(*upg_args_0) as x:
             pass
         del upg_args_0
         """,
     ),
-    "unpacking_generalizations,8": (
+    (
+        "unpacking_generalizations",
         """
         a = [*[1, 2, *[3, 4], 5], 6]
         """,
@@ -390,9 +409,10 @@ TEST_STRINGS = {
         del upg_args_0
         """,
     ),
-    "unpacking_generalizations,9": (
+    (
+        "unpacking_generalizations",
         """
-        with foo(*[1,2,3], 4) as x:
+        with foo(*[1, 2, 3], 4) as x:
             try:
                 if bar:
                     pass
@@ -403,7 +423,7 @@ TEST_STRINGS = {
         """,
         """
         upg_args_3 = []
-        upg_args_3.extend([1,2,3])
+        upg_args_3.extend([1, 2, 3])
         upg_args_3.append(4)
         with foo(*upg_args_3) as x:
             try:
@@ -430,7 +450,8 @@ TEST_STRINGS = {
         del upg_args_3
         """,
     ),
-    "unpacking_generalizations,10": (
+    (
+        "unpacking_generalizations",
         """
         x = [*[1, 2], 3] if True else [*[4, 5], 6]
         """,
@@ -446,33 +467,26 @@ TEST_STRINGS = {
         del upg_args_1
         """,
     ),
-    # "generator_return_to_stop_iteration_exception": (
+    # (
+    #     "generator_return_to_stop_iteration_exception",
     #     """
     #     """,
     #     """
     #     """,
     # ),
-}
+]
 
 
-@pytest.mark.parametrize("test_desc, fixture", list(TEST_STRINGS.items()))
-def test_fixers(test_desc, fixture):
-    fixer_names = [
-        name
-        for name in test_desc.split(",")
-        if not name.isdigit()
-    ]
-    cfg = {"fixers": ",".join(fixer_names)}
-
-    in_str, expected_str = fixture
-
+@pytest.mark.parametrize("fixer_names, in_str, expected_str", TEST_STRINGS)
+def test_fixers(fixer_names, in_str, expected_str):
     expected_str = utils.clean_whitespace(expected_str)
     expected_ast = utils.parsedump_ast(expected_str)
     expected_data = expected_str.encode("utf-8")
     expected_coding, expected_header = transpile.parse_module_header(expected_data)
 
-    print(expected_ast)
+    # print(expected_ast)
 
+    cfg = {"fixers": fixer_names}
     in_coding, in_header, result_str = utils.transpile_and_dump(in_str, cfg)
 
     assert in_coding == expected_coding
