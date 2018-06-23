@@ -81,7 +81,14 @@ class CheckerOrFixer(typext.Protocol):
 T = typ.TypeVar("T", CheckerOrFixer, CheckerOrFixer)
 
 
-def iter_fuzzy_selected_classes(names: str, module: object, clazz: T) -> typ.Iterable[T]:
+def iter_fuzzy_selected_classes(
+    names: typ.Union[str, typ.List[str]], module: object, clazz: T
+) -> typ.Iterable[T]:
+    if isinstance(names, str):
+        names = names.split(",")
+
+    names = [name.strip() for name in names if name.strip()]
+
     assert isinstance(clazz, type)
     clazz_name = clazz.__name__
     assert clazz_name.endswith("Base")
@@ -106,33 +113,40 @@ def iter_fuzzy_selected_classes(names: str, module: object, clazz: T) -> typ.Ite
     }
 
     # Nothing explicitly selected -> all selected
-    if names:
+    if any(names):
         selected_names = [
-            normalize_name(name.strip())
-            for name in names.split(",")
-            if name.strip()
+            normalize_name(name)
+            for name in names
         ]
     else:
         selected_names = list(available_classes.keys())
 
     assert len(selected_names) > 0
+
     for name in selected_names:
         yield available_classes[name]()
 
 
-def transpile_module(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
-    coding, header = parse_module_header(module_source_data)
-    module_source = module_source_data.decode(coding)
+def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
+    checker_names = cfg.get("checkers", "")
+    fixer_names = cfg.get("fixers", "")
     module_tree = ast.parse(module_source)
 
-    for checker in iter_fuzzy_selected_classes(cfg["checkers"], checkers, checkers.CheckerBase):
+    for checker in iter_fuzzy_selected_classes(checker_names, checkers, checkers.CheckerBase):
         checker(cfg, module_tree)
 
-    for fixer in iter_fuzzy_selected_classes(cfg["fixers"], fixers, fixers.FixerBase):
+    for fixer in iter_fuzzy_selected_classes(fixer_names, fixers, fixers.FixerBase):
         maybe_fixed_module = fixer(cfg, module_tree)
         if maybe_fixed_module is None:
             raise Exception(f"Error running fixer {type(fixer).__name__}")
         module_tree = maybe_fixed_module
 
-    fixed_module_source = header + "".join(astor.to_source(module_tree))
+    coding, header = parse_module_header(module_source)
+    return header + "".join(astor.to_source(module_tree))
+
+
+def transpile_module_data(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
+    coding, header = parse_module_header(module_source_data)
+    module_source = module_source_data.decode(coding)
+    fixed_module_source = transpile_module(cfg, module_source)
     return fixed_module_source.encode(coding)

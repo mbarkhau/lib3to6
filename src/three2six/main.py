@@ -22,7 +22,7 @@ def main(argv: typ.List[str]=sys.argv[1:]):
             continue
         with path.open(mode="rb") as fh:
             source_data = fh.read()
-            fixed_source_data = transpile.transpile_module(cfg, source_data)
+            fixed_source_data = transpile.transpile_module_data(cfg, source_data)
             print(fixed_source_data.decode("utf-8"))
 
 

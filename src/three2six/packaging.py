@@ -107,7 +107,7 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
             cache_path = CACHE_DIR / (filehash + ".py")
 
             if int(cfg["force_transpile"]) or not cache_path.exists():
-                fixed_module_source_data = transpile.transpile_module(cfg, module_source_data)
+                fixed_module_source_data = transpile.transpile_module_data(cfg, module_source_data)
                 with open(cache_path, mode="wb") as fh:
                     fh.write(fixed_module_source_data)
 
