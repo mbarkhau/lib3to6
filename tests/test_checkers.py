@@ -1,7 +1,7 @@
 import pytest
 
 from three2six.common import CheckError
-from . import test_util
+from three2six import utils
 
 
 TEST_STRINGS = {
@@ -99,7 +99,7 @@ def test_checkers(test_desc, fixture):
 
     in_str, expected_error_msg = fixture
     try:
-        test_util.transpile_and_dump(in_str, cfg)
+        utils.transpile_and_dump(in_str, cfg)
         assert expected_error_msg is None
     except CheckError as result_error:
         assert expected_error_msg and expected_error_msg in str(result_error)

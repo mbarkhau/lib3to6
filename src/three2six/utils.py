@@ -1,7 +1,12 @@
 import ast
 import astor
 import typing as typ
-from three2six import transpile
+from . import transpile
+
+
+# Recursive types not fully supported yet, nested types replaced with "Any"
+# NodeOrNodelist = typ.Union[ast.AST, typ.List["NodeOrNodelist"]]
+NodeOrNodelist = typ.Union[ast.AST, typ.List[typ.Any]]
 
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
@@ -14,7 +19,7 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
     numbers and column offsets are not dumped by default.  If this is wanted,
     *include_attributes* can be set to True.
     """
-    def _format(node, level=0):
+    def _format(node: NodeOrNodelist, level=0):
         if isinstance(node, ast.AST):
             fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
             if include_attributes and node._attributes:
@@ -32,10 +37,11 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
             node_name = node.__class__.__name__
             return node_name + "(" + fields_str + ")"
         elif isinstance(node, list):
+            subnodes = typ.cast(typ.List[typ.Any], node)
             lines = ["["]
             lines.extend((
                 indent * (level + 2) + _format(x, level + 2) + ","
-                for x in node
+                for x in subnodes
             ))
             if len(lines) > 1:
                 lines.append(indent * (level + 1) + "]")
@@ -49,7 +55,7 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
     return _format(node)
 
 
-def clean_whitespace(fixture_str):
+def clean_whitespace(fixture_str: str):
     if fixture_str.strip().count("\n") == 0:
         return fixture_str.strip()
 
@@ -71,28 +77,22 @@ def clean_whitespace(fixture_str):
     ])
 
 
-def parsedump_ast(code, mode="exec", **kwargs):
+def parsedump_ast(code: str, mode="exec", **kwargs):
     """Parse some code from a string and pretty-print it."""
     node = ast.parse(clean_whitespace(code), mode=mode)
     return dump_ast(node, **kwargs)
 
 
-def parsedump_source(code, mode="exec"):
+def parsedump_source(code: str, mode="exec"):
     node = ast.parse(clean_whitespace(code), mode=mode)
     return astor.to_source(node)
 
 
-def transpile_and_dump(module_str, cfg=None):
+def transpile_and_dump(module_str: str, cfg=None):
     if cfg is None:
         cfg = {}
-    if "checkers" not in cfg:
-        cfg["checkers"] = ""
-    if "fixers" not in cfg:
-        cfg["fixers"] = ""
 
     module_str = clean_whitespace(module_str)
-    module_data = module_str.encode("utf-8")
-    coding, header = transpile.parse_module_header(module_data)
-    result_data = transpile.transpile_module(cfg, module_data)
-    result_str = result_data.decode("utf-8")
+    coding, header = transpile.parse_module_header(module_str)
+    result_str = transpile.transpile_module(cfg, module_str)
     return coding, header, result_str

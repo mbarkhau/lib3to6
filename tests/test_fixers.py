@@ -1,7 +1,7 @@
 import pytest
 
 from three2six import transpile
-from . import test_util
+from three2six import utils
 
 
 def test_numeric_literals_with_underscore():
@@ -9,8 +9,8 @@ def test_numeric_literals_with_underscore():
     #   this case is taken care off by the fact that there
     #   is no representation of the underscores at the ast
     #   level.
-    a_ast = test_util.parsedump_ast("x = 200_000_000")
-    b_ast = test_util.parsedump_ast("x = 200000000")
+    a_ast = utils.parsedump_ast("x = 200_000_000")
+    b_ast = utils.parsedump_ast("x = 200000000")
     assert a_ast == b_ast
 
 
@@ -38,9 +38,9 @@ def test_header_preserved():
     from __future__ import absolute_import
     hello = "world"
     """
-    in_coding, in_header, result_str = test_util.transpile_and_dump(in_str)
-    expected_ast = test_util.parsedump_ast(expected_str)
-    result_ast = test_util.parsedump_ast(result_str)
+    in_coding, in_header, result_str = utils.transpile_and_dump(in_str)
+    expected_ast = utils.parsedump_ast(expected_str)
+    result_ast = utils.parsedump_ast(result_str)
     assert expected_ast == result_ast
 
 
@@ -466,14 +466,14 @@ def test_fixers(test_desc, fixture):
 
     in_str, expected_str = fixture
 
-    expected_str = test_util.clean_whitespace(expected_str)
-    expected_ast = test_util.parsedump_ast(expected_str)
+    expected_str = utils.clean_whitespace(expected_str)
+    expected_ast = utils.parsedump_ast(expected_str)
     expected_data = expected_str.encode("utf-8")
     expected_coding, expected_header = transpile.parse_module_header(expected_data)
 
     print(expected_ast)
 
-    in_coding, in_header, result_str = test_util.transpile_and_dump(in_str, cfg)
+    in_coding, in_header, result_str = utils.transpile_and_dump(in_str, cfg)
 
     assert in_coding == expected_coding
     assert in_header == expected_header
@@ -484,15 +484,15 @@ def test_fixers(test_desc, fixture):
     # print()
     # print(in_str)
     # print("###" * 20)
-    # print(test_util.parsedump_ast(in_str))
+    # print(utils.parsedump_ast(in_str))
     # print("###" * 20)
-    # print(test_util.parsedump_ast(expected_str))
+    # print(utils.parsedump_ast(expected_str))
     # print("###" * 20)
-    # print(test_util.parsedump_ast(result_str))
+    # print(utils.parsedump_ast(result_str))
 
-    in_source = test_util.parsedump_source(in_str)
-    expected_source = test_util.parsedump_source(expected_str)
-    result_source = test_util.parsedump_source(result_str)
+    in_source = utils.parsedump_source(in_str)
+    expected_source = utils.parsedump_source(expected_str)
+    result_source = utils.parsedump_source(result_str)
     print(">>>>>>>>" * 9)
     print(in_source)
     print("????????" * 9)

@@ -5,5 +5,12 @@
 # SPDX-License-Identifier:    MIT
 
 from .packaging import repackage
+from .transpile import transpile_module
+from .utils import parsedump_ast, parsedump_source
 
-__all__ = ['repackage']
+__all__ = [
+    "repackage",
+    "transpile_module",
+    "parsedump_ast",
+    "parsedump_source",
+]
