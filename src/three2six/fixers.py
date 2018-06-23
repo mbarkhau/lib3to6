@@ -245,7 +245,7 @@ class NewStyleClassesFixer(TransformerFixerBase):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         if len(node.bases) == 0:
-            node.bases.append(ast.Name(id='object', ctx=ast.Load()))
+            node.bases.append(ast.Name(id="object", ctx=ast.Load()))
         return node
 
 
@@ -258,31 +258,34 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         self._fix_applied = False
         tree = self.visit(tree)
-        if self._fix_applied:
-            prelude_end_index = -1
-            itertools_import_found = False
 
-            for i, node in enumerate(tree.body):
-                is_prelude = (
-                    isinstance(node, ast.Expr) and isinstance(node.value, ast.Str) or
-                    isinstance(node, ast.ImportFrom) and node.module == "__future__"
-                )
-                if prelude_end_index < 0 and not is_prelude:
-                    prelude_end_index = i
+        if not self._fix_applied:
+            return tree
 
-                is_itertools_import = (
-                    isinstance(node, ast.Import) and
-                    any(alias.name == "itertools" for alias in node.names)
-                )
-                if is_itertools_import:
-                    itertools_import_found = True
-                    break
+        prelude_end_index = -1
+        itertools_import_found = False
 
-            if not itertools_import_found:
-                tree.body.insert(
-                    prelude_end_index,
-                    ast.Import(names=[ast.alias(name="itertools", asname=None)]),
-                )
+        for i, node in enumerate(tree.body):
+            is_prelude = (
+                isinstance(node, ast.Expr) and isinstance(node.value, ast.Str) or
+                isinstance(node, ast.ImportFrom) and node.module == "__future__"
+            )
+            if prelude_end_index < 0 and not is_prelude:
+                prelude_end_index = i
+
+            is_itertools_import = (
+                isinstance(node, ast.Import) and
+                any(alias.name == "itertools" for alias in node.names)
+            )
+            if is_itertools_import:
+                itertools_import_found = True
+                break
+
+        if not itertools_import_found:
+            tree.body.insert(
+                prelude_end_index,
+                ast.Import(names=[ast.alias(name="itertools", asname=None)]),
+            )
         return tree
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
@@ -296,3 +299,417 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
             attr="i" + node.id,
             ctx=ast.Load(),
         )
+
+
+class BlockNode:
+
+    body: typ.List[ast.stmt]
+
+
+STMTLIST_FIELD_NAMES = {"body", "orelse", "finalbody"}
+
+
+def node_field_sort_key(elem):
+    # NOTE (mb 2018-06-23): Expand block bodies before
+    #   node expressions There's no particular reason to
+    #   do this other than making things predictable (and
+    #   testable).
+    field_name, field = elem
+    return (field_name not in STMTLIST_FIELD_NAMES, field_name)
+
+
+ArgUnpackNodes = (ast.Call, ast.List, ast.Tuple, ast.Set)
+ArgUnpackType = typ.Union[ast.Call, ast.List, ast.Tuple, ast.Set]
+KwArgUnpackNodes = (ast.Call, ast.Dict)
+KwArgUnpackType = typ.Union[ast.Call, ast.Dict]
+
+ValNodeUpdate = typ.Tuple[typ.List[ast.stmt], ast.expr, typ.List[ast.Delete]]
+ListFieldNodeUpdate = typ.Tuple[typ.List[ast.stmt], typ.List[ast.expr], typ.List[ast.Delete]]
+ExpandedUpdate = typ.Tuple[typ.List[ast.stmt], typ.List[ast.Delete]]
+
+
+class UnpackingGeneralizationsFixer(FixerBase):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._tmp_var_index = 0
+
+    def has_args_unpacking(self, val_node: ast.expr) -> bool:
+        if isinstance(val_node, ast.Call):
+            elts = val_node.args
+        elif isinstance(val_node, (ast.List, ast.Tuple, ast.Set)):
+            elts = val_node.elts
+        else:
+            raise TypeError(f"Unexpected val_node: {val_node}")
+
+        has_starred_arg = False
+        for arg in elts:
+            # Anything after * means we have to apply the fix
+            if has_starred_arg:
+                return True
+            has_starred_arg = isinstance(arg, ast.Starred)
+        return False
+
+    def has_kwargs_unpacking(self, val_node: ast.expr) -> bool:
+        if isinstance(val_node, ast.Call):
+            has_kwstarred_arg = False
+            for kw in val_node.keywords:
+                if has_kwstarred_arg:
+                    # Anything after ** means we have to apply the fix
+                    return True
+                has_kwstarred_arg = kw.arg is None
+            return False
+        elif isinstance(val_node, ast.Dict):
+            has_kwstarred_arg = False
+            for key in val_node.keys:
+                if has_kwstarred_arg:
+                    # Anything after ** means we have to apply the fix
+                    return True
+                has_kwstarred_arg = key is None
+            return False
+        else:
+            raise TypeError(f"Unexpected val_node: {val_node}")
+
+    def expand_args_unpacking(self, val_node: ArgUnpackType) -> ValNodeUpdate:
+        upg_args_name = f"upg_args_{self._tmp_var_index}"
+        self._tmp_var_index += 1
+
+        prefix_nodes: typ.List[ast.stmt] = [
+            ast.Assign(
+                targets=[ast.Name(id=upg_args_name, ctx=ast.Store())],
+                value=ast.List(elts=[], ctx=ast.Load()),
+            )
+        ]
+
+        if isinstance(val_node, ast.Call):
+            new_val_func = val_node.func
+            new_val_keywords = val_node.keywords
+            elts = val_node.args
+        elif isinstance(val_node, (ast.List, ast.Tuple, ast.Set)):
+            func_id = val_node.__class__.__name__.lower()
+            assert func_id in ("list", "tuple", "set")
+            new_val_func = ast.Name(id=func_id, ctx=ast.Load())
+            new_val_keywords = []
+            elts = val_node.elts
+        else:
+            raise TypeError(f"Unexpected val_node: {val_node}")
+
+        for arg in elts:
+            if isinstance(arg, ast.Starred):
+                func_name = "extend"
+                args = [arg.value]
+            else:
+                func_name = "append"
+                args = [arg]
+
+            func_node = ast.Attribute(
+                value=ast.Name(id=upg_args_name, ctx=ast.Load()),
+                attr=func_name,
+                ctx=ast.Load(),
+            )
+            prefix_nodes.append(ast.Expr(
+                value=ast.Call(func=func_node, args=args, keywords=[])
+            ))
+
+        new_val_node = ast.Call(
+            func=new_val_func,
+            args=[ast.Starred(
+                value=ast.Name(id=upg_args_name, ctx=ast.Load()),
+                ctx=ast.Load(),
+            )],
+            keywords=new_val_keywords,
+        )
+        del_node = ast.Delete(targets=[ast.Name(id=upg_args_name, ctx=ast.Del())])
+        return prefix_nodes, new_val_node, [del_node]
+
+    def expand_kwargs_unpacking(self, val_node: KwArgUnpackType) -> ValNodeUpdate:
+        upg_kwargs_name = f"upg_kwargs_{self._tmp_var_index}"
+        self._tmp_var_index += 1
+
+        prefix_nodes: typ.List[ast.stmt] = [
+            ast.Assign(
+                targets=[ast.Name(id=upg_kwargs_name, ctx=ast.Store())],
+                value=ast.Dict(keys=[], values=[], ctx=ast.Load()),
+            )
+        ]
+
+        def add_items(val_node_items: typ.Iterable[typ.Tuple]):
+            for key, val in val_node_items:
+                if key is None:
+                    prefix_nodes.append(ast.Expr(value=ast.Call(
+                        func=ast.Attribute(
+                            value=ast.Name(id=upg_kwargs_name, ctx=ast.Load()),
+                            attr="update",
+                            ctx=ast.Load(),
+                        ),
+                        args=[val],
+                        keywords=[],
+                    )))
+                else:
+                    if isinstance(key, ast.Str):
+                        key_val = key
+                    elif isinstance(key, str):
+                        key_val = ast.Str(s=key)
+                    else:
+                        raise TypeError(f"Invalid dict key {key}")
+
+                    prefix_nodes.append(ast.Assign(targets=[
+                        ast.Subscript(
+                            slice=ast.Index(value=key_val),
+                            value=ast.Name(id=upg_kwargs_name, ctx=ast.Load()),
+                            ctx=ast.Store(),
+                        ),
+                    ], value=val))
+
+        if isinstance(val_node, ast.Call):
+            add_items((kw.arg, kw.value) for kw in val_node.keywords)
+            args = val_node.args
+            replacenemt_func = val_node.func
+        elif isinstance(val_node, ast.Dict):
+            args = []
+            add_items(zip(val_node.keys, val_node.values))
+            replacenemt_func = ast.Name(id="dict", ctx=ast.Load())
+        else:
+            raise TypeError(f"Unexpected val_node: {val_node}")
+
+        new_val_node = ast.Call(
+            func=replacenemt_func,
+            args=args,
+            keywords=[ast.keyword(
+                arg=None, value=ast.Name(id=upg_kwargs_name, ctx=ast.Load())
+            )],
+        )
+        del_node = ast.Delete(targets=[ast.Name(id=upg_kwargs_name, ctx=ast.Del())])
+        return prefix_nodes, new_val_node, [del_node]
+
+    def make_val_node_update(self, val_node: ast.expr) -> typ.Optional[ValNodeUpdate]:
+        all_prefix_nodes: typ.List[ast.stmt] = []
+        all_del_nodes: typ.List[ast.Delete] = []
+
+        if isinstance(val_node, ArgUnpackNodes) and self.has_args_unpacking(val_node):
+            prefix_nodes, new_val_node, del_nodes = self.expand_args_unpacking(val_node)
+            assert not self.has_args_unpacking(new_val_node)
+            all_prefix_nodes.extend(prefix_nodes)
+            val_node = new_val_node
+            all_del_nodes.extend(del_nodes)
+
+        if isinstance(val_node, KwArgUnpackNodes) and self.has_kwargs_unpacking(val_node):
+            prefix_nodes, new_val_node, del_nodes = self.expand_kwargs_unpacking(val_node)
+            assert not self.has_kwargs_unpacking(new_val_node)
+            all_prefix_nodes.extend(prefix_nodes)
+            val_node = new_val_node
+            all_del_nodes.extend(del_nodes)
+
+        if len(all_prefix_nodes) > 0:
+            assert len(all_del_nodes) > 0
+            # TODO (mb 2018-06-22): We could simplify prefix nodes at
+            #   this point, for example we could collapse consectuive
+            #   calls to .extend which use literals into one, and
+            #   replace the initial assignment with the first literal
+            #   used in an .extend.
+            return all_prefix_nodes, val_node, all_del_nodes
+        else:
+            return None
+
+    def expand_single_field_unpacking(
+        self, field_node: ast.expr
+    ) -> typ.Optional[ValNodeUpdate]:
+
+        if isinstance(field_node, ArgUnpackNodes + KwArgUnpackNodes):
+            val_node_update = self.make_val_node_update(field_node)
+            if val_node_update is not None:
+                return val_node_update
+
+        all_prefix_nodes: typ.List[ast.stmt] = []
+        all_del_nodes: typ.List[ast.Delete] = []
+
+        sub_fields = sorted(ast.iter_fields(field_node), key=node_field_sort_key)
+        for sub_field_name, sub_field in sub_fields:
+            # NOTE (mb 2018-06-23): field nodes should not have any body
+            assert sub_field_name not in STMTLIST_FIELD_NAMES
+            if not isinstance(sub_field, (list, ast.AST)):
+                continue
+
+            maybe_body_update = self.expand_field_unpacking(field_node, sub_field_name, sub_field)
+
+            if maybe_body_update is None:
+                continue
+
+            prefix_nodes, del_nodes = maybe_body_update
+            all_prefix_nodes.extend(prefix_nodes)
+            all_del_nodes.extend(del_nodes)
+
+        if len(all_prefix_nodes) > 0:
+            assert len(all_del_nodes) > 0
+            return all_prefix_nodes, field_node, all_del_nodes
+        else:
+            return None
+
+    def expand_list_field_unpacking(
+        self, field_nodes: typ.List[ast.expr]
+    ) -> typ.Optional[ListFieldNodeUpdate]:
+        if len(field_nodes) == 0:
+            return None
+
+        all_prefix_nodes: typ.List[ast.stmt] = []
+        new_field_nodes: typ.List[ast.expr] = []
+        all_del_nodes: typ.List[ast.Delete] = []
+
+        for field_node in field_nodes:
+            body_update = self.expand_single_field_unpacking(field_node)
+            if body_update is None:
+                new_field_nodes.append(field_node)
+            else:
+                prefix_nodes, new_field, del_nodes = body_update
+                all_prefix_nodes.extend(prefix_nodes)
+                new_field_nodes.append(new_field)
+                all_del_nodes.extend(del_nodes)
+
+        if len(all_prefix_nodes) > 0:
+            assert len(all_del_nodes) > 0
+            assert len(new_field_nodes) > 0
+            assert len(new_field_nodes) == len(field_nodes)
+            return all_prefix_nodes, new_field_nodes, all_del_nodes
+        else:
+            return None
+
+    def expand_field_unpacking(
+        self, parent_node, field_name, field
+    ) -> typ.Optional[ExpandedUpdate]:
+        maybe_body_update: typ.Union[ListFieldNodeUpdate, ValNodeUpdate, None]
+
+        if isinstance(field, list):
+            maybe_body_update = self.expand_list_field_unpacking(field)
+        else:
+            maybe_body_update = self.expand_single_field_unpacking(field)
+
+        if maybe_body_update is None:
+            return None
+
+        if isinstance(field, list):
+            prefix_nodes, new_list_field, del_nodes = maybe_body_update
+            setattr(parent_node, field_name, new_list_field)
+        else:
+            prefix_nodes, new_field, del_nodes = maybe_body_update
+            setattr(parent_node, field_name, new_field)
+
+        return prefix_nodes, del_nodes
+
+    def expand_body_unpackings(self, body: typ.List[ast.stmt]):
+        initial_len_body = len(body)
+        prev_len_body = -1
+        while prev_len_body != len(body):
+            if len(body) > initial_len_body * 100:
+                # NOTE (mb 2018-06-23): This should never happen,
+                #   so it's an internal error, but rather than
+                #   running out of memory, an early exception is
+                #   raised.
+                raise Exception("Expansion overflow")
+
+            prev_len_body = len(body)
+
+            o = 0
+            # NOTE (mb 2018-06-17): Copy the body, because we
+            #   modify it during iteration.
+            body_copy = list(body)
+            for i, node in enumerate(body_copy):
+                fields = sorted(ast.iter_fields(node), key=node_field_sort_key)
+                for field_name, field in fields:
+                    if not isinstance(field, (list, ast.AST)):
+                        continue
+
+                    if field_name in STMTLIST_FIELD_NAMES:
+                        assert isinstance(field, list)
+                        node_body = typ.cast(typ.List[ast.stmt], field)
+                        self.expand_body_unpackings(node_body)
+                    else:
+                        maybe_body_update = self.expand_field_unpacking(node, field_name, field)
+
+                        if maybe_body_update is None:
+                            continue
+
+                        prefix_nodes, del_nodes = maybe_body_update
+                        body[i + o:i + o] = prefix_nodes
+                        o += len(prefix_nodes) + 1
+                        body[i + o:i + o] = del_nodes
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        self.expand_body_unpackings(tree.body)
+        return tree
+
+
+# class GeneratorReturnToStopIterationExceptionFixer(FixerBase):
+
+#     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+#         return tree
+
+#     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+#         # NOTE (mb 2018-06-15): What about a generator nested in a function definition?
+#         is_generator = any(
+#             isinstance(sub_node, (ast.Yield, ast.YieldFrom))
+#             for sub_node in ast.walk(node)
+#         )
+#         if not is_generator:
+#             return node
+
+#         for sub_node in ast.walk(node):
+#             pass
+
+
+# YIELD_FROM_EQUIVALENT = """
+# _i = iter(EXPR)
+# try:
+#     _y = next(_i)
+# except StopIteration as _e:
+#     _r = _e.value
+# else:
+#     while 1:
+#         try:
+#             _s = yield _y
+#         except GeneratorExit as _e:
+#             try:
+#                 _m = _i.close
+#             except AttributeError:
+#                 pass
+#             else:
+#                 _m()
+#             raise _e
+#         except BaseException as _e:
+#             _x = sys.exc_info()
+#             try:
+#                 _m = _i.throw
+#             except AttributeError:
+#                 raise _e
+#             else:
+#                 try:
+#                     _y = _m(*_x)
+#                 except StopIteration as _e:
+#                     _r = _e.value
+#                     break
+#         else:
+#             try:
+#                 if _s is None:
+#                     _y = next(_i)
+#                 else:
+#                     _y = _i.send(_s)
+#             except StopIteration as _e:
+#                 _r = _e.value
+#                 break
+# RESULT = _r
+# """in_len_body
+
+
+# class YieldFromFixer(FixerBase):
+# # see https://www.python.org/dev/peps/pep-0380/
+# NOTE (mb 2018-06-14): We should definetly do the most simple case
+#   but maybe we can also detect the more complex cases involving
+#   send and return values and at least throw an error
+
+# class MetaclassFixer(TransformerFixerBase):
+#     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
+#         #  class Foo(metaclass=X): => class Foo(object):\n  __metaclass__ = X
+
+
+# class MatMulFixer(TransformerFixerBase):
+#     def visit_Binop(self, node: ast.BinOp) -> ast.Call:
+#         # replace a @ b with a.__matmul__(b)
