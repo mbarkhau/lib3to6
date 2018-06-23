@@ -7,3 +7,5 @@
 who = "World"
 
 print(f"Hello {who}!")
+
+print("all ok")

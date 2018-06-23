@@ -61,3 +61,5 @@ target/
 .idea
 .*.make_marker
 README.html
+envs.txt
+test_build_logs/*.log

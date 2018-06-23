@@ -24,6 +24,7 @@ package_dir = {"": path("src")}
 
 
 if "bdist_wheel" in sys.argv:
+    # TODO (mb 2018-06-23): Figure out and document bootstrapping
     import three2six
     packages, package_dir = three2six.repackage(packages, package_dir)
 
