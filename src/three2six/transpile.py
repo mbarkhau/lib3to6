@@ -19,7 +19,8 @@ DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
 
 DEFAULT_SOURCE_ENCODING = "utf-8"
 
-SOURCE_ENCODING_RE = re.compile(rb"""
+# https://www.python.org/dev/peps/pep-0263/
+SOURCE_ENCODING_RE = re.compile(r"""
     ^
     [ \t\v]*
     \#.*?coding[:=][ \t]*
@@ -27,37 +28,43 @@ SOURCE_ENCODING_RE = re.compile(rb"""
 """, re.VERBOSE)
 
 
-def parse_module_header(module_source_data: bytes) -> typ.Tuple[str, str]:
-    header_lines = []
-    for line in module_source_data.splitlines():
-        if not line.strip() or line.strip().startswith(b"#"):
+def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, str]:
+    shebang = False
+    coding_declared = False
+    coding = DEFAULT_SOURCE_ENCODING
+
+    header_lines: typ.List[str] = []
+
+    # NOTE (mb 2018-06-23): Sneaky replacement of coding is done during
+    #   consumption of the generator.
+    source_lines: typ.Iterable[str] = (
+        line.decode(coding, errors="ignore") if isinstance(line, bytes) else line
+        for line in module_source.splitlines()
+    )
+
+    for i, line in enumerate(source_lines):
+        if i < 2:
+            if i == 0 and line.startswith("#!") and "python" in line:
+                shebang = True
+            else:
+                m = SOURCE_ENCODING_RE.match(line)
+                if m:
+                    coding = m.group("coding").strip()
+                    coding_declared = True
+
+        if not line.rstrip() or line.rstrip().startswith("#"):
             header_lines.append(line)
         else:
             break
 
-    shebang = False
-    coding_declared = False
-
-    coding = DEFAULT_SOURCE_ENCODING
-    for i, line in enumerate(header_lines):
-        if i >= 2:
-            break
-        if i == 0 and line.startswith(b"#!") and b"python" in line:
-            shebang = True
-        m = SOURCE_ENCODING_RE.match(header_lines[i])
-        if m:
-            coding = m.group("coding").decode("ascii").strip()
-            coding_declared = True
-
     if not coding_declared:
         coding_declaration = DEFAULT_SOURCE_ENCODING_DECLARATION.format(coding)
-        coding_declaration_data = coding_declaration.encode(coding)
         if shebang:
-            header_lines.insert(1, coding_declaration_data)
+            header_lines.insert(1, coding_declaration)
         else:
-            header_lines.insert(0, coding_declaration_data)
+            header_lines.insert(0, coding_declaration)
 
-    header = (b"\n".join(header_lines) + b"\n").decode(coding)
+    header = "\n".join(header_lines) + "\n"
     return coding, header
 
 
