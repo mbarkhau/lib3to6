@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier:    MIT
 
+import builtins
 import typing as typ
 
 PackageDir = typ.Dict[str, str]
@@ -16,3 +17,10 @@ class InvalidPackage(Exception):
 
 class CheckError(Exception):
     pass
+
+
+BUILTIN_NAMES = {
+    name
+    for name in dir(builtins)
+    if name.lower() == name and not name.startswith("__")
+}

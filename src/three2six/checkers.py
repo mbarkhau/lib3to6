@@ -6,8 +6,6 @@
 
 import ast
 
-import builtins
-
 from . import common
 
 
@@ -21,13 +19,6 @@ class VisitorCheckerBase(CheckerBase, ast.NodeVisitor):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         return self.visit(tree)
-
-
-BUILTIN_NAMES = {
-    name
-    for name in dir(builtins)
-    if name.lower() == name and not name.startswith("__")
-}
 
 
 class NoOverriddenBuiltinsChecker(CheckerBase):
@@ -46,6 +37,6 @@ class NoOverriddenBuiltinsChecker(CheckerBase):
             else:
                 continue
 
-            if name_in_scope and name_in_scope in BUILTIN_NAMES:
+            if name_in_scope and name_in_scope in common.BUILTIN_NAMES:
                 # TODO (mb 2018-06-14): line numbers and file path
                 raise common.CheckError(f"Prohibited override of builtin '{name_in_scope}'")

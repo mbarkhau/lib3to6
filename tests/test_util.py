@@ -1,9 +1,11 @@
 import ast
+import astor
+import typing as typ
 from three2six import transpile
 
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
-def dump_ast(node, annotate_fields=True, include_attributes=False, indent="  "):
+def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, indent="  "):
     """
     Return a formatted dump of the tree in *node*.  This is mainly useful for
     debugging purposes.  The returned string will show the names and the values
@@ -73,6 +75,11 @@ def parsedump_ast(code, mode="exec", **kwargs):
     """Parse some code from a string and pretty-print it."""
     node = ast.parse(clean_whitespace(code), mode=mode)
     return dump_ast(node, **kwargs)
+
+
+def parsedump_source(code, mode="exec"):
+    node = ast.parse(clean_whitespace(code), mode=mode)
+    return astor.to_source(node)
 
 
 def transpile_and_dump(module_str, cfg=None):
