@@ -7,6 +7,7 @@
 import ast
 
 from . import common
+from . import utils
 
 
 class VersionInfo:
@@ -78,15 +79,70 @@ class NoThreeOnlyImports(CheckerBase):
         pass
 
 
+PROHIBITED_OPEN_ARGUMENTS = {"encoding", "errors", "newline", "closefd", "opener"}
+
+
 class NoOpenWithEncodingChecker(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="2.7")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
-            if isinstance(node, ast.Call):
-                # print(node, dir(node))
-                pass
+            if not isinstance(node, ast.Call):
+                continue
+
+            func_node = node.func
+            if not isinstance(func_node, ast.Name):
+                continue
+            if func_node.id != "open" or not isinstance(func_node.ctx, ast.Load):
+                continue
+
+            mode = "r"
+            if len(node.args) >= 2:
+                mode_node = node.args[1]
+                if isinstance(mode_node, ast.Str):
+                    mode = mode_node.s
+                else:
+                    raise common.CheckError(
+                        "Prohibited value for argument 'mode' of builtin.open. " +
+                        f"Expected ast.Str node, got: {mode_node}"
+                    )
+
+            if len(node.args) > 3:
+                raise common.CheckError(
+                    f"Prohibited positional arguments to builtin.open"
+                )
+
+            for kw in node.keywords:
+                if kw.arg in PROHIBITED_OPEN_ARGUMENTS:
+                    raise common.CheckError(
+                        f"Prohibited keyword argument '{kw.arg}' to builtin.open."
+                    )
+                if kw.arg != "mode":
+                    continue
+
+                mode_node = kw.value
+                if isinstance(mode_node, ast.Str):
+                    mode = mode_node.s
+                else:
+                    raise common.CheckError(
+                        "Prohibited value for argument 'mode' of builtin.open. " +
+                        f"Expected ast.Str node, got: {mode_node}"
+                    )
+
+            if "b" not in mode:
+                raise common.CheckError(
+                    f"Prohibited value '{mode}' for argument 'mode' of builtin.open. " +
+                    "Only binary modes are allowed, use io.open as an alternative."
+                )
+
+
+ASYNC_AWAIT_NODE_TYPES = (
+    ast.AsyncFor,
+    ast.AsyncWith,
+    ast.AsyncFunctionDef,
+    ast.Await,
+)
 
 
 class NoAsyncAwait(CheckerBase):
@@ -94,4 +150,18 @@ class NoAsyncAwait(CheckerBase):
     version_info = VersionInfo(prohibited_until="3.4")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
-        pass
+        for node in ast.walk(tree):
+            if isinstance(node, ASYNC_AWAIT_NODE_TYPES):
+                raise common.CheckError("Prohibited use of async/await")
+
+
+# NOTE (mb 2018-06-24): I don't know how this could be done reliably.
+#   The main issue is that there are objects other than dict, which
+#   have methods named items,keys,values which this check wouldn't
+#   apply to.
+# class NoAssignedDictViews(CheckerBase):
+#
+#     check_before = "3.0"
+#
+#     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+#         pass
