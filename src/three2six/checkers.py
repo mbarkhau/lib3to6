@@ -9,7 +9,20 @@ import ast
 from . import common
 
 
+class VersionInfo:
+
+    prohibited_until: str
+
+    def __init__(self, prohibited_until: str) -> None:
+        self.prohibited_until = prohibited_until
+
+
 class CheckerBase:
+
+    version_info: VersionInfo
+
+    def is_prohibited_for(self, version):
+        return self.version_info.prohibited_until >= version
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         raise NotImplementedError()
@@ -22,6 +35,8 @@ class VisitorCheckerBase(CheckerBase, ast.NodeVisitor):
 
 
 class NoOverriddenBuiltinsChecker(CheckerBase):
+
+    version_info = VersionInfo(prohibited_until="3.4")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
@@ -65,6 +80,8 @@ class NoThreeOnlyImports(CheckerBase):
 
 class NoOpenWithEncodingChecker(CheckerBase):
 
+    version_info = VersionInfo(prohibited_until="2.7")
+
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
@@ -73,6 +90,8 @@ class NoOpenWithEncodingChecker(CheckerBase):
 
 
 class NoAsyncAwait(CheckerBase):
+
+    version_info = VersionInfo(prohibited_until="3.4")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         pass

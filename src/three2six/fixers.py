@@ -11,9 +11,43 @@ import typing as typ
 from . import common
 
 
+class VersionInfo:
+
+    apply_since: str
+    apply_until: str
+    works_since: str
+    works_until: typ.Optional[str]
+
+    def __init__(
+        self, apply_since: str, apply_until: str, works_since: str=None, works_until: str=None,
+    ) -> None:
+
+        self.apply_since = apply_since
+        self.apply_until = apply_until
+        if works_since is None:
+            # Implicitly, if it's applied since a version, it
+            # also works since then.
+            self.works_since = self.apply_since
+        else:
+            self.works_since = works_since
+        self.works_until = works_until
+
+
 class FixerBase:
-    # src_versions="36+"
-    # tgt_versions="27+"
+
+    version_info: VersionInfo
+
+    def is_required_for(self, version):
+        nfo = self.version_info
+        return nfo.apply_since <= version <= nfo.apply_until
+
+    def is_compatible_with(self, version):
+        nfo = self.version_info
+        return (
+            nfo.works_since <= version and (
+                nfo.works_until is None or version <= nfo.works_until
+            )
+        )
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
@@ -54,10 +88,22 @@ class FutureImportFixerBase(FixerBase):
 
 
 class AbsoluteImportFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.5",
+        apply_until="2.7",
+    )
+
     future_name = "absolute_import"
 
 
 class DivisionFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.2",
+        apply_until="2.7",
+    )
+
     future_name = "division"
 
 
@@ -70,6 +116,11 @@ class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
 
 
 class RemoveFunctionDefAnnotationsFixer(FixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="2.7",
+    )
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
@@ -91,6 +142,11 @@ class RemoveFunctionDefAnnotationsFixer(FixerBase):
 
 class RemoveAnnAssignFixer(TransformerFixerBase):
 
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="3.5",
+    )
+
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
         name_node = node.target
         if not isinstance(name_node, ast.Name):
@@ -103,8 +159,17 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
             value = node.value
         return ast.Assign(targets=[name_node], value=value)
 
+    version_info = VersionInfo(
+        apply_since="2.2",
+        apply_until="2.2",
+    )
 
 class ShortToLongFormSuperFixer(TransformerFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.2",
+        apply_until="2.7",
+    )
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         for maybe_method in ast.walk(node):
@@ -134,6 +199,11 @@ class ShortToLongFormSuperFixer(TransformerFixerBase):
 
 
 class InlineKWOnlyArgsFixer(TransformerFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="3.5",
+    )
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         if not node.args.kwonlyargs:
