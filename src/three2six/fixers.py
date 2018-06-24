@@ -486,6 +486,13 @@ def is_block_field(field_name: str, field: typ.Any) -> bool:
     return field_name in STMTLIST_FIELD_NAMES and isinstance(field, list)
 
 
+def make_temp_lambda_as_def(
+    lambda_node: ast.Lambda, body: typ.List[ast.stmt], name="temp_lambda_as_def"
+) -> ast.FunctionDef:
+    body.append(ast.Return(value=lambda_node.body))
+    return ast.FunctionDef(name=name, args=lambda_node.args, body=body, decorator_list=[])
+
+
 class UnpackingGeneralizationsFixer(FixerBase):
 
     version_info = VersionInfo(
@@ -702,8 +709,22 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 continue
 
             prefix_nodes, del_nodes = maybe_body_update
-            all_prefix_nodes.extend(prefix_nodes)
-            all_del_nodes.extend(del_nodes)
+
+            if isinstance(field_node, ast.Lambda):
+                # NOTE (mb 2018-06-24): An update inside a lambda can reference
+                #   parameters of the lambda. This means the prefix_nodes
+                #   would carry over those references. So we convert the
+                #   lambda to a temporary FunctionDef and replace it with
+                #   a reference to that function def.
+                temp_func_def = make_temp_lambda_as_def(field_node, prefix_nodes)
+                all_prefix_nodes.append(temp_func_def)
+                field_node = ast.Name(id=temp_func_def.name, ctx=ast.Load())
+                all_del_nodes.append(ast.Delete(targets=[
+                    ast.Name(id=temp_func_def.name, ctx=ast.Del())
+                ]))
+            else:
+                all_prefix_nodes.extend(prefix_nodes)
+                all_del_nodes.extend(del_nodes)
 
         if len(all_prefix_nodes) > 0:
             assert len(all_del_nodes) > 0
