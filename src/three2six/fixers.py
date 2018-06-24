@@ -86,6 +86,49 @@ class FutureImportFixerBase(FixerBase):
             tree.body.insert(0, import_node)
         return tree
 
+# NOTE (mb 2018-06-24): Version info pulled from:
+# https://docs.python.org/3/library/__future__.html
+
+
+class GeneratorStopFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="3.5",
+        apply_until="3.6",
+    )
+
+    future_name = "generator_stop"
+
+
+class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.6",
+        apply_until="2.7",
+    )
+
+    future_name = "unicode_literals"
+
+
+class PrintFunctionFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.6",
+        apply_until="2.7",
+    )
+
+    future_name = "print_function"
+
+
+class WithStatementFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.5",
+        apply_until="2.5",
+    )
+
+    future_name = "with_statement"
+
 
 class AbsoluteImportFutureFixer(FutureImportFixerBase):
 
@@ -107,12 +150,42 @@ class DivisionFutureFixer(FutureImportFixerBase):
     future_name = "division"
 
 
-class PrintFunctionFutureFixer(FutureImportFixerBase):
-    future_name = "print_function"
+class GeneratorsFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.2",
+        apply_until="2.2",
+    )
+
+    future_name = "generators"
 
 
-class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
-    future_name = "unicode_literals"
+class NestedScopesFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.1",
+        apply_until="2.1",
+    )
+
+    future_name = "nested_scopes"
+
+
+class RangeToXrangeFixer(FixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="2.7",
+    )
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Name):
+                continue
+
+            if node.id == "range" and isinstance(node.ctx, ast.Load):
+                node.id = "xrange"
+
+        return tree
 
 
 class RemoveFunctionDefAnnotationsFixer(FixerBase):
@@ -159,10 +232,6 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
             value = node.value
         return ast.Assign(targets=[name_node], value=value)
 
-    version_info = VersionInfo(
-        apply_since="2.2",
-        apply_until="2.2",
-    )
 
 class ShortToLongFormSuperFixer(TransformerFixerBase):
 
@@ -266,6 +335,11 @@ if sys.version_info >= (3, 6):
 
     class FStringToStrFormatFixer(TransformerFixerBase):
 
+        version_info = VersionInfo(
+            apply_since="2.6",
+            apply_until="3.5",
+        )
+
         def _formatted_value_str(
             self,
             fmt_val_node: ast.FormattedValue,
@@ -313,6 +387,11 @@ if sys.version_info >= (3, 6):
 
 class NewStyleClassesFixer(TransformerFixerBase):
 
+    version_info = VersionInfo(
+        apply_since="2.0",
+        apply_until="2.7",
+    )
+
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         if len(node.bases) == 0:
             node.bases.append(ast.Name(id="object", ctx=ast.Load()))
@@ -320,6 +399,11 @@ class NewStyleClassesFixer(TransformerFixerBase):
 
 
 class ItertoolsBuiltinsFixer(TransformerFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.0",
+        apply_until="2.7",
+    )
 
     # WARNING (mb 2018-06-09): This fix is very broad, and should
     #   only be used in combination with a sanity check that the
@@ -403,6 +487,11 @@ def is_block_field(field_name: str, field: typ.Any) -> bool:
 
 
 class UnpackingGeneralizationsFixer(FixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.0",
+        apply_until="3.4",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -715,10 +804,15 @@ class UnpackingGeneralizationsFixer(FixerBase):
 
 
 # class GeneratorReturnToStopIterationExceptionFixer(FixerBase):
-
+#
+#     version_info = VersionInfo(
+#         apply_since="2.0",
+#         apply_until="3.3",
+#     )
+#
 #     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
 #         return tree
-
+#
 #     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
 #         # NOTE (mb 2018-06-15): What about a generator nested in a function definition?
 #         is_generator = any(
@@ -727,7 +821,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
 #         )
 #         if not is_generator:
 #             return node
-
+#
 #         for sub_node in ast.walk(node):
 #             pass
 
@@ -782,10 +876,73 @@ class UnpackingGeneralizationsFixer(FixerBase):
 #   send and return values and at least throw an error
 
 # class MetaclassFixer(TransformerFixerBase):
+#
+#     version_info = VersionInfo(
+#         apply_since="2.0",
+#         apply_until="2.7",
+#     )
+#
 #     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
 #         #  class Foo(metaclass=X): => class Foo(object):\n  __metaclass__ = X
 
 
 # class MatMulFixer(TransformerFixerBase):
+#
+#     version_info = VersionInfo(
+#         apply_since="2.0",
+#         apply_until="3.5",
+#     )
+#
 #     def visit_Binop(self, node: ast.BinOp) -> ast.Call:
 #         # replace a @ b with a.__matmul__(b)
+
+
+# NOTE (mb 2018-06-24): I'm not gonna do it, but feel free to
+#   implement it if you feel like it.
+#
+# class DecoratorFixer(FixerBase):
+#     """Replaces use of @decorators with function calls
+#
+#     > @mydec1()
+#     > @mydec2
+#     > def myfn():
+#     >     pass
+#     < def myfn():
+#     <     pass
+#     < myfn = mydec2(myfn)
+#     < myfn = mydec1()(myfn)
+#     """
+#
+#     version_info = VersionInfo(
+#         apply_since="2.0",
+#         apply_until="2.4",
+#     )
+#
+
+# NOTE (mb 2018-06-24): I'm not gonna do it, but feel free to
+#   implement it if you feel like it.
+#
+# class WithStatementToTryExceptFixer(FixerBase):
+#     """
+#     > with expression as name:
+#     >     name
+#
+#     < import sys
+#     < __had_exception = False
+#     < __manager = expression
+#     < try:
+#     <     name = manager.__enter__()
+#     < except:
+#     <     __had_exception = True
+#     <     ex_type, ex_value, traceback = sys.exc_info()
+#     <     __manager.__exit__(ex_type, ex_value, traceback)
+#     < finally:
+#     <     if not __had_exception:
+#     <         __manager.__exit__(None, None, None)
+#     """
+#
+#     version_info = VersionInfo(
+#         apply_since="2.0",
+#         apply_until="2.4",
+#     )
+#
