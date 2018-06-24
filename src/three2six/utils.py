@@ -74,7 +74,7 @@ def clean_whitespace(fixture_str: str):
     indent = min(line_indents)
     return "\n".join([
         line[indent:] for line in fixture_lines
-    ])
+    ]).strip() + "\n"
 
 
 def parsedump_ast(code: str, mode="exec", **kwargs):

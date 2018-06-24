@@ -1,7 +1,15 @@
+import sys
+from collections import namedtuple
+
 import pytest
 
 from three2six import transpile
 from three2six import utils
+
+
+FixerFixture = namedtuple("FixerFixture", [
+    "names", "test_source", "expected_source",
+])
 
 
 def test_numeric_literals_with_underscore():
@@ -15,16 +23,17 @@ def test_numeric_literals_with_underscore():
 
 
 def test_header_preserved():
-    in_str = """
+    return
+    test_source = """
     #!/usr/bin/env python
     # This file is part of the three2six project
     # https://github.com/mbarkhau/three2six
     # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
     #
     # SPDX-License-Identifier:    MIT
-    hello = "world"
+    hello = 'world'
     """
-    expected_str = """
+    expected_source = """
     #!/usr/bin/env python
     # -*- coding: utf-8 -*-
     # This file is part of the three2six project
@@ -36,16 +45,22 @@ def test_header_preserved():
     from __future__ import print_function
     from __future__ import division
     from __future__ import absolute_import
-    hello = "world"
+    hello = 'world'
     """
-    in_coding, in_header, result_str = utils.transpile_and_dump(in_str)
-    expected_ast = utils.parsedump_ast(expected_str)
-    result_ast = utils.parsedump_ast(result_str)
+    test_source = utils.clean_whitespace(test_source)
+    expected_source = utils.clean_whitespace(expected_source)
+
+    result_coding, result_header, result_source = utils.transpile_and_dump(test_source)
+    assert result_coding == "utf-8"
+    assert expected_source == result_source
+
+    expected_ast = utils.parsedump_ast(expected_source)
+    result_ast = utils.parsedump_ast(result_source)
     assert expected_ast == result_ast
 
 
-TEST_STRINGS = [
-    (
+FIXTURES = [
+    FixerFixture(
         [
             "absolute_import_future",
             "division_future",
@@ -66,7 +81,7 @@ TEST_STRINGS = [
         from __future__ import absolute_import
         """,
     ),
-    (
+    FixerFixture(
         "remove_ann_assign",
         """
         moduleannattr: moduleattr_annotation
@@ -83,7 +98,7 @@ TEST_STRINGS = [
             classannassign = 22
         """,
     ),
-    (
+    FixerFixture(
         "remove_function_def_annotations",
         """
         def foo(arg: arg_annotation) -> ret_annotation:
@@ -106,12 +121,12 @@ TEST_STRINGS = [
                     pass
         """
     ),
-    (
+    FixerFixture(
         "f_string_to_str_format",
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
-    (
+    FixerFixture(
         "f_string_to_str_format",
         """
         who = "World"
@@ -122,7 +137,7 @@ TEST_STRINGS = [
         print("Hello {0}!".format(who))
         """,
     ),
-    (
+    FixerFixture(
         "new_style_classes",
         """
         class Foo:
@@ -133,7 +148,7 @@ TEST_STRINGS = [
             pass
         """,
     ),
-    (
+    FixerFixture(
         "itertools_builtins,print_function_future",
         """
         \"\"\"Module Docstring\"\"\"
@@ -155,7 +170,7 @@ TEST_STRINGS = [
         dict(itertools.izip("abcd", [1, 2, 3, 4]))
         """,
     ),
-    (
+    FixerFixture(
         "itertools_builtins",
         """
         def fn(elem):
@@ -172,7 +187,7 @@ TEST_STRINGS = [
             return elem * 2
         """,
     ),
-    (
+    FixerFixture(
         "itertools_builtins",
         """
         def fn(elem):
@@ -187,7 +202,7 @@ TEST_STRINGS = [
                 list(itertools.imap(moep, itertools.izip("abcd", [1, 2, 3, 4])))
         """,
     ),
-    (
+    FixerFixture(
         "short_to_long_form_super",
         """
         class FooClass:
@@ -200,7 +215,7 @@ TEST_STRINGS = [
                 return super(FooClass, self).foo_method(arg, *args, **kwargs)
         """,
     ),
-    (
+    FixerFixture(
         "remove_function_def_annotations,inline_kw_only_args",
         """
         def foo(
@@ -229,7 +244,7 @@ TEST_STRINGS = [
             pass
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         print(*[1])
@@ -253,7 +268,7 @@ TEST_STRINGS = [
         del upg_args_1
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         def foo():
@@ -269,7 +284,7 @@ TEST_STRINGS = [
             del upg_args_0
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         dict(**{"x": 1})
@@ -300,7 +315,7 @@ TEST_STRINGS = [
         del upg_kwargs_1
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         {**{'x': 2}, 'x': 1}
@@ -313,37 +328,77 @@ TEST_STRINGS = [
         del upg_kwargs_0
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
-        [*[1, 2], 3, *[4, 5]]
-        {*[1, 2], 3, *[4, 5]}
-        (*[1, 2], 3, *[4, 5])
+        a = [*[1, 2], 3, *[4, 5]]
         """,
         """
-        upg_args_0 = []
-        upg_args_0.extend([1, 2])
-        upg_args_0.append(3)
-        upg_args_0.extend([4, 5])
-        list(*upg_args_0)
-        del upg_args_0
-
-        upg_args_1 = []
-        upg_args_1.extend([1, 2])
-        upg_args_1.append(3)
-        upg_args_1.extend([4, 5])
-        set(*upg_args_1)
-        del upg_args_1
-
-        upg_args_2 = []
-        upg_args_2.extend([1, 2])
-        upg_args_2.append(3)
-        upg_args_2.extend([4, 5])
-        tuple(*upg_args_2)
-        del upg_args_2
+        a = [1, 2, 3, 4, 5]
         """,
     ),
-    (
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        b = {*[1, 2], 3, *[4, 5]}
+        """,
+        """
+        b = {1, 2, 3, 4, 5}
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        c = (*[1, 2], 3, *[4, 5])
+        """,
+        """
+        c = (1, 2, 3, 4, 5)
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        a = [*[1, 2], x, *x, *[4, 5]]
+        """,
+        """
+        upg_args_0 = [1, 2]
+        upg_args_0.append(x)
+        upg_args_0.extend(x)
+        upg_args_0.extend([4, 5])
+        a = upg_args_0
+        del upg_args_0
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        b = {*[1, 2], x, *x, *[4, 5], *(6, 7)}
+        """,
+        """
+        upg_args_0 = {1, 2}
+        upg_args_0.add(x)
+        upg_args_0.update(x)
+        upg_args_0.update((4, 5, 6, 7))
+        b = upg_args_0
+        del upg_args_0
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        c = (*[1, 2], x, *[4, 5], *(6, 7), *y)
+        """,
+        """
+        upg_args_0 = (1, 2)
+        upg_args_0 += (x,)
+        upg_args_0 += tuple([4, 5])
+        upg_args_0 += (6, 7)
+        upg_args_0 += tuple(y)
+        c = upg_args_0
+        del upg_args_0
+        """,
+    ),
+    FixerFixture(
         "unpacking_generalizations",
         """
         for x in [*[1, 2, 3], 4]:
@@ -355,7 +410,7 @@ TEST_STRINGS = [
         upg_args_2.extend([1, 2, 3])
         upg_args_2.append(4)
 
-        for x in list(*upg_args_2):
+        for x in upg_args_2:
             upg_args_0 = []
             upg_args_0.extend([1, 2, 3])
             upg_args_0.append(4)
@@ -375,7 +430,7 @@ TEST_STRINGS = [
         del upg_args_2
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         with foo(*[1, 2, 3], 4) as x:
@@ -390,7 +445,7 @@ TEST_STRINGS = [
         del upg_args_0
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         a = [*[1, 2, *[3, 4], 5], 6]
@@ -402,14 +457,90 @@ TEST_STRINGS = [
         upg_args_1.append(2)
         upg_args_1.extend([3, 4])
         upg_args_1.append(5)
-        upg_args_0.extend(list(*upg_args_1))
+        upg_args_0.extend(upg_args_1)
         del upg_args_1
         upg_args_0.append(6)
-        a = list(*upg_args_0)
+        a = upg_args_0
         del upg_args_0
         """,
     ),
-    (
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        def foo(l):
+            return [*[1, 2, *l, 5], 6]
+        """,
+        """
+        def foo(l):
+            upg_args_0 = []
+            upg_args_1 = []
+            upg_args_1.append(1)
+            upg_args_1.append(2)
+            upg_args_1.extend(l)
+            upg_args_1.append(5)
+            upg_args_0.extend(upg_args_1)
+            del upg_args_1
+            upg_args_0.append(6)
+            return upg_args_0
+            # NOTE (mb 2018-06-24): No del at end of function
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        lambda x: [*x, 0]
+        """,
+        """
+        def temp_lambda_as_def(x):
+            upg_args_0 = []
+            upg_args_0.extend(x)
+            upg_args_0.append(0)
+            return upg_args_0
+
+        temp_lambda_as_def
+        del temp_lambda_as_def
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        (lambda l: l.extend([*[1, 2, *l, 5], 6]))(*[1, 2, 3], 4)
+        """,
+        """
+        upg_args_2 = []
+        upg_args_2.extend([1, 2, 3])
+        upg_args_2.append(4)
+
+        def temp_lambda_as_def(l):
+            upg_args_0 = []
+            upg_args_1 = []
+            upg_args_1.append(1)
+            upg_args_1.append(2)
+            upg_args_1.extend(l)
+            upg_args_1.append(5)
+            upg_args_0.extend(upg_args_1)
+            del upg_args_1
+            upg_args_0.append(6)
+            return l.extend(upg_args_0)
+
+        (temp_lambda_as_def)(*upg_args_2)
+        del upg_args_2
+        del temp_lambda_as_def
+        """,
+        # TODO (mb 2018-06-24): After simplification
+        # """
+        # def temp_lambda_as_def(l):
+        #     upg_args_0 = [1, 2]
+        #     upg_args_0.extend(l)
+        #     upg_args_0.append(5)
+        #     upg_args_0.append(6)
+        #     return l.extend(upg_args_0)
+        #
+        # (temp_lambda_as_def)(1, 2, 3, 4)
+        # del temp_lambda_as_def
+        # """,
+    ),
+    FixerFixture(
         "unpacking_generalizations",
         """
         with foo(*[1, 2, 3], 4) as x:
@@ -436,10 +567,10 @@ TEST_STRINGS = [
                     upg_args_1.append(2)
                     upg_args_1.extend([3, 4])
                     upg_args_1.append(5)
-                    upg_args_0.extend(list(*upg_args_1))
+                    upg_args_0.extend(upg_args_1)
                     del upg_args_1
                     upg_args_0.append(6)
-                    a = list(*upg_args_0)
+                    a = upg_args_0
                     del upg_args_0
             finally:
                 upg_kwargs_2 = {}
@@ -450,7 +581,7 @@ TEST_STRINGS = [
         del upg_args_3
         """,
     ),
-    (
+    FixerFixture(
         "unpacking_generalizations",
         """
         x = [*[1, 2], 3] if True else [*[4, 5], 6]
@@ -462,12 +593,36 @@ TEST_STRINGS = [
         upg_args_1 = []
         upg_args_1.extend([4, 5])
         upg_args_1.append(6)
-        x = list(*upg_args_0) if True else list(*upg_args_1)
+        x = upg_args_0 if True else upg_args_1
         del upg_args_0
         del upg_args_1
         """,
     ),
-    # (
+    FixerFixture(
+        "range_to_xrange",
+        """
+        myrange = range
+        """,
+        """
+        myrange = xrange
+        """
+    ),
+    FixerFixture(
+        "range_to_xrange",
+        """
+        def foo():
+            if True:
+                for x in range(9):
+                    print(x)
+        """,
+        """
+        def foo():
+            if True:
+                for x in xrange(9):
+                    print(x)
+        """
+    ),
+    # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     """
     #     """,
@@ -477,41 +632,52 @@ TEST_STRINGS = [
 ]
 
 
-@pytest.mark.parametrize("fixer_names, in_str, expected_str", TEST_STRINGS)
-def test_fixers(fixer_names, in_str, expected_str):
-    expected_str = utils.clean_whitespace(expected_str)
-    expected_ast = utils.parsedump_ast(expected_str)
-    expected_data = expected_str.encode("utf-8")
-    expected_coding, expected_header = transpile.parse_module_header(expected_data)
+def _normalized_source(in_source):
+    """This is mostly to get rid of comments"""
+    in_source = utils.clean_whitespace(in_source)
+    out_source = utils.parsedump_source(in_source)
+    assert utils.parsedump_ast(out_source) == utils.parsedump_ast(in_source)
+    return out_source
 
-    # print(expected_ast)
 
-    cfg = {"fixers": fixer_names}
-    in_coding, in_header, result_str = utils.transpile_and_dump(in_str, cfg)
+@pytest.mark.parametrize("fixture", FIXTURES)
+def test_fixers(fixture):
+    if "--capture=no" in sys.argv:
+        print()
 
-    assert in_coding == expected_coding
-    assert in_header == expected_header
+    expected_source = utils.clean_whitespace(fixture.expected_source)
+    expected_ast = utils.parsedump_ast(expected_source)
+    expected_coding, expected_header = transpile.parse_module_header(expected_source)
 
-    # if fixer_names != "remove_functiond_def_annotations":
-    #     return
-
-    # print()
-    # print(in_str)
-    # print("###" * 20)
-    # print(utils.parsedump_ast(in_str))
-    # print("###" * 20)
-    # print(utils.parsedump_ast(expected_str))
-    # print("###" * 20)
-    # print(utils.parsedump_ast(result_str))
-
-    in_source = utils.parsedump_source(in_str)
-    expected_source = utils.parsedump_source(expected_str)
-    result_source = utils.parsedump_source(result_str)
+    test_source = utils.clean_whitespace(fixture.test_source)
+    test_ast = utils.parsedump_ast(test_source)
     print(">>>>>>>>" * 9)
-    print(in_source)
+    print(repr(test_source))
+    print("--------" * 9)
+    print(test_ast)
+    print(">>>>>>>>" * 9)
+
     print("????????" * 9)
+    print(repr(expected_header))
     print(expected_source)
+    print("--------" * 9)
+    print(expected_ast)
     print("????????" * 9)
-    print(result_source)
+
+    cfg = {"fixers": fixture.names}
+    result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
+    result_ast = utils.parsedump_ast(result_source)
+
     print("<<<<<<<<" * 9)
-    assert expected_source == result_source
+    print(repr(result_header))
+    print(repr(result_source))
+    print(result_source)
+    print("--------" * 9)
+    print(result_ast)
+    print("<<<<<<<<" * 9)
+
+    assert result_coding == expected_coding
+    assert result_header == expected_header
+
+    assert result_ast == expected_ast
+    assert _normalized_source(result_source) == _normalized_source(expected_source)

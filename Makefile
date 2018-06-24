@@ -72,7 +72,7 @@ test: .install_dev.make_marker
 		$(PYTHON36) -m pytest tests/
 
 
-debugtest: .install_dev.make_marker
+devtest: .install_dev.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON36) -m pytest -v \
 		--capture=no \
