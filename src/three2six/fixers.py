@@ -674,7 +674,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             return None
 
-    def expand_single_field_unpacking(
+    def make_single_field_update(
         self, field_node: ast.expr
     ) -> typ.Optional[ValNodeUpdate]:
 
@@ -696,7 +696,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
             if not isinstance(sub_field, (list, ast.AST)):
                 continue
 
-            maybe_body_update = self.expand_field_unpacking(field_node, sub_field_name, sub_field)
+            maybe_body_update = self.make_field_update(field_node, sub_field_name, sub_field)
 
             if maybe_body_update is None:
                 continue
@@ -711,7 +711,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             return None
 
-    def expand_list_field_unpacking(
+    def make_list_field_update(
         self, field_nodes: typ.List[ast.expr]
     ) -> typ.Optional[ListFieldNodeUpdate]:
         if len(field_nodes) == 0:
@@ -722,7 +722,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         all_del_nodes: typ.List[ast.Delete] = []
 
         for field_node in field_nodes:
-            body_update = self.expand_single_field_unpacking(field_node)
+            body_update = self.make_single_field_update(field_node)
             if body_update is None:
                 new_field_nodes.append(field_node)
             else:
@@ -739,15 +739,15 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             return None
 
-    def expand_field_unpacking(
+    def make_field_update(
         self, parent_node, field_name, field
     ) -> typ.Optional[ExpandedUpdate]:
         maybe_body_update: typ.Union[ListFieldNodeUpdate, ValNodeUpdate, None]
 
         if isinstance(field, list):
-            maybe_body_update = self.expand_list_field_unpacking(field)
+            maybe_body_update = self.make_list_field_update(field)
         else:
-            maybe_body_update = self.expand_single_field_unpacking(field)
+            maybe_body_update = self.make_single_field_update(field)
 
         if maybe_body_update is None:
             return None
@@ -761,7 +761,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
 
         return prefix_nodes, del_nodes
 
-    def expand_body_unpackings(self, body: typ.List[ast.stmt]):
+    def apply_body_updates(self, body: typ.List[ast.stmt]):
         initial_len_body = len(body)
         prev_len_body = -1
         while prev_len_body != len(body):
@@ -786,20 +786,28 @@ class UnpackingGeneralizationsFixer(FixerBase):
 
                     if is_block_field(field_name, field):
                         node_body = typ.cast(typ.List[ast.stmt], field)
-                        self.expand_body_unpackings(node_body)
-                    else:
-                        maybe_body_update = self.expand_field_unpacking(node, field_name, field)
+                        self.apply_body_updates(node_body)
+                        continue
 
-                        if maybe_body_update is None:
-                            continue
+                    maybe_body_update = self.make_field_update(node, field_name, field)
 
-                        prefix_nodes, del_nodes = maybe_body_update
-                        body[i + o:i + o] = prefix_nodes
-                        o += len(prefix_nodes) + 1
-                        body[i + o:i + o] = del_nodes
+                    if maybe_body_update is None:
+                        continue
+
+                    prefix_nodes, del_nodes = maybe_body_update
+
+                    body[i + o:i + o] = prefix_nodes
+                    o += len(prefix_nodes)
+                    if isinstance(body[i + o], ast.Return):
+                        continue
+
+                    # NOTE (mb 2018-06-24): We don't need to del if
+                    #   we're at the end of a function block anyway.
+                    o += 1
+                    body[i + o:i + o] = del_nodes
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        self.expand_body_unpackings(tree.body)
+        self.apply_body_updates(tree.body)
         return tree
 
 
