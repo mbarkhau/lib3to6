@@ -24,35 +24,47 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
     numbers and column offsets are not dumped by default.  If this is wanted,
     *include_attributes* can be set to True.
     """
-    def _format(node: NodeOrNodelist, level=0):
+    def _format(node: NodeOrNodelist, level=1):
         if isinstance(node, ast.AST):
-            fields = [(a, _format(b, level)) for a, b in ast.iter_fields(node)]
+            fields = [(a, _format(b, level + 1)) for a, b in ast.iter_fields(node)]
             if include_attributes and node._attributes:
                 fields.extend([
-                    (a, _format(getattr(node, a), level))
+                    (a, _format(getattr(node, a), level + 1))
                     for a in node._attributes
                 ])
 
             if annotate_fields:
-                field_parts = ("%s=%s" % field for field in fields)
+                field_parts = ["%s=%s" % field for field in fields]
             else:
-                field_parts = (b for a, b in fields)
+                field_parts = [b for a, b in fields]
 
-            fields_str = ", ".join(field_parts)
             node_name = node.__class__.__name__
-            return node_name + "(" + fields_str + ")"
+            is_short_node = (
+                len(field_parts) <= 1 or
+                isinstance(node, (ast.Name, ast.Num, ast.Str, ast.Bytes, ast.alias))
+            )
+
+            if is_short_node:
+                return node_name + "(" + ", ".join(field_parts) + ")"
+
+            lines = [node_name + "("]
+            for part in field_parts:
+                lines.append((indent * level) + part + ",")
+            lines.append((indent * (level - 1)) + ")")
+            return "\n".join(lines)
         elif isinstance(node, list):
             subnodes = typ.cast(typ.List[typ.Any], node)
-            lines = ["["]
-            lines.extend((
-                indent * (level + 2) + _format(x, level + 2) + ","
-                for x in subnodes
-            ))
-            if len(lines) > 1:
-                lines.append(indent * (level + 1) + "]")
-            else:
-                lines[-1] += "]"
-            return "\n".join(lines)
+            if len(subnodes) == 0:
+                return "[]"
+
+            if len(subnodes) == 1:
+                return "[" + _format(subnodes[0], level) + "]"
+
+            lines = [
+                indent * level + _format(subnode, level + 1) + ","
+                for subnode in subnodes
+            ]
+            return "[\n" + "\n".join(lines) + "\n" + indent * (level - 1) + "]"
         return repr(node)
 
     if not isinstance(node, (ast.AST, list)):
