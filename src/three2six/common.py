@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier:    MIT
 
+import ast
 import builtins
 import typing as typ
 
@@ -16,7 +17,28 @@ class InvalidPackage(Exception):
 
 
 class CheckError(Exception):
+
+    # TODO (mb 2018-06-14): line numbers and file path
     pass
+
+
+class FixerError(Exception):
+
+    msg: str
+    node: ast.AST
+    module: typ.Optional[ast.Module]
+
+    def __init__(self, msg: str, node: ast.AST, module: ast.Module = None) -> None:
+        self.msg = msg
+        self.node = node
+        self.module = module
+
+
+# NOTE (mb 2018-06-29): None of the fixers use asname. If there a
+#   module has an import using asname, it won't be detected as
+#   already imported, and another import (without the asname)
+#   will be added to the module.
+ImportDecl = typ.Tuple[str, typ.Optional[str]]
 
 
 # NOTE (mb 2018-06-24): This also includes builtins from py27

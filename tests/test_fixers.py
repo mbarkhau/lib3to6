@@ -111,15 +111,23 @@ FIXTURES = [
         moduleannattr: moduleattr_annotation
 
         class Bar:
-            classannattr: classattr_annotation
+            classannattr_a: classattr_annotation
+            classannattr_b: typ.Any
             classannassign: classattr_annotation = 22
+
+            def method(self, arg):
+                self.instance_attr: typ.Any = arg
         """,
         """
         moduleannattr = None
 
         class Bar:
-            classannattr = None
+            classannattr_a = None
+            classannattr_b = None
             classannassign = 22
+
+            def method(self, arg):
+                self.instance_attr = arg
         """,
     ),
     FixerFixture(
@@ -555,6 +563,24 @@ FIXTURES = [
         """,
         """
         x = [1, 2, 3] if True else [4, 5, 6]
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        x = [a, b, c][([*[1], 2])[0]]
+        """,
+        """
+        x = [a, b, c][ [1, 2][0] ]
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        x = [n for n in [*[1, 2], 3, 4] if n % 2 == 0]
+        """,
+        """
+        x = [n for n in [1, 2, 3, 4] if n % 2 == 0]
         """,
     ),
     FixerFixture(

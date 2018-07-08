@@ -12,9 +12,11 @@ from . import common
 
 
 ContainerNodes = (ast.List, ast.Set, ast.Tuple)
-ImmutableNodes = (ast.Num, ast.Str, ast.Bytes, ast.NameConstant)
-LeafNodes = ImmutableNodes + (ast.Name,)
-
+ImmutableValueNodes = (ast.Num, ast.Str, ast.Bytes, ast.NameConstant)
+LeafNodes = (
+    ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Name,
+    ast.cmpop, ast.boolop, ast.operator, ast.unaryop, ast.expr_context,
+)
 ArgUnpackNodes = (ast.Call, ast.List, ast.Tuple, ast.Set)
 KwArgUnpackNodes = (ast.Call, ast.Dict)
 
@@ -44,9 +46,10 @@ class VersionInfo:
 class FixerBase:
 
     version_info: VersionInfo
+    required_imports: typ.Set[common.ImportDecl]
 
-    def __init__(self):
-        self.required_imports: typ.Set[common.ImportDecl] = set()
+    def __init__(self) -> None:
+        self.required_imports = set()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
@@ -67,7 +70,12 @@ class FixerBase:
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        return self.visit(tree)
+        try:
+            return self.visit(tree)
+        except common.FixerError as ex:
+            if ex.module is None:
+                ex.module = tree
+            raise
 
 
 # NOTE (mb 2018-06-24): Version info pulled from:
@@ -172,10 +180,7 @@ class RangeToXrangeFixer(FixerBase):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Name):
-                continue
-
-            if node.id == "range" and isinstance(node.ctx, ast.Load):
+            if isinstance(node, ast.Name) and node.id == "range" and isinstance(node.ctx, ast.Load):
                 node.id = "xrange"
 
         return tree
@@ -190,18 +195,16 @@ class RemoveFunctionDefAnnotationsFixer(FixerBase):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
-            if not isinstance(node, ast.FunctionDef):
-                continue
-
-            node.returns = None
-            for arg in node.args.args:
-                arg.annotation = None
-            for arg in node.args.kwonlyargs:
-                arg.annotation = None
-            if node.args.vararg:
-                node.args.vararg.annotation = None
-            if node.args.kwarg:
-                node.args.kwarg.annotation = None
+            if isinstance(node, ast.FunctionDef):
+                node.returns = None
+                for arg in node.args.args:
+                    arg.annotation = None
+                for arg in node.args.kwonlyargs:
+                    arg.annotation = None
+                if node.args.vararg:
+                    node.args.vararg.annotation = None
+                if node.args.kwarg:
+                    node.args.kwarg.annotation = None
 
         return tree
 
@@ -214,16 +217,16 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
     )
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
-        name_node = node.target
-        if not isinstance(name_node, ast.Name):
-            raise Exception(f"Unexpected Node Type {name_node}")
+        tgt_node = node.target
+        if not isinstance(tgt_node, (ast.Name, ast.Attribute)):
+            raise common.FixerError("Unexpected Node type", tgt_node)
 
         value: ast.expr
         if node.value is None:
             value = ast.NameConstant(value=None)
         else:
             value = node.value
-        return ast.Assign(targets=[name_node], value=value)
+        return ast.Assign(targets=[tgt_node], value=value)
 
 
 class ShortToLongFormSuperFixer(TransformerFixerBase):
@@ -237,18 +240,22 @@ class ShortToLongFormSuperFixer(TransformerFixerBase):
         for maybe_method in ast.walk(node):
             if not isinstance(maybe_method, ast.FunctionDef):
                 continue
+
             method: ast.FunctionDef = maybe_method
             method_args: ast.arguments = method.args
             if len(method_args.args) == 0:
                 continue
+
             self_arg: ast.arg = method_args.args[0]
 
             for maybe_super_call in ast.walk(method):
                 if not isinstance(maybe_super_call, ast.Call):
                     continue
+
                 func_node = maybe_super_call.func
                 if not (isinstance(func_node, ast.Name) and func_node.id == "super"):
                     continue
+
                 super_call = maybe_super_call
                 if len(super_call.args) > 0:
                     continue
@@ -295,11 +302,12 @@ class InlineKWOnlyArgsFixer(TransformerFixerBase):
                     )
                 )
             else:
-                if not isinstance(default, ImmutableNodes):
-                    raise Exception(
+                if not isinstance(default, ImmutableValueNodes):
+                    msg = (
                         f"Keyword only arguments must be immutable. "
-                        f"Found: {default} on {default.lineno}:{node.col_offset} for {arg_name}"
+                        f"Found: {default} for {arg_name}"
                     )
+                    raise common.FixerError(msg, node)
 
                 new_node = ast.Assign(
                     targets=[ast.Name(
@@ -345,7 +353,7 @@ if sys.version_info >= (3, 6):
             if format_spec_node is None:
                 format_spec = ""
             elif not isinstance(format_spec_node, ast.JoinedStr):
-                raise Exception(f"Unexpected Node Type {format_spec_node}")
+                raise common.FixerError("Unexpected Node Type", format_spec_node)
             else:
                 format_spec = ":" + self._joined_str_str(format_spec_node, arg_nodes)
 
@@ -363,7 +371,7 @@ if sys.version_info >= (3, 6):
                 elif isinstance(val, ast.FormattedValue):
                     fmt_str += self._formatted_value_str(val, arg_nodes)
                 else:
-                    raise Exception(f"Unexpected Node Type {val}")
+                    raise common.FixerError("Unexpected Node Type", val)
             return fmt_str
 
         def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.Call:
@@ -709,7 +717,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
             new_node = self.expand_starstararg_g12n(new_node, parent, field_name)
         return new_node
 
-    def is_stmtlist(self, nodelist: typ.Sequence[ast.AST]):
+    def is_stmtlist(self, nodelist: typ.Any):
         return isinstance(nodelist, list) and all(isinstance(n, ast.stmt) for n in nodelist)
 
     def walk_stmtlist(
@@ -735,18 +743,25 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 continue
             if isinstance(field_node, LeafNodes):
                 continue
+            if isinstance(field_node, ast.slice):
+                # TODO (mb 2018-07-08): This needs to be handled
+                continue
+            if isinstance(field_node, ast.comprehension):
+                # TODO (mb 2018-07-08): This needs to be handled
+                continue
 
             if isinstance(field_node, ast.expr):
                 new_expr = self.walk_expr(field_node, node, field_name)
                 setattr(node, field_name, new_expr)
-                # NOTE (mb 2018-06-30): replace dict(**{}) -> {}
             elif isinstance(field_node, list):
                 new_field_node = []
                 new_sub_node: ast.AST
                 for sub_node in field_node:
-                    if isinstance(sub_node, ImmutableNodes):
+                    if isinstance(sub_node, LeafNodes):
                         new_sub_node = sub_node
-                    elif isinstance(sub_node, ast.cmpop):
+                    elif isinstance(sub_node, ast.slice):
+                        new_sub_node = sub_node
+                    elif isinstance(sub_node, ast.comprehension):
                         new_sub_node = sub_node
                     elif isinstance(sub_node, ast.keyword):
                         new_sub_node = ast.keyword(
@@ -755,14 +770,15 @@ class UnpackingGeneralizationsFixer(FixerBase):
                         )
                     elif isinstance(sub_node, ast.expr):
                         new_sub_node = self.walk_expr(sub_node, node, field_name)
+                    elif isinstance(sub_node, ast.AST):
+                        raise common.FixerError("Unexpected Node Type", sub_node)
                     else:
-                        assert not isinstance(sub_node, ast.AST)
                         new_sub_node = sub_node
                     new_field_node.append(new_sub_node)
 
                 setattr(node, field_name, new_field_node)
-            else:
-                assert not isinstance(field_node, ast.AST)
+            elif isinstance(field_node, ast.AST):
+                raise common.FixerError("Unexpected Node Type", field_node)
 
         new_expr_node = self.visit_expr(node, parent, parent_field_name)
 
@@ -785,7 +801,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         return new_expr_node
 
     def walk_stmt(self, node: ast.stmt, parent: ast.AST, field_name: str) -> ast.stmt:
-        assert not self.is_stmtlist(typ.cast(typ.List[ast.stmt], node))
+        assert not self.is_stmtlist(node)
         # print("==>", field_name.ljust(15), node)
 
         for field_name, field_node in ast.iter_fields(node):
@@ -967,5 +983,21 @@ class UnpackingGeneralizationsFixer(FixerBase):
 #     version_info = VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.4",
+#     )
+#
+
+# NOTE (mb 2018-06-25): I'm not gonna do it, but feel free to
+#   implement it if you feel like it.
+#
+# class ImplicitFormatIndexesFixer(FixerBase):
+#     """Replaces use of @decorators with function calls
+#
+#     > "first: {} second: {:>9}".format(0, 1)
+#     < "first: {0} second: {1:>9}".format(0, 1)
+#     """
+#
+#     version_info = VersionInfo(
+#         apply_since="2.6",
+#         apply_until="2.6",
 #     )
 #

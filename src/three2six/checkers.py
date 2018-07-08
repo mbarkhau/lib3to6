@@ -5,16 +5,16 @@
 # SPDX-License-Identifier:    MIT
 
 import ast
+import typing as typ
 
 from . import common
-from . import utils
 
 
 class VersionInfo:
 
-    prohibited_until: str
+    prohibited_until: typ.Optional[str]
 
-    def __init__(self, prohibited_until: str) -> None:
+    def __init__(self, prohibited_until: str = None) -> None:
         self.prohibited_until = prohibited_until
 
 
@@ -23,7 +23,10 @@ class CheckerBase:
     version_info: VersionInfo
 
     def is_prohibited_for(self, version):
-        return self.version_info.prohibited_until >= version
+        return (
+            self.version_info.prohibited_until is None or
+            self.version_info.prohibited_until >= version
+        )
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         raise NotImplementedError()
@@ -75,7 +78,7 @@ class NoOverriddenStdlibImportsChecker(CheckerBase):
 class NoOverriddenBuiltinsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
-    version_info = VersionInfo(prohibited_until="3.4")
+    version_info = VersionInfo(prohibited_until=None)
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
@@ -91,7 +94,6 @@ class NoOverriddenBuiltinsChecker(CheckerBase):
                 continue
 
             if name_in_scope and name_in_scope in common.BUILTIN_NAMES:
-                # TODO (mb 2018-06-14): line numbers and file path
                 raise common.CheckError(f"Prohibited override of builtin '{name_in_scope}'")
 
 
