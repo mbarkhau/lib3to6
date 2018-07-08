@@ -35,6 +35,20 @@ class VisitorCheckerBase(CheckerBase, ast.NodeVisitor):
         return self.visit(tree)
 
 
+class NoStarImports(CheckerBase):
+
+    version_info = VersionInfo()
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+
+            for alias in node.names:
+                if alias.name == "*":
+                    raise common.CheckError(f"Prohibited from {node.module} import *.")
+
+
 class NoOverriddenStdlibImportsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
