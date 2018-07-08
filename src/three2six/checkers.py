@@ -35,7 +35,31 @@ class VisitorCheckerBase(CheckerBase, ast.NodeVisitor):
         return self.visit(tree)
 
 
+class NoOverriddenStdlibImportsChecker(CheckerBase):
+    """Don't override names that fixers may reference."""
+
+    version_info = VersionInfo(prohibited_until=None)
+    prohibited_import_overrides = {"itertools", "six", "builtins"}
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                name_in_scope = node.name
+            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                name_in_scope = node.id
+            elif isinstance(node, ast.alias) and node.asname:
+                name_in_scope = node.asname
+            elif isinstance(node, ast.arg):
+                name_in_scope = node.arg
+            else:
+                continue
+
+            if name_in_scope and name_in_scope in self.prohibited_import_overrides:
+                raise common.CheckError(f"Prohibited override of import '{name_in_scope}'")
+
+
 class NoOverriddenBuiltinsChecker(CheckerBase):
+    """Don't override names that fixers may reference."""
 
     version_info = VersionInfo(prohibited_until="3.4")
 

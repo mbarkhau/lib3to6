@@ -14,6 +14,35 @@ CheckFixture = namedtuple("CheckFixture", [
 
 FIXTURES = [
     CheckFixture(
+        "no_overridden_stdlib_imports",
+        """
+        import itertools
+        """,
+        None
+    ),
+    CheckFixture(
+        "no_overridden_stdlib_imports",
+        """
+        itertools = "foo"
+        """,
+        "Prohibited override of import 'itertools'"
+    ),
+    CheckFixture(
+        "no_overridden_stdlib_imports",
+        """
+        def itertools():
+            pass
+        """,
+        "Prohibited override of import 'itertools'"
+    ),
+    CheckFixture(
+        "no_overridden_stdlib_imports",
+        """
+        import x as itertools
+        """,
+        "Prohibited override of import 'itertools'"
+    ),
+    CheckFixture(
         "no_overridden_builtins",
         """
         def map(x):
@@ -172,6 +201,13 @@ FIXTURES = [
         """,
         "Prohibited keyword argument 'encoding' to builtin.open.",
     ),
+    CheckFixture(
+        "no_star_imports",
+        """
+        from math import *
+        """,
+        "Prohibited from math import *.",
+    ),
 ]
 
 
@@ -184,15 +220,17 @@ def test_checkers(fixture):
         expected_error_messages = fixture.expected_error_msg
     else:
         expected_error_messages = [fixture.expected_error_msg]
+
     test_source = utils.clean_whitespace(fixture.test_source)
     try:
         utils.transpile_and_dump(test_source, {"checkers": fixture.names})
         assert fixture.expected_error_msg is None
     except CheckError as result_error:
         result_error_msg = str(result_error)
+        print("!!!", repr(result_error_msg))
+
         assert fixture.expected_error_msg is not None
 
-        print("!!!", repr(result_error_msg))
         for expected_error_msg in expected_error_messages:
             print("???", repr(expected_error_msg))
             assert expected_error_msg in str(result_error)
