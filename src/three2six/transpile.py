@@ -8,7 +8,6 @@ import re
 import ast
 import astor
 import typing as typ
-import typing_extensions as typext
 
 from . import common
 from . import fixers

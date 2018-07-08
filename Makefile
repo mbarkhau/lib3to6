@@ -58,7 +58,7 @@ clean:
 
 lint: .install_dev.make_marker
 	@echo -n "lint.."
-	@$(PYTHON37) -m flake8 src/three2six/
+	@$(PYTHON36) -m flake8 src/three2six/
 	@echo "ok"
 
 

@@ -37,6 +37,12 @@ class FixerBase:
 
     version_info: VersionInfo
 
+    def __init__(self):
+        self.required_imports: typ.Set[common.ImportDecl] = set()
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        raise NotImplementedError()
+
     def is_required_for(self, version):
         nfo = self.version_info
         return nfo.apply_since <= version <= nfo.apply_until
@@ -48,9 +54,6 @@ class FixerBase:
                 nfo.works_until is None or version <= nfo.works_until
             )
         )
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        raise NotImplementedError()
 
 
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
@@ -392,43 +395,13 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
     #   builtin names are not being overridden.
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        self._fix_applied = False
-        tree = self.visit(tree)
-
-        if not self._fix_applied:
-            return tree
-
-        prelude_end_index = -1
-        itertools_import_found = False
-
-        for i, node in enumerate(tree.body):
-            is_prelude = (
-                isinstance(node, ast.Expr) and isinstance(node.value, ast.Str) or
-                isinstance(node, ast.ImportFrom) and node.module == "__future__"
-            )
-            if prelude_end_index < 0 and not is_prelude:
-                prelude_end_index = i
-
-            is_itertools_import = (
-                isinstance(node, ast.Import) and
-                any(alias.name == "itertools" for alias in node.names)
-            )
-            if is_itertools_import:
-                itertools_import_found = True
-                break
-
-        if not itertools_import_found:
-            tree.body.insert(
-                prelude_end_index,
-                ast.Import(names=[ast.alias(name="itertools", asname=None)]),
-            )
-        return tree
+        return self.visit(tree)
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
         if node.id not in ("map", "zip", "filter"):
             return node
 
-        self._fix_applied = True
+        self.required_imports.add(("itertools", None))
 
         return ast.Attribute(
             value=ast.Name(id="itertools", ctx=ast.Load()),
