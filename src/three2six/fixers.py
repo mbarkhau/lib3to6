@@ -59,35 +59,17 @@ class TransformerFixerBase(FixerBase, ast.NodeTransformer):
         return self.visit(tree)
 
 
+# NOTE (mb 2018-06-24): Version info pulled from:
+# https://docs.python.org/3/library/__future__.html
+
+
 class FutureImportFixerBase(FixerBase):
 
     future_name: str
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        has_docstring = False
-        for i, node in enumerate(tree.body):
-            has_docstring = has_docstring or (
-                i == 0 and
-                isinstance(node, ast.Expr) and isinstance(node.value, ast.Str)
-            )
-            is_already_fixed = (
-                isinstance(node, ast.ImportFrom) and
-                node.module == "__future__" and
-                any(alias.name == self.future_name for alias in node.names)
-            )
-            if is_already_fixed:
-                return tree
-
-        alias_node = ast.alias(name=self.future_name, asname=None)
-        import_node = ast.ImportFrom(module="__future__", level=0, names=[alias_node])
-        if has_docstring:
-            tree.body.insert(1, import_node)
-        else:
-            tree.body.insert(0, import_node)
+        self.required_imports.add(("__future__", self.future_name))
         return tree
-
-# NOTE (mb 2018-06-24): Version info pulled from:
-# https://docs.python.org/3/library/__future__.html
 
 
 class GeneratorStopFutureFixer(FutureImportFixerBase):
@@ -302,7 +284,7 @@ class InlineKWOnlyArgsFixer(TransformerFixerBase):
                     )
                 )
             else:
-                if not isinstance(default, (ast.Str, ast.Num, ast.NameConstant)):
+                if not isinstance(default, IMMUTABLE_EXPR_TYPES):
                     raise Exception(
                         f"Keyword only arguments must be immutable. "
                         f"Found: {default} on {default.lineno}:{node.col_offset} for {arg_name}"
