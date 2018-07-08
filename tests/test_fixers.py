@@ -271,94 +271,10 @@ FIXTURES = [
     FixerFixture(
         "unpacking_generalizations",
         """
-        print(*[1])
-        print(*[1], 2)
-        print(*[1], *[2], 3)
+        a = [0, *[1, 2], 3, *[4, 5]]
         """,
         """
-        print(*[1])
-
-        upg_args_0 = []
-        upg_args_0.extend([1])
-        upg_args_0.append(2)
-        print(*upg_args_0)
-        del upg_args_0
-
-        upg_args_1 = []
-        upg_args_1.extend([1])
-        upg_args_1.extend([2])
-        upg_args_1.append(3)
-        print(*upg_args_1)
-        del upg_args_1
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        def foo():
-            print(*[1], *[2], 3)
-        """,
-        """
-        def foo():
-            upg_args_0 = []
-            upg_args_0.extend([1])
-            upg_args_0.extend([2])
-            upg_args_0.append(3)
-            print(*upg_args_0)
-            del upg_args_0
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        dict(**{"x": 1})
-
-        dict(**{"x": 1}, y=2, **{"z": 3})
-
-        a = {"x": 11}
-        b = {"z": 33}
-        dict(**a, y=22, **b)
-        """,
-        """
-        dict(**{"x": 1})
-
-        upg_kwargs_0 = {}
-        upg_kwargs_0.update({"x": 1})
-        upg_kwargs_0["y"] = 2
-        upg_kwargs_0.update({"z": 3})
-        dict(**upg_kwargs_0)
-        del upg_kwargs_0
-
-        a = {"x": 11}
-        b = {"z": 33}
-        upg_kwargs_1 = {}
-        upg_kwargs_1.update(a)
-        upg_kwargs_1["y"] = 22
-        upg_kwargs_1.update(b)
-        dict(**upg_kwargs_1)
-        del upg_kwargs_1
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        {**{'x': 2}, 'x': 1}
-        """,
-        """
-        upg_kwargs_0 = {}
-        upg_kwargs_0.update({"x": 2})
-        upg_kwargs_0["x"] = 1
-        dict(**upg_kwargs_0)
-        del upg_kwargs_0
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        a = [*[1, 2], 3, *[4, 5]]
-        """,
-        """
-        a = [1, 2, 3, 4, 5]
+        a = [0, 1, 2, 3, 4, 5]
         """,
     ),
     FixerFixture(
@@ -385,12 +301,7 @@ FIXTURES = [
         a = [*[1, 2], x, *x, *[4, 5]]
         """,
         """
-        upg_args_0 = [1, 2]
-        upg_args_0.append(x)
-        upg_args_0.extend(x)
-        upg_args_0.extend([4, 5])
-        a = upg_args_0
-        del upg_args_0
+        a = [1, 2, x] + list(x) + [4, 5]
         """,
     ),
     FixerFixture(
@@ -399,12 +310,7 @@ FIXTURES = [
         b = {*[1, 2], x, *x, *[4, 5], *(6, 7)}
         """,
         """
-        upg_args_0 = {1, 2}
-        upg_args_0.add(x)
-        upg_args_0.update(x)
-        upg_args_0.update((4, 5, 6, 7))
-        b = upg_args_0
-        del upg_args_0
+        b = set([1, 2, x] + list(x) + [4, 5, 6, 7])
         """,
     ),
     FixerFixture(
@@ -413,13 +319,168 @@ FIXTURES = [
         c = (*[1, 2], x, *[4, 5], *(6, 7), *y)
         """,
         """
-        upg_args_0 = (1, 2)
-        upg_args_0 += (x,)
-        upg_args_0 += tuple([4, 5])
-        upg_args_0 += (6, 7)
-        upg_args_0 += tuple(y)
-        c = upg_args_0
-        del upg_args_0
+        c = tuple([1, 2, x, 4, 5, 6, 7] + list(y))
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        a = [*x, 0]
+        """,
+        """
+        a = list(x) + [0]
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        lambda x: [*x, 0]
+        """,
+        """
+        lambda x: (list(x) + [0])
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        print(*[1])
+        print(*[1], 2)
+        print(*[1], *[2], 3)
+        print(*[1], *x, 3)
+        """,
+        """
+        print(*[1])
+        print(1, 2)
+        print(1, 2, 3)
+        print(*[1] + list(x) + [3])
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        def foo():
+            print(*[1], *[2], 3)
+        """,
+        """
+        def foo():
+            print(1, 2, 3)
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        foo(**x, bar=22)
+        """,
+        """
+        import itertools
+
+        foo(**dict(itertools.chain(
+            x.items(),
+            {"bar": 22}.items(),
+        )))
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        dict(**dict(**{"x": 1}), **dict(**{"y": 2}), z=3)
+        """,
+        """
+        {"x": 1, "y": 2, "z": 3}
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        {**{'x': 1}, 'y': 2}
+        """,
+        """
+        {'x': 1, 'y': 2}
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        x = "x"
+        y = "y"
+        d = {**{x: 1}, y: 2}
+        assert d == {"x": 1, "y": 2}
+        """,
+        """
+        x = "x"
+        y = "y"
+        d = {x: 1, y: 2}
+        assert d == {"x": 1, "y": 2}
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        foo(**dict(**{"x": 1}), **dict(**{"y": 2}), z=3)
+        """,
+        """
+        foo(**{"x": 1, "y": 2, "z": 3})
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        dict(**dict(**{"x": 1}), **y, z=3)
+        """,
+        """
+        import itertools
+
+        dict(itertools.chain(
+            {"x": 1}.items(),
+            y.items(),
+            {"z": 3}.items(),
+        ))
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        dict(**{"x": 1})
+        testfn(**{"a": 1}, b=2, **{"c": 3}, d=4)
+        dict(**{"a": 1}, b=2, **{"c": 3}, d=4)
+        """,
+        """
+        {"x": 1}
+        testfn(**{"a": 1, "b": 2, "c": 3, "d": 4})
+        {"a": 1, "b": 2, "c": 3, "d": 4}
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        a = [1, 2, 3]
+        b = [4, 5, 6]
+        x = {"x": 11}
+        z = {"z": 33}
+        testfn(0, *a, *b, 7, 8, **x, y=22, **z)
+        """,
+        """
+        import itertools
+
+        a = [1, 2, 3]
+        b = [4, 5, 6]
+        x = {"x": 11}
+        z = {"z": 33}
+        testfn(
+            *([0] + list(a) + list(b) + [7, 8]),
+            **dict(itertools.chain(x.items(), {"y": 22}.items(), z.items()))
+        )
+        """,
+    ),
+    FixerFixture(
+        "unpacking_generalizations",
+        """
+        with foo(*[1, 2, 3], 4) as x:
+            pass
+        """,
+        """
+        with foo(1, 2, 3, 4) as x:
+            pass
         """,
     ),
     FixerFixture(
@@ -430,139 +491,39 @@ FIXTURES = [
                 bar(x, y)
         """,
         """
-        upg_args_2 = []
-        upg_args_2.extend([1, 2, 3])
-        upg_args_2.append(4)
-
-        for x in upg_args_2:
-            upg_args_0 = []
-            upg_args_0.extend([1, 2, 3])
-            upg_args_0.append(4)
-            upg_args_0.extend([5, 6, 7])
-
-            upg_kwargs_1 = {}
-            upg_kwargs_1.update({"foo": 1})
-            upg_kwargs_1["bar"] = 2
-            upg_kwargs_1.update({"baz": 3})
-
-            for y in foo(*upg_args_0, **upg_kwargs_1):
+        for x in [1, 2, 3, 4]:
+            for y in foo(1, 2, 3, 4, 5, 6, 7, **{"foo": 1, "bar": 2, "baz": 3}):
                 bar(x, y)
-
-            del upg_args_0
-            del upg_kwargs_1
-
-        del upg_args_2
         """,
     ),
     FixerFixture(
         "unpacking_generalizations",
         """
-        with foo(*[1, 2, 3], 4) as x:
-            pass
+        x = [1, 2, 3]
+        (
+            lambda l: l.extend([*[1, 2, *l, 4], 5])
+        )(x)
+        assert x == [1, 2, 3, 1, 2, 1, 2, 3, 4, 5]
         """,
         """
-        upg_args_0 = []
-        upg_args_0.extend([1, 2, 3])
-        upg_args_0.append(4)
-        with foo(*upg_args_0) as x:
-            pass
-        del upg_args_0
+        x = [1, 2, 3]
+        (
+            lambda l: l.extend(
+                list([1, 2] + list(l) + [4]) + [5]
+            )
+        )(x)
+        assert x == [1, 2, 3, 1, 2, 1, 2, 3, 4, 5]
         """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        a = [*[1, 2, *[3, 4], 5], 6]
-        """,
-        """
-        upg_args_0 = []
-        upg_args_1 = []
-        upg_args_1.append(1)
-        upg_args_1.append(2)
-        upg_args_1.extend([3, 4])
-        upg_args_1.append(5)
-        upg_args_0.extend(upg_args_1)
-        del upg_args_1
-        upg_args_0.append(6)
-        a = upg_args_0
-        del upg_args_0
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        def foo(l):
-            return [*[1, 2, *l, 5], 6]
-        """,
-        """
-        def foo(l):
-            upg_args_0 = []
-            upg_args_1 = []
-            upg_args_1.append(1)
-            upg_args_1.append(2)
-            upg_args_1.extend(l)
-            upg_args_1.append(5)
-            upg_args_0.extend(upg_args_1)
-            del upg_args_1
-            upg_args_0.append(6)
-            return upg_args_0
-            # NOTE (mb 2018-06-24): No del at end of function
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        lambda x: [*x, 0]
-        """,
-        """
-        def temp_lambda_as_def(x):
-            upg_args_0 = []
-            upg_args_0.extend(x)
-            upg_args_0.append(0)
-            return upg_args_0
-
-        temp_lambda_as_def
-        del temp_lambda_as_def
-        """,
-    ),
-    FixerFixture(
-        "unpacking_generalizations",
-        """
-        (lambda l: l.extend([*[1, 2, *l, 5], 6]))(*[1, 2, 3], 4)
-        """,
-        """
-        upg_args_2 = []
-        upg_args_2.extend([1, 2, 3])
-        upg_args_2.append(4)
-
-        def temp_lambda_as_def(l):
-            upg_args_0 = []
-            upg_args_1 = []
-            upg_args_1.append(1)
-            upg_args_1.append(2)
-            upg_args_1.extend(l)
-            upg_args_1.append(5)
-            upg_args_0.extend(upg_args_1)
-            del upg_args_1
-            upg_args_0.append(6)
-            return l.extend(upg_args_0)
-
-        (temp_lambda_as_def)(*upg_args_2)
-        del upg_args_2
-        del temp_lambda_as_def
-        """,
-        # TODO (mb 2018-06-24): After simplification
-        # """
-        # def temp_lambda_as_def(l):
-        #     upg_args_0 = [1, 2]
-        #     upg_args_0.extend(l)
-        #     upg_args_0.append(5)
-        #     upg_args_0.append(6)
-        #     return l.extend(upg_args_0)
+        # NOTE (mb 2018-07-08): Ideally we could
+        #   be simplified to:
         #
-        # (temp_lambda_as_def)(1, 2, 3, 4)
-        # del temp_lambda_as_def
-        # """,
+        #     lambda l: l.extend(
+        #         [1, 2] + list(l) + [4, 5]
+        #     )
+        #
+        # But since the existing transpile is correct
+        # and these examples are corner cases anyway,
+        # I'm not putting in any more effort.
     ),
     FixerFixture(
         "unpacking_generalizations",
@@ -577,32 +538,14 @@ FIXTURES = [
                 b = {**{'x': 2}, 'x': 1}
         """,
         """
-        upg_args_3 = []
-        upg_args_3.extend([1, 2, 3])
-        upg_args_3.append(4)
-        with foo(*upg_args_3) as x:
+        with foo(1, 2, 3, 4) as x:
             try:
                 if bar:
                     pass
                 else:
-                    upg_args_0 = []
-                    upg_args_1 = []
-                    upg_args_1.append(1)
-                    upg_args_1.append(2)
-                    upg_args_1.extend([3, 4])
-                    upg_args_1.append(5)
-                    upg_args_0.extend(upg_args_1)
-                    del upg_args_1
-                    upg_args_0.append(6)
-                    a = upg_args_0
-                    del upg_args_0
+                    a = [1, 2, 3, 4, 5, 6]
             finally:
-                upg_kwargs_2 = {}
-                upg_kwargs_2.update({"x": 2})
-                upg_kwargs_2["x"] = 1
-                b = dict(**upg_kwargs_2)
-                del upg_kwargs_2
-        del upg_args_3
+                b = {'x': 2, 'x': 1}
         """,
     ),
     FixerFixture(
@@ -611,15 +554,7 @@ FIXTURES = [
         x = [*[1, 2], 3] if True else [*[4, 5], 6]
         """,
         """
-        upg_args_0 = []
-        upg_args_0.extend([1, 2])
-        upg_args_0.append(3)
-        upg_args_1 = []
-        upg_args_1.extend([4, 5])
-        upg_args_1.append(6)
-        x = upg_args_0 if True else upg_args_1
-        del upg_args_0
-        del upg_args_1
+        x = [1, 2, 3] if True else [4, 5, 6]
         """,
     ),
     FixerFixture(
@@ -676,16 +611,16 @@ def test_fixers(fixture):
     test_source = utils.clean_whitespace(fixture.test_source)
     test_ast = utils.parsedump_ast(test_source)
     print(">>>>>>>>" * 9)
-    print(repr(test_source))
-    print("--------" * 9)
     print(test_ast)
+    print("--------" * 9)
+    print(repr(test_source))
     print(">>>>>>>>" * 9)
 
     print("????????" * 9)
     print(repr(expected_header))
+    # print(expected_ast)
+    # print("--------" * 9)
     print(expected_source)
-    print("--------" * 9)
-    print(expected_ast)
     print("????????" * 9)
 
     cfg = {"fixers": fixture.names}
@@ -695,9 +630,9 @@ def test_fixers(fixture):
     print("<<<<<<<<" * 9)
     print(repr(result_header))
     print(repr(result_source))
+    # print(result_ast)
+    # print("--------" * 9)
     print(result_source)
-    print("--------" * 9)
-    print(result_ast)
     print("<<<<<<<<" * 9)
 
     assert result_coding == expected_coding
