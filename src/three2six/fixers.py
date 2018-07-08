@@ -91,6 +91,16 @@ class FutureImportFixerBase(FixerBase):
         return tree
 
 
+class AnnotationsFutureFixer(FutureImportFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="3.7",
+        apply_until="3.9",
+    )
+
+    future_name = "annotations"
+
+
 class GeneratorStopFutureFixer(FutureImportFixerBase):
 
     version_info = VersionInfo(
