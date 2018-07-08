@@ -41,10 +41,10 @@ def test_header_preserved():
     # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
     #
     # SPDX-License-Identifier:    MIT
-    from __future__ import unicode_literals
-    from __future__ import print_function
-    from __future__ import division
     from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
+    from __future__ import unicode_literals
     hello = 'world'
     """
     test_source = utils.clean_whitespace(test_source)
@@ -75,10 +75,34 @@ FIXTURES = [
         #!/usr/bin/env python
         # -*- coding: utf-8 -*-
         \"\"\"Module Docstring\"\"\"
-        from __future__ import unicode_literals
-        from __future__ import print_function
-        from __future__ import division
         from __future__ import absolute_import
+        from __future__ import division
+        from __future__ import print_function
+        from __future__ import unicode_literals
+        """,
+    ),
+    FixerFixture(
+        [
+            "absolute_import_future",
+            "division_future",
+            "print_function_future",
+            "unicode_literals_future",
+        ],
+        """
+        #!/usr/bin/env python
+        \"\"\"Module Docstring\"\"\"
+        from __future__ import division
+        import itertools
+        """,
+        """
+        #!/usr/bin/env python
+        # -*- coding: utf-8 -*-
+        \"\"\"Module Docstring\"\"\"
+        from __future__ import absolute_import
+        from __future__ import print_function
+        from __future__ import unicode_literals
+        from __future__ import division
+        import itertools
         """,
     ),
     FixerFixture(
