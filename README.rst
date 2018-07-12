@@ -258,3 +258,22 @@ modern python to legacy python interpreter. You cannot transpile
 features which your interpreter cannot parse. The intended use is
 for developers of libraries who use the most modern python
 version, but want their libraries to work on older versions.
+
+
+FAQ
+---
+
+ - Q: Isn't the tagline "Compatibility Matters" ironic,
+   considering that python 3.6+ is required to build a wheel?
+ - A: The irony is not lost. The issue is, how to parse source
+   code from a newer version of python than the python
+   interpreter itself supports. You can install three2six on
+   older versions of python, but you'll be limited to the
+   features supported by that version. For example, you won't be
+   able to use f"" strings on python 3.5, but most annotations
+   will work fine.
+
+ - Q: Why keep python2.7 alive, just let it die already?
+ - A: This is not just for python 2.7, it also allows you to use
+   new features like f"" strings and variable annotations, and
+   build wheels which work for python 3.5.
