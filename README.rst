@@ -9,10 +9,10 @@ to Bable https://babeljs.io/.
 .. list-table::
     :stub-columns: 1
 
-    * - tests
-      - | |travis| |mypy| |coverage|
     * - package
       - | |license| |version| |wheel| |pyversions|
+    * - tests
+      - | |travis| |mypy| |coverage|
 
 .. |travis| image:: https://api.travis-ci.org/mbarkhau/three2six.svg?branch=master
     :target: https://travis-ci.org/mbarkhau/three2six
