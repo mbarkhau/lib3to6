@@ -1,9 +1,16 @@
-``three2six``
-=============
+``three2six`` : Compatibility Matters
+=====================================
 
-``three2six`` is a library to transpile modern python (3.6+) code
-to semantically equivalent legacy python (2.7+) code. The idea is
-quite similar to Bable https://babeljs.io/.
+Build py2.7+ wheels from py3.6 source. The idea is quite similar
+to Bable https://babeljs.io/.
+
+.. image:: https://api.travis-ci.org/mbarkhau/three2six.svg?branch=master
+    :target: https://travis-ci.org/mbarkhau/three2six
+    :alt: Build Status
+
+.. image:: http://www.mypy-lang.org/static/mypy_badge.svg
+    :target: http://mypy-lang.org/
+    :alt: Checked with mypy
 
 
 Motivation

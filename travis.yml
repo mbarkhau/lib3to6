@@ -1,0 +1,17 @@
+language: python
+
+python:
+  - "3.6"
+  - "3.7"
+
+install:
+  - pip install rst2html5 flake8 pytest pytest-coverage
+  - pip install .
+
+script:
+  - export PYTHONPATH=src/:$PYTHONPATH
+  - export MYPYPATH=stubs/
+  - python -m flake8 src/three2six/
+  - python -m mypy src/three2six/
+  - python -m pytest tests/
+  - rst2html5 --strict README.rst > /dev/null

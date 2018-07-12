@@ -64,8 +64,7 @@ lint: .install_dev.make_marker
 
 mypy: .install_dev.make_marker
 	@echo -n "mypy.."
-	@MYPYPATH=$(PYENV36)/lib/python3.6/site-packages/:stubs/ \
-	$(PYTHON36) -m mypy \
+	@MYPYPATH=stubs/ $(PYTHON36) -m mypy \
 		--follow-imports=silent \
 		src/three2six/
 	@echo "ok"
@@ -85,7 +84,7 @@ devtest: .install_dev.make_marker
 
 
 README.html: .install_dev.make_marker README.rst
-	$(PYENV37)/bin/rst2html5 README.rst > README.html.tmp
+	$(PYENV37)/bin/rst2html5 --strict README.rst > README.html.tmp
 	mv README.html.tmp README.html
 
 
