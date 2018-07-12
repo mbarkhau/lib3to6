@@ -5,7 +5,7 @@ python:
   - "3.7"
 
 install:
-  - pip install rst2html5 flake8 pytest pytest-coverage
+  - pip install rst2html5 flake8 pytest pytest-coverage mypy typing-extensions
   - pip install .
 
 script:
