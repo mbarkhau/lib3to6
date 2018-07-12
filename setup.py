@@ -24,14 +24,13 @@ package_dir = {"": path("src")}
 
 
 if "bdist_wheel" in sys.argv:
-    # TODO (mb 2018-06-23): Figure out and document bootstrapping
     import three2six
     packages, package_dir = three2six.repackage(packages, package_dir)
 
 
 setuptools.setup(
     name="three2six",
-    version="0.2.0",
+    version="0.2.1",
     description="Transpile modern python to universal python",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",
@@ -60,6 +59,7 @@ setuptools.setup(
         "Operating System :: MacOS :: MacOS X",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries",

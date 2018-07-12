@@ -25,8 +25,8 @@ PYTHON35 ?= $(PYENV35)/bin/python
 PYTHON34 ?= $(PYENV34)/bin/python
 PYTHON27 ?= $(PYENV27)/bin/python
 
-DIST_WHEEL_THREE2SIX = $(shell bash -c "ls -1t dist/*.whl | head -n 1")
-DIST_WHEEL_TEST = $(shell bash -c "ls -1t test_project/dist/*.whl | head -n 1")
+DIST_WHEEL_THREE2SIX = $(shell bash -c "ls -1t dist/*py2*.whl | head -n 1")
+DIST_WHEEL_TEST = $(shell bash -c "ls -1t test_project/dist/*py2*.whl | head -n 1")
 BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 
 
@@ -88,23 +88,20 @@ README.html: .install_dev.make_marker README.rst
 	$(PYENV37)/bin/rst2html5 README.rst > README.html.tmp
 	mv README.html.tmp README.html
 
+
 build:
 	@mkdir -p test_build_logs/
 	@echo "Writing full build log to $(BUILD_LOG)"
 	@echo -n "build three2six.."
-	@$(PYTHON37) setup.py bdist_wheel >> $(BUILD_LOG)
+	# NOTE (mb 2018-07-08): Before we can run setup.py we
+	# 	need a valid install of the previous version.
+	# TODO (mb 2018-07-08): How to bootstrap new devs?
+	$(PYTHON37) -m pip install --ignore-installed --force .
+	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG)
 	@echo "ok"
+
 
 fulltest: .install_all.make_marker README.html lint mypy test build
-	@echo -n "install.."
-	@$(PYTHON37) -m pip install  --ignore-installed --quiet --force \
-		$(DIST_WHEEL_THREE2SIX) >> $(BUILD_LOG)
-	@echo "ok"
-
-	@echo -n "build test_project.."
-	@bash -c "cd test_project;$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3" >> $(BUILD_LOG)
-	@echo "ok"
-
 	@echo -n "envcheck.."
 	@echo -n "py27.."
 	@$(PYTHON27) --version 2>&1 | grep "Python 2.7" >> $(BUILD_LOG)
@@ -124,6 +121,15 @@ fulltest: .install_all.make_marker README.html lint mypy test build
 
 	@echo -n "py34.."
 	@$(PYTHON34) --version 2>&1 | grep "Python 3.4" >> $(BUILD_LOG)
+	@echo "ok"
+
+	@echo -n "install.."
+	@$(PYTHON37) -m pip install  --ignore-installed --quiet --force \
+		$(DIST_WHEEL_THREE2SIX) >> $(BUILD_LOG)
+	@echo "ok"
+
+	@echo -n "build test_project.."
+	@bash -c "cd test_project;$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3" >> $(BUILD_LOG)
 	@echo "ok"
 
 	@echo -n "py27.."

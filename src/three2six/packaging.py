@@ -90,6 +90,8 @@ def init_build_package_dir(norm_package_dir: common.PackageDir) -> common.Packag
 
         shutil.copytree(src_package_dir, tmp_build_package_dir)
         build_package_dir[package] = tmp_build_package_dir
+
+    # TODO (mb 2018-07-12): cleanup after build
     return build_package_dir
 
 

@@ -84,6 +84,7 @@ FIXTURES = [
     ),
     FixerFixture(
         [
+            "annotations_future",       # not applied to old versions
             "absolute_import_future",
             "division_future",
             "print_function_future",
@@ -93,17 +94,16 @@ FIXTURES = [
         """
         #!/usr/bin/env python
         \"\"\"Module Docstring\"\"\"
-        from __future__ import division
-        import itertools
+        import itertools    # check order of imports (__future__ first)
         """,
         """
         #!/usr/bin/env python
         # -*- coding: utf-8 -*-
         \"\"\"Module Docstring\"\"\"
         from __future__ import absolute_import
+        from __future__ import division
         from __future__ import print_function
         from __future__ import unicode_literals
-        from __future__ import division
         import itertools
         """,
     ),
