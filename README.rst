@@ -10,16 +10,18 @@ Motivation
 ----------
 
 The main motivation for this project is to be able to use ``mypy``
-and generate builds which also work for older versions of python.
+without sacrificing compatability to older versions of python.
 
 .. code-block:: bash
 
-    $ cat example.py
+    $ cat my_module/__init__.py
     def hello(who: str) -> None:
-        print(f"Hello {who}")
+        print(f"Hello {who}!")
+
+    hello("World")
 
     $ pip install three2six
-    $ three2six example.py
+    $ three2six my_module/__init__.py
     # -*- coding: utf-8 -*-
 
     from __future__ import absolute_import
@@ -28,7 +30,9 @@ and generate builds which also work for older versions of python.
     from __future__ import unicode_literals
 
     def hello(who):
-        print('Hello {0}'.format(who))
+        print('Hello {0}!'.format(who))
+
+    hello("World")
 
 
 The cli command ``three2six`` is nice for demo purposes,
@@ -56,6 +60,17 @@ setup.py file.
 .. code-block:: bash
 
     $ python setup.py bdist_wheel --python-tag=py2.py3
+    running bdist_wheel
+    running build
+    running build_py
+    copying /tmp/three2six_qu7ub0bk/my_module/__init__.py -> build/lib/my_module
+    ...
+
+    $ python3 build/lib/my_module/__init__.py
+    Hello World!
+
+    $ python2 build/lib/my_module/__init__.py
+    Hello World!
 
 
 Feature Support
@@ -221,82 +236,3 @@ modern python to legacy python interpreter. You cannot transpile
 features which your interpreter cannot parse. The intended use is
 for developers of libraries who use the most modern python
 version, but want their libraries to work on older versions.
-
-
-Testing
--------
-
-The ``three2six`` command is only intended for testing and
-validation. In particular, you should never be working directly
-with the output transpiled output. With that out of the way,
-let's have a look at what three2six does.
-
-.. code-block:: bash
-
-    $ python3 --version
-    Python 3.6.5 :: Anaconda, Inc.
-    $ python2 --version
-    Python 2.7.15 :: Anaconda, Inc.
-
-    $ cat hello_world_three.py
-    who = "World"
-    print(f"Hello {who}!")
-
-    $ python3 hello_world_three.py
-    Hello World!
-
-    $ python2 hello_world_three.py
-      File "my_module/__init__.py", line 2
-        print(f"Hello {who}!")
-                            ^
-    SyntaxError: invalid syntax
-
-    $ pip3 install three2six
-    $ three2six hello_world_three.py
-    # -*- coding: utf-8 -*-
-    from __future__ import unicode_literals
-    from __future__ import print_function
-    from __future__ import division
-    from __future__ import absolute_import
-    who = "World"
-    print("Hello {0}!".format(who))
-
-    $ three2six hello_world_three.py > hello_world_six.py
-    $ python2 hello_world_six.py
-    Hello World!
-
-
-Project Setup
--------------
-
-
-.. code-block:: python
-
-    # my_module/__init__.py
-    who = "World"
-    print(f"Hello {who}!")
-
-
-.. code-block:: bash
-
-    $ python3 setup.py bdist_wheel
-    running bdist_wheel
-    running build
-    running build_py
-    copying /tmp/three2six_qu7ub0bk/my_module/__init__.py -> build/lib/my_module
-    ...
-
-    $ cat build/lib/my_module/__init__.py
-    # -*- coding: utf-8 -*-
-    from __future__ import unicode_literals
-    from __future__ import print_function
-    from __future__ import division
-    from __future__ import absolute_import
-    who = "World"
-    print("Hello {0}!".format(who))
-
-    $ python3 build/lib/my_module/__init__.py
-    Hello World!
-
-    $ python2 build/lib/my_module/__init__.py
-    Hello World!
