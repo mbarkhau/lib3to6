@@ -31,7 +31,7 @@ if "bdist_wheel" in sys.argv:
 setuptools.setup(
     name="three2six",
     version="0.2.4",
-    description="Build py2.7+ wheels from py3.6 source",
+    description="Build py2.7+ wheels from py3.6+ source",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",
     author="Manuel Barkhau",
@@ -61,7 +61,6 @@ setuptools.setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
