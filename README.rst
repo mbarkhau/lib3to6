@@ -12,13 +12,16 @@ Motivation
 The main motivation for this project is to be able to use ``mypy``
 without sacrificing compatability to older versions of python.
 
-.. code-block:: bash
+.. code-block:: python
 
-    $ cat my_module/__init__.py
+    # my_module/__init__.py
     def hello(who: str) -> None:
         print(f"Hello {who}!")
 
     hello("World")
+
+
+.. code-block:: bash
 
     $ pip install three2six
     $ three2six my_module/__init__.py
