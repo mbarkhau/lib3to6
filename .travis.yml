@@ -5,7 +5,7 @@ python:
   # - "3.7"
 
 install:
-  - pip install rst2html5 flake8 pytest pytest-coverage mypy typing-extensions
+  - pip install rst2html5 flake8 pytest pytest-cov mypy typing-extensions
   - pip install .
 
 script:
@@ -13,5 +13,5 @@ script:
   - export MYPYPATH=stubs/
   - python -m flake8 src/three2six/
   - python -m mypy src/three2six/
-  - python -m pytest tests/
+  - python -m pytest --cov=three2six tests/
   - rst2html5 --strict README.rst > /dev/null

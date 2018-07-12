@@ -35,7 +35,7 @@ BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 		wheel twine \
 		flake8 mypy typing-extensions \
 		rst2html5 \
-		pytest pytest-coverage \
+		pytest pytest-cov \
 		ipython pudb \
 		astor pathlib2 click;
 	@touch .install_dev.make_marker
@@ -72,12 +72,13 @@ mypy: .install_dev.make_marker
 
 test: .install_dev.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest tests/
+		$(PYTHON37) -m pytest --cov=three2six tests/
 
 
 devtest: .install_dev.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON37) -m pytest -v \
+		--cov=three2six \
 		--capture=no \
 		--exitfirst \
 		tests/

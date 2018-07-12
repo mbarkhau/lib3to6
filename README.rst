@@ -4,23 +4,41 @@
 Build py2.7+ wheels from py3.6 source. The idea is quite similar
 to Bable https://babeljs.io/.
 
-.. image:: https://api.travis-ci.org/mbarkhau/three2six.svg?branch=master
+.. start-badges
+
+.. list-table::
+    :stub-columns: 1
+
+    * - tests
+      - | |travis| |mypy| |coverage|
+    * - package
+      - | |license| |version| |wheel| |pyversions|
+
+.. |travis| image:: https://api.travis-ci.org/mbarkhau/three2six.svg?branch=master
     :target: https://travis-ci.org/mbarkhau/three2six
     :alt: Build Status
 
-.. image:: http://www.mypy-lang.org/static/mypy_badge.svg
+.. |mypy| image:: http://www.mypy-lang.org/static/mypy_badge.svg
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
-.. image:: https://img.shields.io/pypi/l/three2six.svg
-    :target: https://pypi.python.org/pypi/three2six
-    :alt: MIT Licenced
+.. |coverage| image:: https://img.shields.io/badge/coverage-84%25-green.svg
+    :target: https://travis-ci.org/mbarkhau/three2six
+    :alt: Code Coverage
 
-.. image:: https://img.shields.io/pypi/v/three2six.svg
+.. |license| image:: https://img.shields.io/pypi/l/three2six.svg
+    :target: https://pypi.python.org/pypi/three2six
+    :alt: MIT License
+
+.. |version| image:: https://img.shields.io/pypi/v/three2six.svg
     :target: https://pypi.python.org/pypi/three2six
     :alt: Version Number
 
-.. image:: https://img.shields.io/pypi/pyversions/three2six.svg
+.. |wheel| image:: https://img.shields.io/pypi/wheel/three2six.svg
+    :target: https://pypi.python.org/pypi/three2six
+    :alt: PyPI Wheel
+
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/three2six.svg
     :target: https://pypi.python.org/pypi/three2six
     :alt: Supported Python Versions
 
