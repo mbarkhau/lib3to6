@@ -47,7 +47,7 @@ setuptools.setup(
             "three2six=three2six.main:main"
         ],
     },
-    install_requires=["astor", "pathlib2"],
+    install_requires=["astor", "pathlib2", "click"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

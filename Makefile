@@ -37,7 +37,7 @@ BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 		rst2html5 \
 		pytest pytest-coverage \
 		ipython pudb \
-		astor pathlib2;
+		astor pathlib2 click;
 	@touch .install_dev.make_marker
 
 

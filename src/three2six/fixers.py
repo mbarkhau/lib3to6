@@ -54,16 +54,22 @@ class FixerBase:
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
 
-    def is_required_for(self, version):
+    def is_required_for(self, version: str) -> bool:
         nfo = self.version_info
         return nfo.apply_since <= version <= nfo.apply_until
 
-    def is_compatible_with(self, version):
+    def is_compatible_with(self, version: str) -> bool:
         nfo = self.version_info
         return (
             nfo.works_since <= version and (
                 nfo.works_until is None or version <= nfo.works_until
             )
+        )
+
+    def is_applicable_to(self, src_version: str, tgt_version: str) -> bool:
+        return (
+            self.is_compatible_with(src_version) and
+            self.is_required_for(tgt_version)
         )
 
 

@@ -32,16 +32,16 @@ CACHE_DIR = pl.Path(tempfile.gettempdir()) / ".three2six_cache"
 
 def eval_build_config() -> common.BuildConfig:
     # TODO (mb 2018-06-07): Get options from setup.cfg
-    python_tags = "py2.py3"
-    for argi, arg in enumerate(sys.argv):
-        if "--python-tag" in arg:
-            if "=" in arg:
-                python_tags = arg.split("=", 1)[-1]
-            else:
-                python_tags = sys.argv[argi + 1]
+    # python_tags = "py2.py3"
+    # for argi, arg in enumerate(sys.argv):
+    #     if "--python-tag" in arg:
+    #         if "=" in arg:
+    #             python_tags = arg.split("=", 1)[-1]
+    #         else:
+    #             python_tags = sys.argv[argi + 1]
 
     return {
-        "python_tags"     : python_tags,
+        "target_version"  : "2.7",
         "force_transpile" : "1",
         "fixers"          : "",
         "checkers"        : "",

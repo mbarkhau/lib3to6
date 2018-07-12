@@ -6,6 +6,7 @@
 
 import re
 import ast
+import sys
 import astor
 import typing as typ
 
@@ -211,10 +212,18 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     module_tree = ast.parse(module_source)
     required_imports: typ.Set[common.ImportDecl] = set()
 
+    ver = sys.version_info
+    src_version = f"{ver.major}.{ver.minor}"
+    tgt_version = cfg["target_version"]
+
     for checker in iter_fuzzy_selected_checkers(checker_names):
-        checker(cfg, module_tree)
+        if checker.is_prohibited_for(tgt_version):
+            checker(cfg, module_tree)
 
     for fixer in iter_fuzzy_selected_fixers(fixer_names):
+        if not fixer.is_applicable_to(src_version, tgt_version):
+            continue
+
         maybe_fixed_module = fixer(cfg, module_tree)
         if maybe_fixed_module is None:
             raise Exception(f"Error running fixer {type(fixer).__name__}")

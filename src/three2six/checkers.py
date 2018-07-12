@@ -22,7 +22,7 @@ class CheckerBase:
 
     version_info: VersionInfo
 
-    def is_prohibited_for(self, version):
+    def is_prohibited_for(self, version: str) -> bool:
         return (
             self.version_info.prohibited_until is None or
             self.version_info.prohibited_until >= version
@@ -55,7 +55,7 @@ class NoStarImports(CheckerBase):
 class NoOverriddenStdlibImportsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
-    version_info = VersionInfo(prohibited_until=None)
+    version_info = VersionInfo()
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
@@ -78,7 +78,7 @@ class NoOverriddenStdlibImportsChecker(CheckerBase):
 class NoOverriddenBuiltinsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
-    version_info = VersionInfo(prohibited_until=None)
+    version_info = VersionInfo()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
@@ -114,6 +114,8 @@ MODULE_BACKPORTS = {
 
 
 class NoThreeOnlyImports(CheckerBase):
+
+    version_info = VersionInfo(prohibited_until="2.7")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         pass
