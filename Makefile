@@ -171,3 +171,6 @@ setup_conda_envs: .setup_conda_envs.make_marker
 install_all: .install_all.make_marker
 
 install_dev: .install_dev.make_marker
+
+run_main:
+	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m three2six.main
