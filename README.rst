@@ -2,41 +2,99 @@
 =============
 
 ``three2six`` is a library to transpile modern python (3.6+) code
-to equivalent legacy python (2.7+) code. The idea is quite
-similar to Bable https://babeljs.io/.
+to semantically equivalent legacy python (2.7+) code. The idea is
+quite similar to Bable https://babeljs.io/.
 
-Any new language feature which has an equivalent translation
-will be translated, if you try to use a new language feature
-which cannot be translated, you will get a warning.
 
-Supported features include:
+Motivation
+----------
 
- - PEP 498: formatted string literals.
- - Eliding of annotations
- - Unpacking generalizations
- - Keyword only arguments
- - Warnings for code that cannot be transpile
- - PEP 515: underscores in numeric literals
- - map/zip/filter to itertools equivalents
+The main motivation for this project is to be able to use ``mypy``
+and generate builds which also work for older versions of python.
 
-An (obviously non exhaustive) list of features not supported:
+.. code-block:: bash
+
+    $ cat example.py
+    def hello(who: str) -> None:
+        print(f"Hello {who}")
+
+    $ pip install three2six
+    $ three2six example.py
+    # -*- coding: utf-8 -*-
+
+    from __future__ import absolute_import
+    from __future__ import division
+    from __future__ import print_function
+    from __future__ import unicode_literals
+
+    def hello(who):
+        print('Hello {0}'.format(who))
+
+
+The cli command ``three2six`` is nice for demo purposes,
+but for your project it is better to use it in your
+setup.py file.
+
+.. code-block:: python
+
+    # setup.py
+
+    packages = ["my_module"]
+
+    if "bdist_wheel" in sys.argv:
+        import three2six
+        packages, package_dir = three2six.repackage(packages)
+
+    setuptools.setup(
+        name="my-module",
+        version="0.1.0",
+        packages=packages,
+        package_dir=package_dir,
+        ...
+    )
+
+.. code-block:: bash
+
+    $ python setup.py bdist_wheel --python-tag=py2.py3
+
+
+Feature Support
+---------------
+
+Not all new language features have a semantic equivalent in older
+versions. To the extent these can be detected, an error will be
+reported when these features are used.
+
+An (obviously non exhaustive) list of features which are **not
+supported**:
 
  - async/await
  - yield from
  - @/__matmul__ operator
 
-Some new libraries have backports, which warnings will point to:
+Features which **are supported**:
 
- - typing
- - pathlib
- - secrets
- - ipaddress
- - csv -> backports.csv
- - lzma -> backports.lzma
- - enum -> flufl.enum
+ - PEP 498: formatted string literals.
+ - Eliding of annotations
+ - Unpacking generalizations
+ - Keyword only arguments
+ - PEP 515: underscores in numeric literals
+ - map/zip/filter to itertools equivalents
+
+..
+
+    Some new libraries have backports, which warnings will point to:
+
+     - typing
+     - pathlib
+     - secrets
+     - ipaddress
+     - csv -> backports.csv
+     - lzma -> backports.lzma
+     - enum -> flufl.enum
 
 
-Project Status (as of 2018-07-08): Experimental
+Project Status (as of 2018-07-12): Experimental
 -----------------------------------------------
 
 Only use this library if you intend to participate in testing or
@@ -47,8 +105,9 @@ The goal is to go through all of http://python-future.org and
 either:
 
  1. Transpile to code that will work on any version
- 2. Raise an error, pointing to a page and section on
-    python-future.org
+ 2. Raise an error, ideally pointing to a page and section on
+    python-future.org or other documentation describing
+    alternative methods of writing backwards compatible code.
 
 https://docs.python.org/3.X/whatsnew/ also contains much info on
 api changes that might be checked for, but checks and fixers for
@@ -151,7 +210,7 @@ alternative, such as in this case using ``io.open`` instead.
 
 Here ``three2six`` you will ge
 
- however it remains your
+however it remains your
 responsibility to write your code so that this syntactic
 translation is semantically equivalent in both python3 and
 python2.
@@ -209,24 +268,6 @@ let's have a look at what three2six does.
 
 Project Setup
 -------------
-
-.. code-block:: python
-
-    # setup.py
-
-    packages = ["my_module"]
-
-    if "bdist_wheel" in sys.argv:
-        import three2six
-        packages, package_dir = three2six.repackage(packages)
-
-    setuptools.setup(
-        name="my-module",
-        version="0.1.0",
-        packages=packages,
-        package_dir=package_dir,
-        ...
-    )
 
 
 .. code-block:: python

@@ -96,9 +96,15 @@ build:
 	# NOTE (mb 2018-07-08): Before we can run setup.py we
 	# 	need a valid install of the previous version.
 	# TODO (mb 2018-07-08): How to bootstrap new devs?
+	# TODO (mb 2018-07-12): Generate multiple builds,
+	#	one for each supported version.
 	$(PYTHON37) -m pip install --ignore-installed --force .
 	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG)
 	@echo "ok"
+
+
+upload: .install_dev.make_marker README.html
+	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 upload
 
 
 fulltest: .install_all.make_marker README.html lint mypy test build
@@ -168,9 +174,6 @@ fulltest: .install_all.make_marker README.html lint mypy test build
 	@echo "ok"
 	@wait
 
-
-upload: .install_dev.make_marker README.html
-	$(PYTHON36) setup.py bdist_wheel upload
 
 setup_conda_envs: .setup_conda_envs.make_marker
 
