@@ -12,6 +12,18 @@ to Bable https://babeljs.io/.
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
+.. image:: https://img.shields.io/pypi/l/three2six.svg
+    :target: https://pypi.python.org/pypi/three2six
+    :alt: MIT Licenced
+
+.. image:: https://img.shields.io/pypi/v/three2six.svg
+    :target: https://pypi.python.org/pypi/three2six
+    :alt: Version Number
+
+.. image:: https://img.shields.io/pypi/pyversions/three2six.svg
+    :target: https://pypi.python.org/pypi/three2six
+    :alt: Supported Python Versions
+
 
 Motivation
 ----------
