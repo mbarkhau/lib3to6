@@ -72,12 +72,12 @@ mypy: .install_dev.make_marker
 
 test: .install_dev.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest tests/
+		$(PYTHON37) -m pytest tests/
 
 
 devtest: .install_dev.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -v \
+		$(PYTHON37) -m pytest -v \
 		--capture=no \
 		--exitfirst \
 		tests/
