@@ -19,6 +19,8 @@ DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
 
 DEFAULT_SOURCE_ENCODING = "utf-8"
 
+DEFAULT_TARGET_VERSION = "2.7"
+
 # https://www.python.org/dev/peps/pep-0263/
 SOURCE_ENCODING_RE = re.compile(r"""
     ^
@@ -214,21 +216,19 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
 
     ver = sys.version_info
     src_version = f"{ver.major}.{ver.minor}"
-    tgt_version = cfg["target_version"]
+    tgt_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
 
     for checker in iter_fuzzy_selected_checkers(checker_names):
         if checker.is_prohibited_for(tgt_version):
             checker(cfg, module_tree)
 
     for fixer in iter_fuzzy_selected_fixers(fixer_names):
-        if not fixer.is_applicable_to(src_version, tgt_version):
-            continue
-
-        maybe_fixed_module = fixer(cfg, module_tree)
-        if maybe_fixed_module is None:
-            raise Exception(f"Error running fixer {type(fixer).__name__}")
-        required_imports.update(fixer.required_imports)
-        module_tree = maybe_fixed_module
+        if fixer.is_applicable_to(src_version, tgt_version):
+            maybe_fixed_module = fixer(cfg, module_tree)
+            if maybe_fixed_module is None:
+                raise Exception(f"Error running fixer {type(fixer).__name__}")
+            required_imports.update(fixer.required_imports)
+            module_tree = maybe_fixed_module
 
     add_required_imports(module_tree, required_imports)
     coding, header = parse_module_header(module_source)

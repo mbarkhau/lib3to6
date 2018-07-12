@@ -493,7 +493,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             raise TypeError(f"Unexpected node: {node}")
 
-    def _node_with_elts(self, node: ast.expr, new_elts: typ.List[ast.expr]) -> ast.expr:
+    def _node_with_elts(self, node: ast.AST, new_elts: typ.List[ast.expr]) -> ast.expr:
         if isinstance(node, ast.Call):
             node.args = new_elts
             return node
@@ -506,7 +506,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             raise TypeError(f"Unexpected node type {type(node)}")
 
-    def _node_with_binop(self, node: ast.expr, binop: ast.BinOp) -> ast.expr:
+    def _node_with_binop(self, node: ast.AST, binop: ast.BinOp) -> ast.expr:
         if isinstance(node, ast.Call):
             node.args = [ast.Starred(value=binop, ctx=ast.Load())]
             return node
@@ -528,7 +528,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
         else:
             raise TypeError(f"Unexpected node type {type(node)}")
 
-    def expand_stararg_g12n(self, node: ast.expr, parent: ast.AST, field_name: str) -> ast.expr:
+    def expand_stararg_g12n(self, node: ast.AST, parent: ast.AST, field_name: str) -> ast.expr:
         """Convert fn(*x, *[1, 2], z) -> fn(*(list(x) + [1, 2, z]))
 
         NOTE (mb 2018-07-06): The goal here is to create an expression
@@ -748,10 +748,11 @@ class UnpackingGeneralizationsFixer(FixerBase):
         return new_stmts
 
     def walk_expr(self, node: ast.expr, parent: ast.AST, parent_field_name: str) -> ast.expr:
-        if isinstance(node, LeafNodes):
-            return node
-        # print("-->", parent_field_name.ljust(15), node)
+        new_node_expr = self.walk_node(node, parent, parent_field_name)
+        assert isinstance(new_node_expr, ast.expr)
+        return new_node_expr
 
+    def iter_walkable_fields(self, node: ast.AST) -> typ.Iterable[typ.Any]:
         for field_name, field_node in ast.iter_fields(node):
             if isinstance(field_node, ast.arguments):
                 continue
@@ -759,42 +760,35 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 continue
             if isinstance(field_node, LeafNodes):
                 continue
-            if isinstance(field_node, ast.slice):
-                # TODO (mb 2018-07-08): This needs to be handled
-                continue
-            if isinstance(field_node, ast.comprehension):
-                # TODO (mb 2018-07-08): This needs to be handled
-                continue
 
-            if isinstance(field_node, ast.expr):
-                new_expr = self.walk_expr(field_node, node, field_name)
-                setattr(node, field_name, new_expr)
+            yield field_name, field_node
+
+    def walk_node(self, node: ast.AST, parent: ast.AST, parent_field_name: str) -> ast.AST:
+        if isinstance(node, LeafNodes):
+            return node
+
+        # print("-->", parent_field_name.ljust(15), node)
+
+        for field_name, field_node in self.iter_walkable_fields(node):
+            if isinstance(field_node, ast.AST):
+                new_node = self.walk_node(field_node, node, field_name)
+                setattr(node, field_name, new_node)
             elif isinstance(field_node, list):
                 new_field_node = []
                 new_sub_node: ast.AST
                 for sub_node in field_node:
                     if isinstance(sub_node, LeafNodes):
                         new_sub_node = sub_node
-                    elif isinstance(sub_node, ast.slice):
-                        new_sub_node = sub_node
-                    elif isinstance(sub_node, ast.comprehension):
-                        new_sub_node = sub_node
-                    elif isinstance(sub_node, ast.keyword):
-                        new_sub_node = ast.keyword(
-                            arg=sub_node.arg,
-                            value=self.walk_expr(sub_node.value, node, field_name),
-                        )
-                    elif isinstance(sub_node, ast.expr):
-                        new_sub_node = self.walk_expr(sub_node, node, field_name)
                     elif isinstance(sub_node, ast.AST):
-                        raise common.FixerError("Unexpected Node Type", sub_node)
+                        new_sub_node = self.walk_node(sub_node, node, field_name)
                     else:
                         new_sub_node = sub_node
                     new_field_node.append(new_sub_node)
 
                 setattr(node, field_name, new_field_node)
-            elif isinstance(field_node, ast.AST):
-                raise common.FixerError("Unexpected Node Type", field_node)
+
+        if not isinstance(node, ast.expr):
+            return node
 
         new_expr_node = self.visit_expr(node, parent, parent_field_name)
 
@@ -810,44 +804,38 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 if is_dict_call(keyword_node.value) or isinstance(keyword_node.value, ast.Dict):
                     return keyword_node.value
 
-                # # TODO (mb 2018-06-30): convert ast.Call(func=ast.Name(id="dict"))
-                # #   which only has keyword arguments, into a ast.Dict
-                # if is_dict_call(node) and len(node.args) == 0
-
         return new_expr_node
 
     def walk_stmt(self, node: ast.stmt, parent: ast.AST, field_name: str) -> ast.stmt:
         assert not self.is_stmtlist(node)
         # print("==>", field_name.ljust(15), node)
 
-        for field_name, field_node in ast.iter_fields(node):
+        for field_name, field_node in self.iter_walkable_fields(node):
             if self.is_stmtlist(field_node):
                 old_field_nodelist = field_node
                 new_field_nodelist = self.walk_stmtlist(
                     old_field_nodelist, parent=node, field_name=field_name
                 )
                 setattr(node, field_name, new_field_nodelist)
-            elif isinstance(node, ast.With) and field_name == "items":
-                # NOTE (mb 2018-07-08): I don't think I'm dealing
-                #   with corner cases properly here. It might be that
-                #   ast.keyword, ast.alias, ast.arg, ast.arguments can
-                #   or even have to  be treated similarly.
-                assert isinstance(field_node, list)
-                for with_item in field_node:
-                    assert isinstance(with_item, ast.withitem)
-                    with_item.context_expr = self.walk_expr(
-                        with_item.context_expr, with_item, "context_expr"
-                    )
-                    if with_item.optional_vars:
-                        with_item.optional_vars = self.walk_expr(
-                            with_item.optional_vars, with_item, "optional_vars"
-                        )
             elif isinstance(field_node, ast.stmt):
                 new_stmt = self.walk_stmt(field_node, node, field_name)
                 setattr(node, field_name, new_stmt)
-            elif isinstance(field_node, ast.expr):
-                new_expr = self.walk_expr(field_node, node, field_name)
-                setattr(node, field_name, new_expr)
+            elif isinstance(field_node, ast.AST):
+                new_node = self.walk_node(field_node, node, field_name)
+                setattr(node, field_name, new_node)
+            elif isinstance(field_node, list):
+                new_field_node = []
+                new_sub_node: ast.AST
+                for sub_node in field_node:
+                    if isinstance(sub_node, LeafNodes):
+                        new_sub_node = sub_node
+                    elif isinstance(sub_node, ast.AST):
+                        new_sub_node = self.walk_node(sub_node, node, field_name)
+                    else:
+                        new_sub_node = sub_node
+                    new_field_node.append(new_sub_node)
+
+                setattr(node, field_name, new_field_node)
             else:
                 continue
 

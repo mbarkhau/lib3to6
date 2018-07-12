@@ -8,7 +8,7 @@ from three2six import utils
 
 
 FixerFixture = namedtuple("FixerFixture", [
-    "names", "test_source", "expected_source",
+    "names", "target_version", "test_source", "expected_source",
 ])
 
 
@@ -67,6 +67,7 @@ FIXTURES = [
             "print_function_future",
             "unicode_literals_future",
         ],
+        "2.7",
         """
         #!/usr/bin/env python
         \"\"\"Module Docstring\"\"\"
@@ -88,6 +89,7 @@ FIXTURES = [
             "print_function_future",
             "unicode_literals_future",
         ],
+        "2.7",
         """
         #!/usr/bin/env python
         \"\"\"Module Docstring\"\"\"
@@ -107,6 +109,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "remove_ann_assign",
+        "2.7",
         """
         moduleannattr: moduleattr_annotation
 
@@ -132,6 +135,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "remove_function_def_annotations",
+        "2.7",
         """
         def foo(arg: arg_annotation) -> ret_annotation:
             def nested_fn(f: int = 22) -> int:
@@ -155,11 +159,13 @@ FIXTURES = [
     ),
     FixerFixture(
         "f_string_to_str_format",
+        "2.7",
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
     FixerFixture(
         "f_string_to_str_format",
+        "2.7",
         """
         who = "World"
         print(f"Hello {who}!")
@@ -171,6 +177,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "new_style_classes",
+        "2.7",
         """
         class Foo:
             pass
@@ -181,7 +188,20 @@ FIXTURES = [
         """,
     ),
     FixerFixture(
+        "new_style_classes",
+        "3.4",
+        """
+        class Foo:
+            pass
+        """,
+        """
+        class Foo:
+            pass
+        """,
+    ),
+    FixerFixture(
         "itertools_builtins,print_function_future",
+        "2.7",
         """
         \"\"\"Module Docstring\"\"\"
         def fn(elem):
@@ -204,6 +224,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "itertools_builtins",
+        "2.7",
         """
         def fn(elem):
             list(map(fn, [1, 2, 3, 4]))
@@ -221,6 +242,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "itertools_builtins",
+        "2.7",
         """
         def fn(elem):
             def fn_nested():
@@ -236,6 +258,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "short_to_long_form_super",
+        "2.7",
         """
         class FooClass:
             def foo_method(self, arg, *args, **kwargs):
@@ -248,7 +271,22 @@ FIXTURES = [
         """,
     ),
     FixerFixture(
+        "short_to_long_form_super",
+        "3.4",
+        """
+        class FooClass:
+            def foo_method(self, arg, *args, **kwargs):
+                return super().foo_method(arg, *args, **kwargs)
+        """,
+        """
+        class FooClass:
+            def foo_method(self, arg, *args, **kwargs):
+                return super().foo_method(arg, *args, **kwargs)
+        """,
+    ),
+    FixerFixture(
         "remove_function_def_annotations,inline_kw_only_args",
+        "2.7",
         """
         def foo(
             self,
@@ -278,6 +316,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         a = [0, *[1, 2], 3, *[4, 5]]
         """,
@@ -287,6 +326,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         b = {*[1, 2], 3, *[4, 5]}
         """,
@@ -296,6 +336,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         c = (*[1, 2], 3, *[4, 5])
         """,
@@ -305,6 +346,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         a = [*[1, 2], x, *x, *[4, 5]]
         """,
@@ -314,6 +356,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         b = {*[1, 2], x, *x, *[4, 5], *(6, 7)}
         """,
@@ -323,6 +366,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         c = (*[1, 2], x, *[4, 5], *(6, 7), *y)
         """,
@@ -332,6 +376,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         a = [*x, 0]
         """,
@@ -341,6 +386,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         lambda x: [*x, 0]
         """,
@@ -350,6 +396,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         print(*[1])
         print(*[1], 2)
@@ -365,6 +412,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         def foo():
             print(*[1], *[2], 3)
@@ -376,6 +424,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         foo(**x, bar=22)
         """,
@@ -390,6 +439,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         dict(**dict(**{"x": 1}), **dict(**{"y": 2}), z=3)
         """,
@@ -399,6 +449,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         {**{'x': 1}, 'y': 2}
         """,
@@ -408,6 +459,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         x = "x"
         y = "y"
@@ -423,6 +475,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         foo(**dict(**{"x": 1}), **dict(**{"y": 2}), z=3)
         """,
@@ -432,6 +485,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         dict(**dict(**{"x": 1}), **y, z=3)
         """,
@@ -447,6 +501,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         dict(**{"x": 1})
         testfn(**{"a": 1}, b=2, **{"c": 3}, d=4)
@@ -460,6 +515,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         a = [1, 2, 3]
         b = [4, 5, 6]
@@ -482,6 +538,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         with foo(*[1, 2, 3], 4) as x:
             pass
@@ -493,6 +550,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         for x in [*[1, 2, 3], 4]:
             for y in foo(*[1, 2, 3], 4, *[5, 6, 7], **{"foo": 1}, bar=2, **{"baz": 3}):
@@ -506,6 +564,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         x = [1, 2, 3]
         (
@@ -535,6 +594,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         with foo(*[1, 2, 3], 4) as x:
             try:
@@ -558,6 +618,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         x = [*[1, 2], 3] if True else [*[4, 5], 6]
         """,
@@ -567,6 +628,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         x = [a, b, c][([*[1], 2])[0]]
         """,
@@ -576,6 +638,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "unpacking_generalizations",
+        "2.7",
         """
         x = [n for n in [*[1, 2], 3, 4] if n % 2 == 0]
         """,
@@ -585,6 +648,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "range_to_xrange",
+        "2.7",
         """
         myrange = range
         """,
@@ -594,6 +658,7 @@ FIXTURES = [
     ),
     FixerFixture(
         "range_to_xrange",
+        "2.7",
         """
         def foo():
             if True:
@@ -609,6 +674,7 @@ FIXTURES = [
     ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
+    #     "2.7",
     #     """
     #     """,
     #     """
@@ -643,22 +709,19 @@ def test_fixers(fixture):
     print(">>>>>>>>" * 9)
 
     print("????????" * 9)
-    print(repr(expected_header))
     # print(expected_ast)
     # print("--------" * 9)
-    print(expected_source)
+    print(repr(expected_source))
     print("????????" * 9)
 
-    cfg = {"fixers": fixture.names}
+    cfg = {"fixers": fixture.names, "target_version": fixture.target_version}
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
     result_ast = utils.parsedump_ast(result_source)
 
     print("<<<<<<<<" * 9)
-    print(repr(result_header))
-    print(repr(result_source))
     # print(result_ast)
     # print("--------" * 9)
-    print(result_source)
+    print(repr(result_source))
     print("<<<<<<<<" * 9)
 
     assert result_coding == expected_coding

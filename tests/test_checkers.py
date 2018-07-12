@@ -18,14 +18,14 @@ FIXTURES = [
         """
         import itertools
         """,
-        None
+        None,
     ),
     CheckFixture(
         "no_overridden_stdlib_imports",
         """
         itertools = "foo"
         """,
-        "Prohibited override of import 'itertools'"
+        "Prohibited override of import 'itertools'",
     ),
     CheckFixture(
         "no_overridden_stdlib_imports",
@@ -33,14 +33,14 @@ FIXTURES = [
         def itertools():
             pass
         """,
-        "Prohibited override of import 'itertools'"
+        "Prohibited override of import 'itertools'",
     ),
     CheckFixture(
         "no_overridden_stdlib_imports",
         """
         import x as itertools
         """,
-        "Prohibited override of import 'itertools'"
+        "Prohibited override of import 'itertools'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -48,7 +48,7 @@ FIXTURES = [
         def map(x):
             pass
         """,
-        "Prohibited override of builtin 'map'"
+        "Prohibited override of builtin 'map'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -56,35 +56,35 @@ FIXTURES = [
         class filter(x):
             pass
         """,
-        "Prohibited override of builtin 'filter'"
+        "Prohibited override of builtin 'filter'",
     ),
     CheckFixture(
         "no_overridden_builtins",
         """
         zip = "foobar"
         """,
-        "Prohibited override of builtin 'zip'"
+        "Prohibited override of builtin 'zip'",
     ),
     CheckFixture(
         "no_overridden_builtins",
         """
         repr: str = "foobar"
         """,
-        "Prohibited override of builtin 'repr'"
+        "Prohibited override of builtin 'repr'",
     ),
     CheckFixture(
         "no_overridden_builtins",
         """
         import foobar as iter
         """,
-        "Prohibited override of builtin 'iter'"
+        "Prohibited override of builtin 'iter'",
     ),
     CheckFixture(
         "no_overridden_builtins",
         """
         import reversed
         """,
-        "Prohibited override of builtin 'reversed'"
+        "Prohibited override of builtin 'reversed'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -92,7 +92,7 @@ FIXTURES = [
         def foo(input):
             pass
         """,
-        "Prohibited override of builtin 'input'"
+        "Prohibited override of builtin 'input'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -100,7 +100,7 @@ FIXTURES = [
         def foo(min=None):
             pass
         """,
-        "Prohibited override of builtin 'min'"
+        "Prohibited override of builtin 'min'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -108,7 +108,7 @@ FIXTURES = [
         def foo(*, max=None):
             pass
         """,
-        "Prohibited override of builtin 'max'"
+        "Prohibited override of builtin 'max'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -116,7 +116,7 @@ FIXTURES = [
         class foo:
             dict = None
         """,
-        "Prohibited override of builtin 'dict'"
+        "Prohibited override of builtin 'dict'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -124,7 +124,7 @@ FIXTURES = [
         class foo:
             list:  None
         """,
-        "Prohibited override of builtin 'list'"
+        "Prohibited override of builtin 'list'",
     ),
     CheckFixture(
         "no_overridden_builtins",
@@ -132,7 +132,7 @@ FIXTURES = [
         def foo(x: int = None):
             pass
         """,
-        None
+        None,
     ),
     CheckFixture(
         "no_async_await",
@@ -140,7 +140,7 @@ FIXTURES = [
         async def foo():
             bar()
         """,
-        "Prohibited use of async/await"
+        "Prohibited use of async/await",
     ),
     CheckFixture(
         "no_async_await",
@@ -148,7 +148,7 @@ FIXTURES = [
         async def foo():
             await bar()
         """,
-        "Prohibited use of async/await"
+        "Prohibited use of async/await",
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -156,7 +156,7 @@ FIXTURES = [
         data = open(filepath, mode="rb").read()
         assert isinstance(data, bytes)
         """,
-        None
+        None,
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -164,7 +164,7 @@ FIXTURES = [
         with open(filepath, mode="wb") as fh:
             fh.write(b"test")
         """,
-        None
+        None,
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -172,7 +172,7 @@ FIXTURES = [
         with open(filepath, x) as fh:
             fh.write("test")
         """,
-        "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node"
+        "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -180,7 +180,7 @@ FIXTURES = [
         with open(filepath, mode=x) as fh:
             fh.write("test")
         """,
-        "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node"
+        "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -191,7 +191,7 @@ FIXTURES = [
         [
             "Prohibited value 'w' for argument 'mode' of builtin.open. ",
             "Only binary modes are allowed, use io.open as an alternative.",
-        ]
+        ],
     ),
     CheckFixture(
         "no_open_with_encoding",
@@ -220,10 +220,13 @@ def test_checkers(fixture):
         expected_error_messages = fixture.expected_error_msg
     else:
         expected_error_messages = [fixture.expected_error_msg]
-
+    cfg = {
+        "checkers": fixture.names,
+        "target_version": "2.7",
+    }
     test_source = utils.clean_whitespace(fixture.test_source)
     try:
-        utils.transpile_and_dump(test_source, {"checkers": fixture.names})
+        utils.transpile_and_dump(test_source, cfg)
         assert fixture.expected_error_msg is None
     except CheckError as result_error:
         result_error_msg = str(result_error)
