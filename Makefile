@@ -72,16 +72,32 @@ mypy: .install_dev.make_marker
 
 test: .install_dev.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest --cov=three2six tests/
+		$(PYTHON37) -m pytest \
+		--cov-report term \
+		--cov-report html \
+		--cov=three2six \
+		tests/
+
+
+.coverage_percent.txt: test
+	@grep -oP '>[0-9]+%</td>' htmlcov/index.html \
+		| head -n 1 \
+		| grep -oP '[.0-9]+' \
+		> .coverage_percent.txt
 
 
 devtest: .install_dev.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON37) -m pytest -v \
+		--cov-report html \
 		--cov=three2six \
 		--capture=no \
 		--exitfirst \
 		tests/
+
+
+README.rst: .coverage_percent.txt
+	sed -i "s/coverage-[0-9]*/coverage-$$(cat .coverage_percent.txt)/" README.rst
 
 
 README.html: .install_dev.make_marker README.rst
