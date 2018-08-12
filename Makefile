@@ -31,7 +31,7 @@ BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 
 
 .install_dev.make_marker: setup.py envs.txt
-	$(PYTHON37) -m pip install --upgrade --quiet \
+	$(PYTHON36) -m pip install --upgrade --quiet \
 		wheel twine \
 		flake8 mypy typing-extensions \
 		rst2html5 \
@@ -65,17 +65,25 @@ lint: .install_dev.make_marker
 mypy: .install_dev.make_marker
 	@echo -n "mypy.."
 	@MYPYPATH=stubs/ $(PYTHON36) -m mypy \
-		--follow-imports=silent \
 		src/three2six/
 	@echo "ok"
 
 
 test: .install_dev.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest \
-		--cov-report term \
+		$(PYTHON36) -m pytest \
 		--cov-report html \
 		--cov=three2six \
+		tests/
+
+
+devtest: .install_dev.make_marker
+	PYTHONPATH=src/:$$PYTHONPATH \
+		$(PYTHON36) -m pytest -v \
+		--cov-report term \
+		--cov=three2six \
+		--capture=no \
+		--exitfirst \
 		tests/
 
 
@@ -84,16 +92,6 @@ test: .install_dev.make_marker
 		| head -n 1 \
 		| grep -oP '[.0-9]+' \
 		> .coverage_percent.txt
-
-
-devtest: .install_dev.make_marker
-	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest -v \
-		--cov-report html \
-		--cov=three2six \
-		--capture=no \
-		--exitfirst \
-		tests/
 
 
 README.rst: .coverage_percent.txt

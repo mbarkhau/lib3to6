@@ -1,8 +1,9 @@
 ``three2six`` : Compatibility Matters
 =====================================
 
-Build py2.7+ wheels from py3.6 source. The idea is quite similar
-to Bable https://babeljs.io/.
+Build backward compatible wheels from modern Python 3 source
+(Python 3.6+ -> Python 2.7+). The idea is quite similar to Bable
+https://babeljs.io/.
 
 .. start-badges
 
@@ -22,7 +23,7 @@ to Bable https://babeljs.io/.
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
-.. |coverage| image:: https://img.shields.io/badge/coverage-84%25-green.svg
+.. |coverage| image:: https://img.shields.io/badge/coverage-85%25-green.svg
     :target: https://travis-ci.org/mbarkhau/three2six
     :alt: Code Coverage
 
@@ -49,21 +50,25 @@ Motivation
 The main motivation for this project is to be able to use ``mypy``
 without sacrificing compatability to older versions of python.
 
+
 .. code-block:: python
 
     # my_module/__init__.py
     def hello(who: str) -> None:
         print(f"Hello {who}!")
 
-    hello("World")
+    hello("世界")
 
 
 .. code-block:: bash
 
     $ pip install three2six
     $ three2six my_module/__init__.py
-    # -*- coding: utf-8 -*-
 
+
+.. code-block:: python
+
+    # -*- coding: utf-8 -*-
     from __future__ import absolute_import
     from __future__ import division
     from __future__ import print_function
@@ -72,7 +77,21 @@ without sacrificing compatability to older versions of python.
     def hello(who):
         print('Hello {0}!'.format(who))
 
-    hello("World")
+    hello("世界")
+
+
+Fixes are applied to match the semantics of python3 code as
+close as possible, even when running on a python2.7 interpreter.
+
+Some fixes that have been applied:
+
+    - PEP263 magic comment to declare the coding of the python
+      source file. This allows the string literal ``"世界"`` to
+      be decoded correctly.
+    - ``__future__`` imports have been added. This includes the well
+      known print statement -> function change. The unicode_literals
+    - Type annotations have been removed
+    - f string -> "".format  conversion
 
 
 The cli command ``three2six`` is nice for demo purposes,
@@ -107,10 +126,10 @@ setup.py file.
     ...
 
     $ python3 build/lib/my_module/__init__.py
-    Hello World!
+    Hello 世界!
 
     $ python2 build/lib/my_module/__init__.py
-    Hello World!
+    Hello 世界!
 
 
 Feature Support
@@ -135,6 +154,7 @@ Features which **are supported**:
  - Keyword only arguments
  - PEP 515: underscores in numeric literals
  - map/zip/filter to itertools equivalents
+ - Convert class based typing.NamedTuple usage to assignments
 
 ..
 
@@ -149,7 +169,7 @@ Features which **are supported**:
      - enum -> flufl.enum
 
 
-Project Status (as of 2018-07-12): Experimental
+Project Status (as of 2018-08-12): Experimental
 -----------------------------------------------
 
 Only use this library if you intend to participate in testing or
@@ -295,3 +315,11 @@ FAQ
  - A: This is not just for python 2.7, it also allows you to use
    new features like f"" strings and variable annotations, and
    build wheels which work for python 3.5.
+
+ - Q: Why not ``lib3to2``?
+ - A: I can't honestly say much about ``lib3to2``. It seems to not
+   be maintained and looking at the source I thought it would be
+   easier to just write something new that worked on the AST level.
+   The scope of ``three2six`` is more general than 3to2, as you can
+   use it even if all you care about is converting from python 3.6
+   to 3.5.
