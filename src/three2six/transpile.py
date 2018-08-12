@@ -176,7 +176,7 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
             for alias in node.names:
                 if alias.asname:
                     continue
-                found_imports.add((alias.name, None))
+                found_imports.add(common.ImportDecl(alias.name, None))
         elif isinstance(node, ast.ImportFrom):
             module_name = node.module
             if module_name is None:
@@ -185,7 +185,7 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
             for alias in node.names:
                 if alias.asname:
                     continue
-                found_imports.add((module_name, alias.name))
+                found_imports.add(common.ImportDecl(module_name, alias.name))
 
             if node.module == "__future__":
                 prelude_end_index = i
@@ -195,14 +195,14 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
     missing_imports = sorted(required_imports - found_imports)
 
     import_node: ast.stmt
-    for i, (module_name, import_name) in enumerate(missing_imports):
-        if import_name is None:
+    for i, import_decl in enumerate(missing_imports):
+        if import_decl.import_name is None:
             import_node = ast.Import(names=[
-                ast.alias(name=module_name, asname=None)
+                ast.alias(name=import_decl.module_name, asname=None)
             ])
         else:
-            import_node = ast.ImportFrom(module=module_name, level=0, names=[
-                ast.alias(name=import_name, asname=None)
+            import_node = ast.ImportFrom(module=import_decl.module_name, level=0, names=[
+                ast.alias(name=import_decl.import_name, asname=None)
             ])
 
         tree.body.insert(prelude_end_index + i, import_node)

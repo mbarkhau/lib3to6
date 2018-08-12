@@ -34,11 +34,13 @@ class FixerError(Exception):
         self.module = module
 
 
-# NOTE (mb 2018-06-29): None of the fixers use asname. If there a
-#   module has an import using asname, it won't be detected as
-#   already imported, and another import (without the asname)
-#   will be added to the module.
-ImportDecl = typ.Tuple[str, typ.Optional[str]]
+# NOTE (mb 2018-06-29): None of the fixers use asname. If a
+#   module already has an import using asname, it won't be
+#   detected as already imported, and another import (without the
+#   asname) will be added to the module.
+class ImportDecl(typ.NamedTuple):
+    module_name: str
+    import_name: typ.Optional[str]
 
 
 # NOTE (mb 2018-06-24): This also includes builtins from py27

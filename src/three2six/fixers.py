@@ -93,7 +93,7 @@ class FutureImportFixerBase(FixerBase):
     future_name: str
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        self.required_imports.add(("__future__", self.future_name))
+        self.required_imports.add(common.ImportDecl("__future__", self.future_name))
         return tree
 
 
@@ -433,7 +433,7 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
         if node.id not in ("map", "zip", "filter"):
             return node
 
-        self.required_imports.add(("itertools", None))
+        self.required_imports.add(common.ImportDecl("itertools", None))
 
         return ast.Attribute(
             value=ast.Name(id="itertools", ctx=ast.Load()),
@@ -699,7 +699,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 raise TypeError(f"Unexpected node type {node}")
         else:
             assert isinstance(node, ast.Call)
-            self.required_imports.add(("itertools", None))
+            self.required_imports.add(common.ImportDecl("itertools", None))
             chain_args = []
             for val in chain_values:
                 items_func = ast.Attribute(value=val, attr='items', ctx=ast.Load())
