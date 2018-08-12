@@ -24,8 +24,11 @@ package_dir = {"": path("src")}
 
 
 if "bdist_wheel" in sys.argv:
-    import three2six
-    packages, package_dir = three2six.repackage(packages, package_dir)
+    try:
+        import three2six
+        packages, package_dir = three2six.repackage(packages, package_dir)
+    except ImportError:
+        print("WARNING: Building wheel which requires python 3.6+")
 
 
 setuptools.setup(

@@ -112,6 +112,7 @@ build:
 	# TODO (mb 2018-07-08): How to bootstrap new devs?
 	# TODO (mb 2018-07-12): Generate multiple builds,
 	#	one for each supported version.
+	$(PYTHON37) -m pip uninstall three2six --yes
 	$(PYTHON37) -m pip install --ignore-installed --force .
 	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG)
 	@echo "ok"
