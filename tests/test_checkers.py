@@ -208,6 +208,37 @@ FIXTURES = [
         """,
         "Prohibited from math import *.",
     ),
+    CheckFixture(
+        "no_complex_named_tuple",
+        """
+        import typing
+        class Foo(typing.NamedTuple):
+            bar: int
+            baz: int = 1
+        """,
+        "Prohibited use of default value for field 'baz' of class 'Foo'",
+    ),
+    CheckFixture(
+        "no_complex_named_tuple",
+        """
+        import typing
+        class Foo(typing.NamedTuple):
+            bar: int
+            def baz(self):
+                pass
+        """,
+        "Prohibited definition of method 'baz' for class 'Foo'",
+    ),
+    CheckFixture(
+        "no_complex_named_tuple",
+        """
+        import typing as typ
+        class Foo(typ.NamedTuple):
+            bar: int
+            baz: int = 1
+        """,
+        "Prohibited use of default value for field 'baz' of class 'Foo'",
+    ),
 ]
 
 

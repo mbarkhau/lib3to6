@@ -8,6 +8,7 @@ import ast
 import typing as typ
 
 from . import common
+from . import utils
 
 
 class VersionInfo:
@@ -195,6 +196,60 @@ class NoAsyncAwait(CheckerBase):
         for node in ast.walk(tree):
             if isinstance(node, ASYNC_AWAIT_NODE_TYPES):
                 raise common.CheckError("Prohibited use of async/await")
+
+
+class NoComplexNamedTuple(CheckerBase):
+
+    version_info = VersionInfo(prohibited_until="3.4")
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+        _typing_module_name: typ.Optional[str] = None
+        _namedtuple_class_name: str = "NamedTuple"
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "typing":
+                        if alias.asname is None:
+                            _typing_module_name = alias.name
+                        else:
+                            _typing_module_name = alias.asname
+
+            if isinstance(node, ast.ImportFrom) and node.module == "typing":
+                for alias in node.names:
+                    if alias.name == "NamedTuple":
+                        if alias.asname is None:
+                            _namedtuple_class_name = alias.name
+                        else:
+                            _namedtuple_class_name = alias.asname
+
+            if not isinstance(node, ast.ClassDef):
+                continue
+
+            if not (_typing_module_name or _namedtuple_class_name):
+                continue
+
+            if not utils.has_base_class(node, _typing_module_name, _namedtuple_class_name):
+                continue
+
+            for subnode in node.body:
+                if isinstance(subnode, ast.AnnAssign):
+                    if subnode.value:
+                        tgt = subnode.target
+                        assert isinstance(tgt, ast.Name)
+                        raise common.CheckError(
+                            f"Prohibited use of default value " +
+                            f"for field '{tgt.id}' of class '{node.name}'"
+                        )
+                elif isinstance(subnode, ast.FunctionDef):
+                    raise common.CheckError(
+                        f"Prohibited definition of method " +
+                        f"'{subnode.name}' for class '{node.name}'"
+                    )
+                else:
+                    raise common.CheckError(
+                        f"Unexpected subnode defined for class {node.name}: {subnode}"
+                    )
 
 
 # NOTE (mb 2018-06-24): I don't know how this could be done reliably.

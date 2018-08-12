@@ -113,3 +113,23 @@ def transpile_and_dump(module_str: str, cfg=None):
     coding, header = transpile.parse_module_header(module_str)
     result_str = transpile.transpile_module(cfg, module_str)
     return coding, header, result_str
+
+
+def has_base_class(
+    cls_node: ast.ClassDef,
+    module_name: str = None,
+    base_class_name: str = None,
+) -> bool:
+    if not (module_name or base_class_name):
+        return False
+
+    for base in cls_node.bases:
+        if isinstance(base, ast.Attribute):
+            val = base.value
+            if isinstance(val, ast.Name) and val.id == module_name and base.attr == base_class_name:
+                return True
+
+        if isinstance(base, ast.Name) and base.id == base_class_name:
+            return True
+
+    return False

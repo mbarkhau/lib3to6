@@ -680,7 +680,7 @@ FIXTURES = [
 
         class Foo(typing.NamedTuple):
             bar: int
-            baz: bool = False
+            baz: bool
         """,
         """
         import typing
@@ -699,7 +699,7 @@ FIXTURES = [
 
         class Foo(typ.NamedTuple):
             bar: int
-            baz: bool = False
+            baz: bool
         """,
         """
         import typing as typ
@@ -718,7 +718,7 @@ FIXTURES = [
 
         class Foo(NamedTuple):
             bar: int
-            baz: bool = False
+            baz: bool
         """,
         """
         from typing import NamedTuple

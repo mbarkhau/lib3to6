@@ -9,6 +9,7 @@ import ast
 import typing as typ
 
 from . import common
+from . import utils
 
 
 ContainerNodes = (ast.List, ast.Set, ast.Tuple)
@@ -889,23 +890,9 @@ class NamedTupleClassToAssignFixer(TransformerFixerBase):
             # no import of typing.NamedTuple -> class cannot have it as one its bases
             return node
 
-        has_namedtuple_base = False
-
-        for base in node.bases:
-            if isinstance(base, ast.Attribute):
-                val = base.value
-                has_namedtuple_base = has_namedtuple_base or (
-                    isinstance(val, ast.Name) and
-                    val.id == self._typing_module_name and
-                    base.attr == "NamedTuple"
-                )
-
-            if isinstance(base, ast.Name):
-                has_namedtuple_base = has_namedtuple_base or (
-                    isinstance(base, ast.Name) and
-                    base.id == self._namedtuple_class_name
-                )
-
+        has_namedtuple_base = utils.has_base_class(
+            node, self._typing_module_name, self._namedtuple_class_name or "NamedTuple"
+        )
         if not has_namedtuple_base:
             return node
 
