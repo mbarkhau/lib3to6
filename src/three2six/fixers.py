@@ -846,6 +846,109 @@ class UnpackingGeneralizationsFixer(FixerBase):
         return tree
 
 
+class NamedTupleClassToAssignFixer(TransformerFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="2.6",
+        apply_until="3.4",
+    )
+
+    _typing_module_name: typ.Optional[str]
+    _namedtuple_class_name: typ.Optional[str]
+
+    def __init__(self) -> None:
+        self._typing_module_name = None
+        self._namedtuple_class_name = None
+        super().__init__()
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.ImportFrom:
+        if node.module == "typing":
+            for alias in node.names:
+                if alias.name == "NamedTuple":
+                    if alias.asname is None:
+                        self._namedtuple_class_name = alias.name
+                    else:
+                        self._namedtuple_class_name = alias.asname
+
+        return node
+
+    def visit_Import(self, node: ast.Import) -> ast.Import:
+        for alias in node.names:
+            if alias.name == "typing":
+                if alias.asname is None:
+                    self._typing_module_name = alias.name
+                else:
+                    self._typing_module_name = alias.asname
+        return node
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> typ.Union[ast.ClassDef, ast.Assign]:
+        if len(node.bases) == 0:
+            return node
+
+        if not (self._typing_module_name or self._namedtuple_class_name):
+            # no import of typing.NamedTuple -> class cannot have it as one its bases
+            return node
+
+        has_namedtuple_base = False
+
+        for base in node.bases:
+            if isinstance(base, ast.Attribute):
+                val = base.value
+                has_namedtuple_base = has_namedtuple_base or (
+                    isinstance(val, ast.Name) and
+                    val.id == self._typing_module_name and
+                    base.attr == "NamedTuple"
+                )
+
+            if isinstance(base, ast.Name):
+                has_namedtuple_base = has_namedtuple_base or (
+                    isinstance(base, ast.Name) and
+                    base.id == self._namedtuple_class_name
+                )
+
+        if not has_namedtuple_base:
+            return node
+
+        func: typ.Union[ast.Attribute, ast.Name]
+
+        if self._typing_module_name:
+            func = ast.Attribute(
+                value=ast.Name(id=self._typing_module_name, ctx=ast.Load()),
+                attr="NamedTuple",
+                ctx=ast.Load(),
+            )
+        elif self._namedtuple_class_name:
+            func = ast.Name(id=self._namedtuple_class_name, ctx=ast.Load())
+        else:
+            raise RuntimeError("")
+
+        elts: typ.List[ast.Tuple] = []
+
+        for assign in node.body:
+            if not isinstance(assign, ast.AnnAssign):
+                continue
+            tgt = assign.target
+            if not isinstance(tgt, ast.Name):
+                continue
+
+            elts.append(ast.Tuple(
+                elts=[ast.Str(s=tgt.id), assign.annotation],
+                ctx=ast.Load(),
+            ))
+
+        return ast.Assign(
+            targets=[ast.Name(id=node.name, ctx=ast.Store())],
+            value=ast.Call(
+                func=func,
+                args=[
+                    ast.Str(s=node.name),
+                    ast.List(elts=elts, ctx=ast.Load()),
+                ],
+                keywords=[],
+            )
+        )
+
+
 # class GeneratorReturnToStopIterationExceptionFixer(FixerBase):
 #
 #     version_info = VersionInfo(

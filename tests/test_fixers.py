@@ -672,6 +672,63 @@ FIXTURES = [
                     print(x)
         """
     ),
+    FixerFixture(
+        "named_tuple_class_to_assign",
+        "2.7",
+        """
+        import typing
+
+        class Foo(typing.NamedTuple):
+            bar: int
+            baz: bool = False
+        """,
+        """
+        import typing
+
+        Foo = typing.NamedTuple("Foo", [
+            ("bar", int),
+            ("baz", bool),
+        ])
+        """
+    ),
+    FixerFixture(
+        "named_tuple_class_to_assign",
+        "2.7",
+        """
+        import typing as typ
+
+        class Foo(typ.NamedTuple):
+            bar: int
+            baz: bool = False
+        """,
+        """
+        import typing as typ
+
+        Foo = typ.NamedTuple("Foo", [
+            ("bar", int),
+            ("baz", bool),
+        ])
+        """
+    ),
+    FixerFixture(
+        "named_tuple_class_to_assign",
+        "2.7",
+        """
+        from typing import NamedTuple
+
+        class Foo(NamedTuple):
+            bar: int
+            baz: bool = False
+        """,
+        """
+        from typing import NamedTuple
+
+        Foo = NamedTuple("Foo", [
+            ("bar", int),
+            ("baz", bool),
+        ])
+        """
+    ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",
