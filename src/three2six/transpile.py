@@ -10,6 +10,7 @@ import sys
 import astor
 import typing as typ
 
+from . import utils
 from . import common
 from . import fixers
 from . import checkers
@@ -147,12 +148,60 @@ def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBa
         yield fixer_type()
 
 
+def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
+    future_imports_offset = -1
+    imports_end_offset = -1
+
+    import_decls: typ.Set[common.ImportDecl] = set()
+
+    for body_offset, node in enumerate(tree.body):
+        is_docstring = (
+            body_offset == 0 and
+            isinstance(node, ast.Expr) and
+            isinstance(node.value, ast.Str)
+        )
+        if is_docstring:
+            future_imports_offset = body_offset
+            imports_end_offset = body_offset
+            continue
+
+        if isinstance(node, ast.Import):
+            imports_end_offset = body_offset
+            for alias in node.names:
+                if alias.asname:
+                    # we never use asname, so this is user code
+                    pass
+                else:
+                    import_decls.add(common.ImportDecl(alias.name, None))
+        elif isinstance(node, ast.ImportFrom):
+            imports_end_offset = body_offset
+            module_name = node.module
+            if module_name:
+                if module_name == "__future__":
+                    future_imports_offset = body_offset
+
+                for alias in node.names:
+                    if alias.asname:
+                        # we never use asname, so this is user code
+                        pass
+                    else:
+                        import_decls.add(common.ImportDecl(module_name, alias.name))
+        else:
+            break
+
+    return (
+        future_imports_offset,
+        imports_end_offset,
+        import_decls,
+    )
+
+
 def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.ImportDecl]):
     """Add imports required by fixers.
 
     Some fixers depend on modules which may not be imported in
     the source module. As an example, occurrences of 'map' might
-    be replaced with 'itertools.map', in which case,
+    be replaced with 'itertools.imap', in which case,
     "import itertools" will be added in the module scope.
 
     A further quirk is that all reqired imports must be added
@@ -161,41 +210,16 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
     a side effect, a module may end up being imported twice, if
     the module is imported after some statement.
     """
-    found_imports: typ.Set[common.ImportDecl] = set()
-    prelude_end_index = 0
-
-    for i, node in enumerate(tree.body):
-        is_docstring = (
-            i == 0 and
-            isinstance(node, ast.Expr) and
-            isinstance(node.value, ast.Str)
-        )
-        if is_docstring:
-            prelude_end_index = 1
-        elif isinstance(node, ast.Import):
-            for alias in node.names:
-                if alias.asname:
-                    continue
-                found_imports.add(common.ImportDecl(alias.name, None))
-        elif isinstance(node, ast.ImportFrom):
-            module_name = node.module
-            if module_name is None:
-                continue
-
-            for alias in node.names:
-                if alias.asname:
-                    continue
-                found_imports.add(common.ImportDecl(module_name, alias.name))
-
-            if node.module == "__future__":
-                prelude_end_index = i
-        elif i > 0:
-            break
+    (
+        future_imports_offset,
+        imports_end_offset,
+        found_imports,
+    ) = parse_imports(tree)
 
     missing_imports = sorted(required_imports - found_imports)
 
     import_node: ast.stmt
-    for i, import_decl in enumerate(missing_imports):
+    for import_decl in missing_imports:
         if import_decl.import_name is None:
             import_node = ast.Import(names=[
                 ast.alias(name=import_decl.module_name, asname=None)
@@ -205,7 +229,30 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
                 ast.alias(name=import_decl.import_name, asname=None)
             ])
 
-        tree.body.insert(prelude_end_index + i, import_node)
+        if import_decl.module_name == "__future__":
+            tree.body.insert(future_imports_offset + 1, import_node)
+            future_imports_offset += 1
+            imports_end_offset += 1
+        else:
+            tree.body.insert(imports_end_offset + 1, import_node)
+            imports_end_offset += 1
+
+
+def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str]):
+    """Add global declarations required by fixers.
+
+    Some fixers declare globals (or override builtins) the source
+    module. As an example, occurrences of 'map' might be replaced
+    by 'map = getattr(itertools, "map", map)'.
+
+    These declarations are added directly after imports.
+    """
+    _, imports_end_offset, _ = parse_imports(tree)
+
+    for decl_str in sorted(module_declarations):
+        decl_node = utils.parse_stmt(decl_str)
+        tree.body.insert(imports_end_offset + 1, decl_node)
+        imports_end_offset += 1
 
 
 def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
@@ -213,6 +260,7 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     fixer_names: FuzzyNames = cfg.get("fixers", "")
     module_tree = ast.parse(module_source)
     required_imports: typ.Set[common.ImportDecl] = set()
+    module_declarations: typ.Set[str] = set()
 
     ver = sys.version_info
     src_version = f"{ver.major}.{ver.minor}"
@@ -228,9 +276,13 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
             if maybe_fixed_module is None:
                 raise Exception(f"Error running fixer {type(fixer).__name__}")
             required_imports.update(fixer.required_imports)
+            module_declarations.update(fixer.module_declarations)
             module_tree = maybe_fixed_module
 
-    add_required_imports(module_tree, required_imports)
+    if any(required_imports):
+        add_required_imports(module_tree, required_imports)
+    if any(module_declarations):
+        add_module_declarations(module_tree, module_declarations)
     coding, header = parse_module_header(module_source)
     return header + "".join(astor.to_source(module_tree))
 

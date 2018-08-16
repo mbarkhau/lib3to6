@@ -94,6 +94,12 @@ def clean_whitespace(fixture_str: str):
     ]).strip() + "\n"
 
 
+def parse_stmt(code: str) -> ast.stmt:
+    module = ast.parse(code)
+    assert len(module.body) == 1
+    return module.body[0]
+
+
 def parsedump_ast(code: str, mode="exec", **kwargs):
     """Parse some code from a string and pretty-print it."""
     node = ast.parse(clean_whitespace(code), mode=mode)

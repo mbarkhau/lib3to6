@@ -48,9 +48,11 @@ class FixerBase:
 
     version_info: VersionInfo
     required_imports: typ.Set[common.ImportDecl]
+    module_declarations: typ.Set[str]
 
     def __init__(self) -> None:
         self.required_imports = set()
+        self.module_declarations = set()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
@@ -419,8 +421,9 @@ class NewStyleClassesFixer(TransformerFixerBase):
 class ItertoolsBuiltinsFixer(TransformerFixerBase):
 
     version_info = VersionInfo(
-        apply_since="2.0",
+        apply_since="2.3",      # introduction of the itertools module
         apply_until="2.7",
+        works_until="3.7",
     )
 
     # WARNING (mb 2018-06-09): This fix is very broad, and should
@@ -431,16 +434,12 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
         return self.visit(tree)
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
-        if node.id not in ("map", "zip", "filter"):
-            return node
+        if isinstance(node.ctx, ast.Load) and node.id in ("map", "zip", "filter"):
+            self.required_imports.add(common.ImportDecl("itertools", None))
+            global_decl = f"{node.id} = getattr(itertools, 'i{node.id}', {node.id})"
+            self.module_declarations.add(global_decl)
 
-        self.required_imports.add(common.ImportDecl("itertools", None))
-
-        return ast.Attribute(
-            value=ast.Name(id="itertools", ctx=ast.Load()),
-            attr="i" + node.id,
-            ctx=ast.Load(),
-        )
+        return node
 
 
 def is_dict_call(node: ast.expr) -> bool:

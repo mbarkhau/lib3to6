@@ -84,6 +84,27 @@ FIXTURES = [
     ),
     FixerFixture(
         [
+            "absolute_import_future",
+            "division_future",
+            "print_function_future",
+            "unicode_literals_future",
+        ],
+        "2.7",
+        """
+        #!/usr/bin/env python
+        \"\"\"Module Docstring\"\"\"
+        from __future__ import division, absolute_import, print_function
+        """,
+        """
+        #!/usr/bin/env python
+        # -*- coding: utf-8 -*-
+        \"\"\"Module Docstring\"\"\"
+        from __future__ import division, absolute_import, print_function
+        from __future__ import unicode_literals
+        """,
+    ),
+    FixerFixture(
+        [
             "annotations_future",       # not applied to old versions
             "absolute_import_future",
             "division_future",
@@ -214,12 +235,14 @@ FIXTURES = [
         \"\"\"Module Docstring\"\"\"
         from __future__ import print_function
         import itertools
+        map = getattr(itertools, 'imap', map)
+        zip = getattr(itertools, 'izip', zip)
 
         def fn(elem):
             return elem * 2
 
-        list(itertools.imap(fn, [1, 2, 3, 4]))
-        dict(itertools.izip("abcd", [1, 2, 3, 4]))
+        list(map(fn, [1, 2, 3, 4]))
+        dict(zip("abcd", [1, 2, 3, 4]))
         """,
     ),
     FixerFixture(
@@ -234,9 +257,12 @@ FIXTURES = [
         """
         import itertools
 
+        map = getattr(itertools, 'imap', map)
+        zip = getattr(itertools, 'izip', zip)
+
         def fn(elem):
-            list(itertools.imap(fn, [1, 2, 3, 4]))
-            dict(itertools.izip("abcd", [1, 2, 3, 4]))
+            list(map(fn, [1, 2, 3, 4]))
+            dict(zip("abcd", [1, 2, 3, 4]))
             return elem * 2
         """,
     ),
@@ -251,9 +277,12 @@ FIXTURES = [
         """
         import itertools
 
+        map = getattr(itertools, 'imap', map)
+        zip = getattr(itertools, 'izip', zip)
+
         def fn(elem):
             def fn_nested():
-                list(itertools.imap(moep, itertools.izip("abcd", [1, 2, 3, 4])))
+                list(map(moep, zip("abcd", [1, 2, 3, 4])))
         """,
     ),
     FixerFixture(
