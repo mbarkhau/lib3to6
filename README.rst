@@ -168,12 +168,12 @@ Features which **are supported**:
      - lzma -> backports.lzma
      - enum -> flufl.enum
 
-
-Project Status (as of 2018-08-12): Experimental
+Project Status (as of 2018-08-16): Experimental
 -----------------------------------------------
 
 Only use this library if you intend to participate in testing or
-development. This README serves partially as a TODO list, not
+development. I'm using it on personal projects and am still
+finding bugs. This README serves partially as a TODO list, not
 everything advertised is implemented yet.
 
 The goal is to go through all of http://python-future.org and

@@ -31,8 +31,8 @@ BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 
 
 .install_dev.make_marker: setup.py envs.txt
-	$(PYTHON36) -m pip install --upgrade --quiet \
-		wheel twine \
+	$(PYTHON37) -m pip install --upgrade --quiet \
+		pip wheel twine \
 		flake8 mypy typing-extensions \
 		rst2html5 \
 		pytest pytest-cov \
@@ -42,11 +42,11 @@ BUILD_LOG := $(shell date +"test_build_logs/%Y%m%dt%H%M%S%N.log")
 
 
 .install_all.make_marker: setup.py envs.txt .install_dev.make_marker
-	$(PYTHON37) -m pip install --upgrade --quiet wheel astor;
-	$(PYTHON36) -m pip install --upgrade --quiet wheel astor;
-	$(PYTHON35) -m pip install --upgrade --quiet wheel astor;
-	$(PYTHON34) -m pip install --upgrade --quiet wheel astor;
-	$(PYTHON27) -m pip install --upgrade --quiet wheel astor;
+	$(PYTHON37) -m pip install --upgrade --quiet pip wheel astor;
+	$(PYTHON36) -m pip install --upgrade --quiet pip wheel astor;
+	$(PYTHON35) -m pip install --upgrade --quiet pip wheel astor;
+	$(PYTHON34) -m pip install --upgrade --quiet pip wheel astor;
+	$(PYTHON27) -m pip install --upgrade --quiet pip wheel astor;
 	@touch .install_all.make_marker
 
 clean:
@@ -64,14 +64,14 @@ lint: .install_dev.make_marker
 
 mypy: .install_dev.make_marker
 	@echo -n "mypy.."
-	@MYPYPATH=stubs/ $(PYTHON36) -m mypy \
+	@MYPYPATH=stubs/ $(PYTHON37) -m mypy \
 		src/three2six/
 	@echo "ok"
 
 
 test: .install_dev.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest \
+		$(PYTHON37) -m pytest \
 		--cov-report html \
 		--cov=three2six \
 		tests/
@@ -79,7 +79,7 @@ test: .install_dev.make_marker
 
 devtest: .install_dev.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -v \
+		$(PYTHON37) -m pytest -v \
 		--cov-report term \
 		--cov=three2six \
 		--capture=no \
@@ -119,7 +119,7 @@ build:
 
 
 upload: .install_dev.make_marker README.html
-	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 upload
+	$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 upload
 
 
 fulltest: .install_all.make_marker README.html lint mypy test build
