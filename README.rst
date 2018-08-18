@@ -156,19 +156,18 @@ Features which **are supported**:
  - map/zip/filter to itertools equivalents
  - Convert class based typing.NamedTuple usage to assignments
 
-..
+Some new libraries have backports, which warnings will point to:
 
-    Some new libraries have backports, which warnings will point to:
+ - typing
+ - pathlib
+ - secrets
+ - ipaddress
+ - csv -> backports.csv
+ - lzma -> backports.lzma
+ - enum -> flufl.enum
 
-     - typing
-     - pathlib
-     - secrets
-     - ipaddress
-     - csv -> backports.csv
-     - lzma -> backports.lzma
-     - enum -> flufl.enum
 
-Project Status (as of 2018-08-16): Experimental
+Project Status (as of 2018-08-18): Experimental
 -----------------------------------------------
 
 Only use this library if you intend to participate in testing or
