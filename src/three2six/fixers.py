@@ -190,7 +190,25 @@ class NestedScopesFutureFixer(FutureImportFixerBase):
     future_name = "nested_scopes"
 
 
-class RangeToXrangeFixer(FixerBase):
+class BuiltinsRenameFixerBase(FixerBase):
+
+    old_name: str
+    new_name: str
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)):
+                continue
+
+            if node.id == self.new_name:
+                self.module_declarations.add(f"""
+                {self.new_name} = getattr(__builtins__, '{self.old_name}', {self.new_name})
+                """.strip())
+
+        return tree
+
+
+class XrangeToRangeFixer(BuiltinsRenameFixerBase):
 
     version_info = VersionInfo(
         apply_since="1.0",
@@ -198,13 +216,44 @@ class RangeToXrangeFixer(FixerBase):
         works_until="3.7",
     )
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Name) and node.id == "range" and isinstance(node.ctx, ast.Load):
-                global_decl = "range = getattr(__builtins__, 'xrange', range)"
-                self.module_declarations.add(global_decl)
+    old_name = "xrange"
+    new_name = "range"
 
-        return tree
+
+class UnicodeToStrFixer(BuiltinsRenameFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="2.7",
+        works_until="3.7",
+    )
+
+    old_name = "unicode"
+    new_name = "str"
+
+
+class UnichrToChrFixer(BuiltinsRenameFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="2.7",
+        works_until="3.7",
+    )
+
+    old_name = "unichr"
+    new_name = "chr"
+
+
+class RawInputToInputFixer(BuiltinsRenameFixerBase):
+
+    version_info = VersionInfo(
+        apply_since="1.0",
+        apply_until="2.7",
+        works_until="3.7",
+    )
+
+    old_name = "raw_input"
+    new_name = "input"
 
 
 class RemoveFunctionDefAnnotationsFixer(FixerBase):

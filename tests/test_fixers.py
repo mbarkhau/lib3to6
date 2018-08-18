@@ -676,7 +676,7 @@ FIXTURES = [
         """,
     ),
     FixerFixture(
-        "range_to_xrange",
+        "xrange_to_range",
         "2.7",
         """
         myrange = range
@@ -687,20 +687,22 @@ FIXTURES = [
         """
     ),
     FixerFixture(
-        "range_to_xrange",
+        "xrange_to_range,unicode_to_str",
         "2.7",
         """
         def foo():
             if True:
                 for x in range(9):
-                    print(x)
+                    print(str(x))
         """,
         """
         range = getattr(__builtins__, "xrange", range)
+        str = getattr(__builtins__, "unicode", str)
+
         def foo():
             if True:
                 for x in range(9):
-                    print(x)
+                    print(str(x))
         """
     ),
     FixerFixture(
