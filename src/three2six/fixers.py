@@ -195,12 +195,14 @@ class RangeToXrangeFixer(FixerBase):
     version_info = VersionInfo(
         apply_since="1.0",
         apply_until="2.7",
+        works_until="3.7",
     )
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
             if isinstance(node, ast.Name) and node.id == "range" and isinstance(node.ctx, ast.Load):
-                node.id = "xrange"
+                global_decl = "range = getattr(__builtins__, 'xrange', range)"
+                self.module_declarations.add(global_decl)
 
         return tree
 

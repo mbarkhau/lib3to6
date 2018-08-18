@@ -33,7 +33,7 @@ if "bdist_wheel" in sys.argv:
 
 setuptools.setup(
     name="three2six",
-    version="0.2.8",
+    version="0.2.9",
     description="Build py2.7+ wheels from py3.6+ source",
     long_description=read("README.rst"),
     long_description_content_type="text/x-rst",

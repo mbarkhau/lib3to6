@@ -682,7 +682,8 @@ FIXTURES = [
         myrange = range
         """,
         """
-        myrange = xrange
+        range = getattr(__builtins__, "xrange", range)
+        myrange = range
         """
     ),
     FixerFixture(
@@ -695,9 +696,10 @@ FIXTURES = [
                     print(x)
         """,
         """
+        range = getattr(__builtins__, "xrange", range)
         def foo():
             if True:
-                for x in xrange(9):
+                for x in range(9):
                     print(x)
         """
     ),
