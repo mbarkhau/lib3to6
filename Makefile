@@ -74,7 +74,7 @@ test: .install_dev.make_marker
 		$(PYTHON37) -m pytest \
 		--cov-report html \
 		--cov=three2six \
-		tests/
+		test/
 
 
 devtest: .install_dev.make_marker
@@ -84,7 +84,7 @@ devtest: .install_dev.make_marker
 		--cov=three2six \
 		--capture=no \
 		--exitfirst \
-		tests/
+		test/
 
 
 .coverage_percent.txt: test
