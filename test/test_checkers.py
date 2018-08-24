@@ -1,8 +1,8 @@
 import sys
 import pytest
 
-from three2six.common import CheckError
-from three2six import utils
+from lib3to6.common import CheckError
+from lib3to6 import utils
 
 from collections import namedtuple
 

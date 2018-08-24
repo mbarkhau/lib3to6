@@ -1,9 +1,9 @@
-``three2six`` : Compatibility Matters
-=====================================
+lib3to6: Compatibility Matters
+==============================
 
-Build backward compatible wheels from modern Python 3 source
-(Python 3.6+ -> Python 2.7+). The idea is quite similar to Bable
-https://babeljs.io/.
+Build universal python from a substantial subset of Python 3.7
+syntax. (Python 3.7 -> Python 2.7+ and 3.4+). The idea is quite
+similar to Bable https://babeljs.io/.
 
 .. start-badges
 
@@ -11,36 +11,40 @@ https://babeljs.io/.
     :stub-columns: 1
 
     * - package
-      - | |license| |version| |wheel| |pyversions|
+      - | |license| |pypi| |version| |wheel| |pyversions|
     * - tests
       - | |travis| |mypy| |coverage|
 
-.. |travis| image:: https://api.travis-ci.org/mbarkhau/three2six.svg?branch=master
-    :target: https://travis-ci.org/mbarkhau/three2six
+.. |travis| image:: https://api.travis-ci.org/mbarkhau/lib3to6.svg?branch=master
+    :target: https://travis-ci.org/mbarkhau/lib3to6
     :alt: Build Status
 
 .. |mypy| image:: http://www.mypy-lang.org/static/mypy_badge.svg
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
-.. |coverage| image:: https://img.shields.io/badge/coverage-85%25-green.svg
-    :target: https://travis-ci.org/mbarkhau/three2six
+.. |coverage| image:: https://img.shields.io/badge/coverage-86%25-green.svg
+    :target: https://travis-ci.org/mbarkhau/lib3to6
     :alt: Code Coverage
 
-.. |license| image:: https://img.shields.io/pypi/l/three2six.svg
-    :target: https://pypi.python.org/pypi/three2six
+.. |license| image:: https://img.shields.io/pypi/l/lib3to6.svg
+    :target: https://pypi.python.org/pypi/lib3to6
     :alt: MIT License
 
-.. |version| image:: https://img.shields.io/pypi/v/three2six.svg
-    :target: https://pypi.python.org/pypi/three2six
-    :alt: Version Number
+.. |pypi| image:: https://img.shields.io/pypi/v/lib3to6.svg
+    :target: https://pypi.python.org/pypi/lib3to6
+    :alt: PyPI Version
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/three2six.svg
-    :target: https://pypi.python.org/pypi/three2six
+.. |version| image:: https://img.shields.io/badge/CalVer-v201808.0014-blue.svg
+    :target: https://calver.org/
+    :alt: CalVer v201808.0014
+
+.. |wheel| image:: https://img.shields.io/pypi/wheel/lib3to6.svg
+    :target: https://pypi.python.org/pypi/lib3to6
     :alt: PyPI Wheel
 
-.. |pyversions| image:: https://img.shields.io/pypi/pyversions/three2six.svg
-    :target: https://pypi.python.org/pypi/three2six
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/lib3to6.svg
+    :target: https://pypi.python.org/pypi/lib3to6
     :alt: Supported Python Versions
 
 
@@ -62,8 +66,8 @@ without sacrificing compatability to older versions of python.
 
 .. code-block:: bash
 
-    $ pip install three2six
-    $ three2six my_module/__init__.py
+    $ pip install lib3to6
+    $ python -m lib3to6 my_module/__init__.py
 
 
 .. code-block:: python
@@ -94,7 +98,7 @@ Some fixes that have been applied:
     - f string -> "".format  conversion
 
 
-The cli command ``three2six`` is nice for demo purposes,
+The cli command ``lib3to6`` is nice for demo purposes,
 but for your project it is better to use it in your
 setup.py file.
 
@@ -102,11 +106,15 @@ setup.py file.
 
     # setup.py
 
-    packages = ["my_module"]
+    import sys
+    import setuptools
 
-    if "bdist_wheel" in sys.argv:
-        import three2six
-        packages, package_dir = three2six.repackage(packages)
+    packages = setuptools.find_packages(".")
+    package_dir = {"": "."}
+
+    if "sdist" in sys.argv or "bdist_wheel" in sys.argv:
+        import lib3to6
+        package_dir = lib3to6.fix_package_dir()
 
     setuptools.setup(
         name="my-module",
@@ -118,11 +126,14 @@ setup.py file.
 
 .. code-block:: bash
 
-    $ python setup.py bdist_wheel --python-tag=py2.py3
+    $ python setup.py sdist bdist_wheel --python-tag=py2.py3
+    running sdist
+    running egg_info
+    ...
     running bdist_wheel
     running build
     running build_py
-    copying /tmp/three2six_qu7ub0bk/my_module/__init__.py -> build/lib/my_module
+    copying /tmp/lib3to6_qu7ub0bk/my_module/__init__.py -> build/lib/my_module
     ...
 
     $ python3 build/lib/my_module/__init__.py
@@ -203,10 +214,10 @@ example it will translate f-strings to normal strings using the
     >>> import sys
     >>> sys.version_info
     '3.6.5'
-    >>> import three2six
+    >>> import lib3to6
     >>> py3_source = 'f"Hello {1 + 1}!"'
     >>> cfg = {"fixers": ["f_string_to_str_format"]}
-    >>> py2_source = three2six.transpile_module(cfg, py3_source)
+    >>> py2_source = lib3to6.transpile_module(cfg, py3_source)
 
     >>> print(py3_source)
     f"Hello {1 + 1}!"
@@ -214,7 +225,7 @@ example it will translate f-strings to normal strings using the
     # -*- coding: utf-8 -*-
     "Hello {0}!".format(1 + 1)
 
-    >>> print(three2six.parsedump_ast(py3_source))
+    >>> print(lib3to6.parsedump_ast(py3_source))
     Module(body=[Expr(value=JoinedStr(values=[
         Str(s='Hello '),
         FormattedValue(
@@ -228,7 +239,7 @@ example it will translate f-strings to normal strings using the
         ),
         Str(s='!'),
     ]))])
-    >>> print(three2six.parsedump_ast(py2_source))
+    >>> print(lib3to6.parsedump_ast(py2_source))
     Module(body=[Expr(value=Call(
         func=Attribute(
             value=Str(s='Hello {0}!'),
@@ -248,7 +259,7 @@ Of course this does not cover every aspect of compatability.
 Changes in APIs cannot be translated automatically in this way.
 
 An obvious example, is that there is no way to transpile code
-which uses ``async`` and ``await``. In this case, ``three2six``
+which uses ``async`` and ``await``. In this case, ``lib3to6``
 will simply raise a CheckError. This applies only to your source
 code though, so if import use a library which uses ``async`` and
 ``await``, everything may look fine until you run your tests
@@ -270,26 +281,26 @@ A more subtle example is the change in semantics of the builtin
 
 Usually there are alternative ways to write equivalent code that
 works on all versions of python. For these common
-incompatabilities three2six will raise an error and suggest an
+incompatabilities lib3to6 will raise an error and suggest an
 alternative, such as in this case using ``io.open`` instead.
 
 .. code-block:: bash
 
-    $ three2six open_example.py
+    $ lib3to6 open_example.py
     TODO:
 
-    $ three2six open_example.py --diff
+    $ lib3to6 open_example.py --diff
     TODO:
 
 
-Here ``three2six`` you will ge
+Here ``lib3to6`` you will ge
 
 however it remains your
 responsibility to write your code so that this syntactic
 translation is semantically equivalent in both python3 and
 python2.
 
-three2six uses the python ast module to parse your code. This
+lib3to6 uses the python ast module to parse your code. This
 means that you need a modern python interpreter to transpile from
 modern python to legacy python interpreter. You cannot transpile
 features which your interpreter cannot parse. The intended use is
@@ -304,7 +315,7 @@ FAQ
    considering that python 3.6+ is required to build a wheel?
  - A: The irony is not lost. The issue is, how to parse source
    code from a newer version of python than the python
-   interpreter itself supports. You can install three2six on
+   interpreter itself supports. You can install lib3to6 on
    older versions of python, but you'll be limited to the
    features supported by that version. For example, you won't be
    able to use f"" strings on python 3.5, but most annotations
@@ -319,6 +330,6 @@ FAQ
  - A: I can't honestly say much about ``lib3to2``. It seems to not
    be maintained and looking at the source I thought it would be
    easier to just write something new that worked on the AST level.
-   The scope of ``three2six`` is more general than 3to2, as you can
+   The scope of ``lib3to6`` is more general than 3to2, as you can
    use it even if all you care about is converting from python 3.6
    to 3.5.

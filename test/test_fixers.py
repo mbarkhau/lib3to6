@@ -3,8 +3,8 @@ from collections import namedtuple
 
 import pytest
 
-from three2six import transpile
-from three2six import utils
+from lib3to6 import transpile
+from lib3to6 import utils
 
 
 FixerFixture = namedtuple("FixerFixture", [
@@ -26,8 +26,8 @@ def test_header_preserved():
     return
     test_source = """
     #!/usr/bin/env python
-    # This file is part of the three2six project
-    # https://github.com/mbarkhau/three2six
+    # This file is part of the lib3to6 project
+    # https://github.com/mbarkhau/lib3to6
     # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
     #
     # SPDX-License-Identifier:    MIT
@@ -36,8 +36,8 @@ def test_header_preserved():
     expected_source = """
     #!/usr/bin/env python
     # -*- coding: utf-8 -*-
-    # This file is part of the three2six project
-    # https://github.com/mbarkhau/three2six
+    # This file is part of the lib3to6 project
+    # https://github.com/mbarkhau/lib3to6
     # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
     #
     # SPDX-License-Identifier:    MIT

@@ -1,5 +1,5 @@
-# This file is part of the three2six project
-# https://github.com/mbarkhau/three2six
+# This file is part of the lib3to6 project
+# https://github.com/mbarkhau/lib3to6
 # (C) 2018 Manuel Barkhau <mbarkhau@gmail.com>
 #
 # SPDX-License-Identifier:    MIT

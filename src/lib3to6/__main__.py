@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# This file is part of the three2six project
-# https://github.com/mbarkhau/three2six
+# This file is part of the lib3to6 project
+# https://github.com/mbarkhau/lib3to6
 #
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
@@ -35,7 +35,7 @@ from . import transpile
 )
 @click.option(
     "--config",
-    default="three2six.toml",
+    default="lib3to6.toml",
     required=False,
     metavar="<path>",
     help="Path to config file.",

@@ -4,33 +4,34 @@
 
 
 build/.setup_conda_envs.make_marker:
-	conda create --name three2six37 python=3.7 --yes
-	conda create --name three2six36 python=3.6 --yes
-	conda create --name three2six35 python=3.5 --yes
-	conda create --name three2six34 python=3.4 --yes
-	conda create --name three2six27 python=2.7 --yes
+	conda create --name lib3to6_37 python=3.7 --yes
+	conda create --name lib3to6_36 python=3.6 --yes
+	conda create --name lib3to6_35 python=3.5 --yes
+	conda create --name lib3to6_34 python=3.4 --yes
+	conda create --name lib3to6_27 python=2.7 --yes
 	@mkdir -p build/
 	@touch build/.setup_conda_envs.make_marker
 
 
 build/envs.txt: build/.setup_conda_envs.make_marker
 	@mkdir -p build/
-	conda env list | grep three2six | rev | cut -d " " -f1 | rev > build/envs.txt.tmp
+	conda env list | grep lib3to6 | rev | cut -d " " -f1 | rev > build/envs.txt.tmp
 	mv build/envs.txt.tmp build/envs.txt
 
 
-PYENV37 ?= $(shell bash -c "grep three2six37 build/envs.txt || true")
-PYENV36 ?= $(shell bash -c "grep three2six36 build/envs.txt || true")
-PYENV35 ?= $(shell bash -c "grep three2six35 build/envs.txt || true")
-PYENV34 ?= $(shell bash -c "grep three2six34 build/envs.txt || true")
-PYENV27 ?= $(shell bash -c "grep three2six27 build/envs.txt || true")
+PYENV37 ?= $(shell bash -c "grep 37 build/envs.txt || true")
+PYENV36 ?= $(shell bash -c "grep 36 build/envs.txt || true")
+PYENV35 ?= $(shell bash -c "grep 35 build/envs.txt || true")
+PYENV34 ?= $(shell bash -c "grep 34 build/envs.txt || true")
+PYENV27 ?= $(shell bash -c "grep 27 build/envs.txt || true")
 PYTHON37 ?= $(PYENV37)/bin/python
 PYTHON36 ?= $(PYENV36)/bin/python
 PYTHON35 ?= $(PYENV35)/bin/python
 PYTHON34 ?= $(PYENV34)/bin/python
 PYTHON27 ?= $(PYENV27)/bin/python
 
-DIST_WHEEL_THREE2SIX = $(shell bash -c "ls -1t dist/*py2*.whl | head -n 1")
+BDIST_WHEEL_LIB3TO6 = $(shell bash -c "ls -1t dist/lib3to6*py2*.whl | head -n 1")
+SDIST_LIB3TO6 = $(shell bash -c "ls -1t dist/lib3to6*.tar.gz | head -n 1")
 DIST_WHEEL_TEST = $(shell bash -c "ls -1t test_project/dist/*py2*.whl | head -n 1")
 BUILD_LOG_DIR = "test_build_logs/"
 BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
@@ -61,16 +62,21 @@ clean:
 	rm -f build/.install.make_marker
 
 
+# NOTE (mb 2018-08-23): The linter has an issue running with
+# 	python 3.7 because some code in pycodestyle=2.3.1
+#	but we have to wait for a flake8 update because
+#	reasons... https://github.com/PyCQA/pycodestyle/issues/728
+
 lint: build/.install.make_marker
 	@echo -n "lint.."
-	@$(PYTHON36) -m flake8 src/three2six/
+	@$(PYTHON36) -m flake8 src/lib3to6/
 	@echo "ok"
 
 
 mypy: build/.install.make_marker
 	@echo -n "mypy.."
 	@MYPYPATH=stubs/ $(PYTHON37) -m mypy \
-		src/three2six/
+		src/lib3to6/
 	@echo "ok"
 
 
@@ -78,7 +84,7 @@ test: build/.install.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON37) -m pytest \
 		--cov-report html \
-		--cov=three2six \
+		--cov=lib3to6 \
 		test/
 
 
@@ -86,7 +92,7 @@ devtest: build/.install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON37) -m pytest -v \
 		--cov-report term \
-		--cov=three2six \
+		--cov=lib3to6 \
 		--capture=no \
 		--exitfirst \
 		test/
@@ -165,7 +171,7 @@ fulltest: build/.install.make_marker build/README.html lint mypy test build
 
 	@echo -n "install.."
 	@$(PYTHON37) -m pip install  --ignore-installed --quiet --force \
-		$(DIST_WHEEL_THREE2SIX) >> $(BUILD_LOG_FILE)
+		$(BDIST_WHEEL_LIB3TO6) >> $(BUILD_LOG_FILE)
 	@echo "ok"
 
 	@echo -n "build test_project.."
@@ -214,4 +220,4 @@ setup_conda_envs: build/.setup_conda_envs.make_marker
 install: build/.install.make_marker
 
 run_main:
-	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m three2six.main
+	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m lib3to6.main

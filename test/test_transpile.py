@@ -1,5 +1,5 @@
-from three2six import transpile
-from three2six.utils import clean_whitespace
+from lib3to6 import transpile
+from lib3to6.utils import clean_whitespace
 
 
 def test_parse_header_simple():

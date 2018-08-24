@@ -1,5 +1,5 @@
-# This file is part of the three2six project
-# https://github.com/mbarkhau/three2six
+# This file is part of the lib3to6 project
+# https://github.com/mbarkhau/lib3to6
 #
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
@@ -28,7 +28,7 @@ PYTHON_TAG_PREFIXES = {
 }
 
 
-CACHE_DIR = pl.Path(tempfile.gettempdir()) / ".three2six_cache"
+CACHE_DIR = pl.Path(tempfile.gettempdir()) / ".lib3to6_cache"
 
 
 def eval_build_config() -> common.BuildConfig:
@@ -49,47 +49,41 @@ def eval_build_config() -> common.BuildConfig:
     }
 
 
-def normalize_package_dir(
+def _ingore_package_files(src: str, names: typ.List[str]) -> typ.List[str]:
+    if src.endswith("__pycache__"):
+        return names
+    return [name for name in names if name.endswith(".pyc")]
+
+
+def init_build_package_dir(
     packages: typ.List[str],
-    package_dir: common.PackageDir=None,
+    local_package_dir: common.PackageDir
 ) -> common.PackageDir:
-    if package_dir is not None:
-        return {
-            package: package_dir.get(
-                package,
-                str(pl.Path(package_dir[""], package)),
-            )
-            for package in packages
-        }
-
-    norm_package_dir: common.PackageDir = {}
-    for path in sys.path:
-        if path.startswith(ENV_PATH):
-            continue
-        for package in packages:
-            module_path = pl.Path(path) / package / "__init__.py"
-            if module_path.exists():
-                existing_package_path = norm_package_dir.get(package)
-                if existing_package_path is None:
-                    norm_package_dir[package] = str(pl.Path(path) / package)
-                else:
-                    raise common.InvalidPackage((
-                        "Ambiguous package structure. "
-                        "Multiple paths for package '{}': {} {}"
-                    ).format(package, module_path, existing_package_path))
-
-    return norm_package_dir
-
-
-def init_build_package_dir(norm_package_dir: common.PackageDir) -> common.PackageDir:
-    tmp_prefix = "three2six_"
+    tmp_prefix = "lib3to6_"
     tmp_build_dir = pl.Path(tempfile.mkdtemp(prefix=tmp_prefix))
+    if "" in local_package_dir:
+        root = local_package_dir[""]
+    else:
+        root = None
 
     build_package_dir: common.PackageDir = {}
-    for package, src_package_dir in norm_package_dir.items():
+    for package in packages:
+        if package in local_package_dir:
+            src_package_dir = local_package_dir[package]
+        elif root:
+            src_package_dir = pl.Path(root) / package
+        else:
+            raise Exception(f"Could not resolve source path of '{package}'")
+
+    for package, src_package_dir in local_package_dir.items():
         tmp_build_package_dir = str(tmp_build_dir / package)
 
-        shutil.copytree(src_package_dir, tmp_build_package_dir)
+        shutil.copytree(
+            src_package_dir,
+            tmp_build_package_dir,
+            ignore=_ingore_package_files,
+        )
+
         build_package_dir[package] = tmp_build_package_dir
 
     # TODO (mb 2018-07-12): cleanup after build
@@ -124,13 +118,8 @@ def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir
         build_package(cfg, package, build_dir)
 
 
-def repackage(
-    packages: typ.List[str],
-    package_dir: common.PackageDir=None,
-) -> typ.Tuple[typ.List[str], common.PackageDir]:
-
-    norm_package_dir = normalize_package_dir(packages, package_dir)
-    build_package_dir = init_build_package_dir(norm_package_dir)
+def fix(package_dir: common.PackageDir) -> common.PackageDir:
+    build_package_dir = init_build_package_dir(package_dir)
     build_cfg = eval_build_config()
     build_packages(build_cfg, build_package_dir)
-    return packages, build_package_dir
+    return build_package_dir

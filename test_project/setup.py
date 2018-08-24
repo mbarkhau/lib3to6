@@ -1,31 +1,26 @@
-# This file is part of the three2six project
-# https://github.com/mbarkhau/three2six
+# This file is part of the lib3to6 project
+# https://github.com/mbarkhau/lib3to6
 #
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
 
-import sys
+import lib3to6
 import setuptools
 
 
 packages = ["test_module"]
-
-
-if "bdist_wheel" in sys.argv:
-    import three2six
-    packages, package_dir = three2six.repackage(packages)
+package_dir = lib3to6.fix(package_dir=None)
 
 
 setuptools.setup(
     name="test-module",
-    version="0.1.0",
-    description="A python3.6 module built with three2six",
+    version="201808.0001",
+    description="A python3.7 module built with lib3to6",
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
     packages=packages,
     package_dir=package_dir,
     license="MIT",
-    install_requires=["six", "pathlib2"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
