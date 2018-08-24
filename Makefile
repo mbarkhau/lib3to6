@@ -1,6 +1,7 @@
-.PHONY: clean setup_conda_envs install \
+.PHONY: setup_conda_envs install \
 	test devtest fulltest lint \
-	readme build upload
+	clean rm_site_packages \
+	build readme upload
 
 
 build/.setup_conda_envs.make_marker:
@@ -121,26 +122,37 @@ build/README.html: build/.install.make_marker README.rst CHANGELOG.rst
 readme: build/README.html
 
 
-build/sources.txt: setup.py build/envs.txt src/three2six/*.py
+build/.src_files.txt: setup.py build/envs.txt src/lib3to6/*.py
 	@mkdir -p build/
-	@ls -l setup.py build/envs.txt src/three2six/*.py > build/sources.txt.tmp
-	@mv build/sources.txt.tmp build/sources.txt
+	@ls -l setup.py build/envs.txt src/lib3to6/*.py > build/.src_files.txt.tmp
+	@mv build/.src_files.txt.tmp build/.src_files.txt
 
 
-build/.local_install.make_marker: build/sources.txt
-	@echo -n "installing three2six.."
-	$(PYTHON37) -m pip uninstall three2six --yes
-	$(PYTHON37) -m pip install --ignore-installed --force .
+rm_site_packages:
+	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6/
+	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6*.dist-info/
+	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6*.egg-info/
+	rm -f $(PYENV36)/lib/python3.6/site-packages/lib3to6*.egg
+
+
+build/.local_install.make_marker: build/.src_files.txt rm_site_packages
+	@echo "installing lib3to6.."
+	@$(PYTHON36) setup.py install --no-compile --verbose
 	@mkdir -p build/
-	touch build/.local_install.make_marker
+	@$(PYTHON36) -c "import lib3to6"
+	@echo "install completed for lib3to6"
+	@touch build/.local_install.make_marker
 
 
 build: build/.local_install.make_marker
 	@mkdir -p $(BUILD_LOG_DIR)
-	@echo "Writing full build log to $(BUILD_LOG_FILE)"
-	@echo -n "building three2six.."
-	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
-	@echo "ok"
+	@echo "writing full build log to $(BUILD_LOG_FILE)"
+	@echo "building lib3to6.."
+	@$(PYTHON36) setup.py sdist
+	# @$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
+	@echo "############################"
+	@tar --gzip --list --file $(SDIST_LIB3TO6)
+	@echo "build completed for lib3to6"
 
 
 upload: build/.install.make_marker build/README.html
@@ -220,4 +232,4 @@ setup_conda_envs: build/.setup_conda_envs.make_marker
 install: build/.install.make_marker
 
 run_main:
-	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m lib3to6.main
+	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m lib3to6 --help

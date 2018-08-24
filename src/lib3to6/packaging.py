@@ -52,41 +52,39 @@ def eval_build_config() -> common.BuildConfig:
 def _ingore_package_files(src: str, names: typ.List[str]) -> typ.List[str]:
     if src.endswith("__pycache__"):
         return names
-    return [name for name in names if name.endswith(".pyc")]
-
-
-def init_build_package_dir(
-    packages: typ.List[str],
-    local_package_dir: common.PackageDir
-) -> common.PackageDir:
-    tmp_prefix = "lib3to6_"
-    tmp_build_dir = pl.Path(tempfile.mkdtemp(prefix=tmp_prefix))
-    if "" in local_package_dir:
-        root = local_package_dir[""]
     else:
-        root = None
+        return [name for name in names if name.endswith(".pyc")]
+
+
+def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
+    output_dir = pl.Path("build") / "lib3to6_out"
+    if output_dir.exists():
+        # TODO (mb 2018-08-25): As an optimization, we could
+        #   restrict deletion to files that we manipulate, in
+        #   other words, to *.py files.
+        shutil.rmtree(output_dir)
+
+    output_dir.mkdir(parents=True)
 
     build_package_dir: common.PackageDir = {}
-    for package in packages:
-        if package in local_package_dir:
-            src_package_dir = local_package_dir[package]
-        elif root:
-            src_package_dir = pl.Path(root) / package
-        else:
-            raise Exception(f"Could not resolve source path of '{package}'")
 
     for package, src_package_dir in local_package_dir.items():
-        tmp_build_package_dir = str(tmp_build_dir / package)
+        # TODO (mb 2018-08-25): Make sure src_package_dir is a
+        #   relative path.
+        is_abs_path = pl.Path(src_package_dir) == pl.Path(src_package_dir).absolute()
+        if is_abs_path:
+            raise Exception(f"package_dir must use relative paths, got '{src_package_dir}'")
+
+        build_package_subdir = str(output_dir / src_package_dir)
 
         shutil.copytree(
             src_package_dir,
-            tmp_build_package_dir,
+            build_package_subdir,
             ignore=_ingore_package_files,
         )
 
-        build_package_dir[package] = tmp_build_package_dir
+        build_package_dir[package] = build_package_subdir
 
-    # TODO (mb 2018-07-12): cleanup after build
     return build_package_dir
 
 
@@ -118,7 +116,10 @@ def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir
         build_package(cfg, package, build_dir)
 
 
-def fix(package_dir: common.PackageDir) -> common.PackageDir:
+def fix(package_dir: common.PackageDir=None) -> common.PackageDir:
+    if package_dir is None:
+        package_dir = {"": "."}
+
     build_package_dir = init_build_package_dir(package_dir)
     build_cfg = eval_build_config()
     build_packages(build_cfg, build_package_dir)

@@ -1,4 +1,4 @@
-lib3to6: Compatibility Matters
+lib3to6: compatibility matters
 ==============================
 
 Build universal python from a substantial subset of Python 3.7

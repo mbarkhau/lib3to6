@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import sys
 import setuptools
 import pkg_resources
 
@@ -20,53 +21,27 @@ def read(filename):
 
 
 packages = setuptools.find_packages(project_path("src"))
-package_dir = {
-    package_name: project_path("src", package_name)
-    for package_name in packages
-}
+package_dir = {"": "src"}
 
-print("!!!", package_dir)
+print("??????????", sys.argv)
 
-packages = setuptools.find_packages(project_path("src"))
-package_dir = {"": project_path("src")}
-
-# print("!!!", package_dir)
-
-# for path in package_dir.values():
-#     for root, dirnames, filenames in os.walk(path):
-#         for dirname in dirnames:
-#             print("##11d", root, dirname)
-#         for filename in filenames:
-#             if filename.endswith(".py"):
-#                 print("##11f", root, filename, end=" ")
-#                 with open(root + "/" + filename, mode="r") as fh:
-#                     print(fh.readlines()[:2])
-
-print(">>>", package_dir)
-
-try:
-    import lib3to6
-    package_dir = lib3to6.fix(package_dir)
-except ImportError as ex:
-    if "lib3to6" in str(ex):
-        print("WARNING: 'lib3to6' not available, distribution will be python 3.6+ only")
-    else:
-        raise
-
-print("<<<", package_dir)
-
-# for path in package_dir.values():
-#     for root, dirnames, filenames in os.walk(path):
-#         for dirname in dirnames:
-#             print("##22d", root, dirname)
-#         for filename in filenames:
-#             if filename.endswith(".py"):
-#                 print("##22f", root, filename, end=" ")
-#                 with open(root + "/" + filename, mode="r") as fh:
-#                     print(fh.readlines()[:2])
+is_dist_cmd = any((
+    "sdist" in sys.argv,
+    "build_py" in sys.argv,
+    "bdist_wheel" in sys.argv,
+))
+if is_dist_cmd:
+    try:
+        import lib3to6
+        package_dir = lib3to6.fix(package_dir)
+    except ImportError as ex:
+        if "lib3to6" in str(ex):
+            print("WARNING: 'lib3to6' missing, package will not be universal")
+        else:
+            raise
 
 
-__version__ = "v201808.0014"
+__version__ = "v201808.0014-alpha"
 __normalized_python_version__ = str(pkg_resources.parse_version(__version__))
 
 long_description = (
@@ -74,7 +49,6 @@ long_description = (
     "\n\n" +
     read("CHANGELOG.rst")
 )
-
 
 setuptools.setup(
     name="lib3to6",

@@ -4,12 +4,12 @@
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
 
-from .packaging import repackage
+from .packaging import fix
 from .transpile import transpile_module
 from .utils import parsedump_ast, parsedump_source
 
 __all__ = [
-    "repackage",
+    "fix",
     "transpile_module",
     "parsedump_ast",
     "parsedump_source",
