@@ -1,9 +1,10 @@
-fail_fast: true
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v1.4.0
     hooks:
     -   id: autopep8-wrapper
+    -   id: flake8
+    -   id: pyflakes
     -   id: check-added-large-files
     -   id: check-ast
     -   id: check-builtin-literals
@@ -13,21 +14,20 @@ repos:
     -   id: check-json
     -   id: check-yaml
     -   id: debug-statements
-    -   id: detect-aws-credentials
     -   id: detect-private-key
     -   id: end-of-file-fixer
-    -   id: flake8
-    -   id: forbid-new-submodules
-    -   id: mixed-line-ending
     -   id: name-tests-test
-    -   id: pyflakes
-    -   id: requirements-txt-fixer
     -   id: sort-simple-yaml
+    -   id: mixed-line-ending
     -   id: trailing-whitespace
--   repo: https://github.com/asottile/pyupgrade
-    rev: v1.2.0
-    hooks:
-    -   id: pyupgrade
+
+    # -   id: detect-aws-credentials
+    # -   id: forbid-new-submodules
+    # -   id: requirements-txt-fixer
+# -   repo: https://github.com/asottile/pyupgrade
+#     rev: v1.2.0
+#     hooks:
+#     -   id: pyupgrade
 -   repo: https://github.com/asottile/add-trailing-comma
     rev: v0.6.4
     hooks:
