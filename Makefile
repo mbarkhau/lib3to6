@@ -39,9 +39,9 @@ BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
 
 
 build/.install.make_marker: setup.py build/envs.txt
-	$(PYTHON37) -m pip install --upgrade --quiet \
+	$(PYTHON36) -m pip install --upgrade --quiet \
 		pip wheel twine \
-		flake8 mypy typing-extensions \
+		pre-commit flake8 mypy typing-extensions \
 		rst2html5 \
 		pytest pytest-cov \
 		ipython pudb \
@@ -70,6 +70,7 @@ clean:
 
 lint: build/.install.make_marker
 	@echo -n "lint.."
+	@$(PYTHON36) -m pre_commit
 	@$(PYTHON36) -m flake8 src/lib3to6/
 	@echo "ok"
 

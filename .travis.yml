@@ -11,7 +11,7 @@ install:
 script:
   - export PYTHONPATH=src/:$PYTHONPATH
   - export MYPYPATH=stubs/
-  - python -m flake8 src/three2six/
-  - python -m mypy src/three2six/
-  - python -m pytest --cov=three2six tests/
+  - python -m flake8 src/lib3to6/
+  - python -m mypy src/lib3to6/
+  - python -m pytest --cov=lib3to6 tests/
   - rst2html5 --strict README.rst > /dev/null
