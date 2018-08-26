@@ -152,7 +152,8 @@ build: build/.local_install.make_marker
 
 
 upload: build/.install.make_marker build/README.html
-	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 upload
+	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3
+	$(PYENV36)/bin/twine upload $(BDIST_WHEEL_LIB3TO6)
 
 
 fulltest: build/.install.make_marker build/README.html lint mypy test build

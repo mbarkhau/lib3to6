@@ -2,6 +2,7 @@ exclude: >
     (?x)^(
         build/.+|
         dist/.+|
+        htmlcov/.+|
         my-module/build/.*|
         my-module/dist/.*|
         test_project/build/.*|
