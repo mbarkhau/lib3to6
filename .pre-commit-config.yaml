@@ -1,3 +1,12 @@
+exclude: >
+    (?x)^(
+        build/.+|
+        dist/.+|
+        my-module/build/.*|
+        my-module/dist/.*|
+        test_project/build/.*|
+        test_project/dist/.*
+    )$
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v1.4.0

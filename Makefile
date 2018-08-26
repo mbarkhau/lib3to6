@@ -7,8 +7,6 @@
 build/.setup_conda_envs.make_marker:
 	conda create --name lib3to6_37 python=3.7 --yes
 	conda create --name lib3to6_36 python=3.6 --yes
-	conda create --name lib3to6_35 python=3.5 --yes
-	conda create --name lib3to6_34 python=3.4 --yes
 	conda create --name lib3to6_27 python=2.7 --yes
 	@mkdir -p build/
 	@touch build/.setup_conda_envs.make_marker
@@ -22,13 +20,9 @@ build/envs.txt: build/.setup_conda_envs.make_marker
 
 PYENV37 ?= $(shell bash -c "grep 37 build/envs.txt || true")
 PYENV36 ?= $(shell bash -c "grep 36 build/envs.txt || true")
-PYENV35 ?= $(shell bash -c "grep 35 build/envs.txt || true")
-PYENV34 ?= $(shell bash -c "grep 34 build/envs.txt || true")
 PYENV27 ?= $(shell bash -c "grep 27 build/envs.txt || true")
 PYTHON37 ?= $(PYENV37)/bin/python
 PYTHON36 ?= $(PYENV36)/bin/python
-PYTHON35 ?= $(PYENV35)/bin/python
-PYTHON34 ?= $(PYENV34)/bin/python
 PYTHON27 ?= $(PYENV27)/bin/python
 
 BDIST_WHEEL_LIB3TO6 = $(shell bash -c "ls -1t dist/lib3to6*py2*.whl | head -n 1")
@@ -40,18 +34,16 @@ BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
 
 build/.install.make_marker: setup.py build/envs.txt
 	$(PYTHON36) -m pip install --upgrade --quiet \
-		pip wheel twine \
+		pip setuptools wheel twine \
 		pre-commit flake8 mypy typing-extensions \
 		rst2html5 \
 		pytest pytest-cov \
 		ipython pudb \
 		astor pathlib2 click;
 
-	$(PYTHON37) -m pip install --upgrade --quiet pip wheel astor;
-	$(PYTHON36) -m pip install --upgrade --quiet pip wheel astor;
-	$(PYTHON35) -m pip install --upgrade --quiet pip wheel astor;
-	$(PYTHON34) -m pip install --upgrade --quiet pip wheel astor;
-	$(PYTHON27) -m pip install --upgrade --quiet pip wheel astor;
+	$(PYTHON37) -m pip install --upgrade --quiet pip setuptools wheel astor;
+	$(PYTHON36) -m pip install --upgrade --quiet pip setuptools wheel astor;
+	$(PYTHON27) -m pip install --upgrade --quiet pip setuptools wheel astor;
 
 	@mkdir -p build/
 	@touch build/.install.make_marker
@@ -63,28 +55,32 @@ clean:
 	rm -f build/.install.make_marker
 
 
+pc:
+	@$(PYTHON36) -m pre_commit
+
+
 # NOTE (mb 2018-08-23): The linter has an issue running with
 # 	python 3.7 because some code in pycodestyle=2.3.1
 #	but we have to wait for a flake8 update because
 #	reasons... https://github.com/PyCQA/pycodestyle/issues/728
 
+
 lint: build/.install.make_marker
 	@echo -n "lint.."
-	@$(PYTHON36) -m pre_commit
 	@$(PYTHON36) -m flake8 src/lib3to6/
 	@echo "ok"
 
 
 mypy: build/.install.make_marker
 	@echo -n "mypy.."
-	@MYPYPATH=stubs/ $(PYTHON37) -m mypy \
+	@MYPYPATH=stubs/ $(PYTHON36) -m mypy \
 		src/lib3to6/
 	@echo "ok"
 
 
 test: build/.install.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest \
+		$(PYTHON36) -m pytest \
 		--cov-report html \
 		--cov=lib3to6 \
 		test/
@@ -92,7 +88,7 @@ test: build/.install.make_marker
 
 devtest: build/.install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON37) -m pytest -v \
+		$(PYTHON36) -m pytest -v \
 		--cov-report term \
 		--cov=lib3to6 \
 		--capture=no \
@@ -101,10 +97,11 @@ devtest: build/.install.make_marker
 
 
 build/.coverage_percent.txt: test
+	@mkdir -p build/
 	@grep -oP '>[0-9]+%</td>' htmlcov/index.html \
 		| head -n 1 \
 		| grep -oP '[.0-9]+' \
-		> .coverage_percent.txt
+		> build/.coverage_percent.txt
 
 
 README.rst: build/.coverage_percent.txt
@@ -115,7 +112,8 @@ build/README.html: build/.install.make_marker README.rst CHANGELOG.rst
 	@cat README.rst > build/.full_readme.rst
 	@echo "\n" >> build/.full_readme.rst
 	@cat CHANGELOG.rst >> build/.full_readme.rst
-	@$(PYENV37)/bin/rst2html5 --strict build/.full_readme.rst > build/README.html.tmp
+	@$(PYENV36)/bin/rst2html5 --strict \
+		build/.full_readme.rst > build/README.html.tmp
 	@mv build/README.html.tmp build/README.html
 	@echo "updated build/README.html"
 
@@ -149,12 +147,12 @@ build: build/.local_install.make_marker
 	@mkdir -p $(BUILD_LOG_DIR)
 	@echo "writing full build log to $(BUILD_LOG_FILE)"
 	@echo "building lib3to6.."
-	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
+	@$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
 	@echo "build completed for lib3to6"
 
 
 upload: build/.install.make_marker build/README.html
-	$(PYTHON37) setup.py sdist bdist_wheel --python-tag=py2.py3 upload
+	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 upload
 
 
 fulltest: build/.install.make_marker build/README.html lint mypy test build
@@ -170,14 +168,6 @@ fulltest: build/.install.make_marker build/README.html lint mypy test build
 	@echo -n "py36.."
 	@$(PYTHON36) --version 2>&1 | grep "Python 3.6" >> $(BUILD_LOG_FILE)
 	@echo -n "ok "
-
-	@echo -n "py35.."
-	@$(PYTHON35) --version 2>&1 | grep "Python 3.5" >> $(BUILD_LOG_FILE)
-	@echo -n "ok "
-
-	@echo -n "py34.."
-	@$(PYTHON34) --version 2>&1 | grep "Python 3.4" >> $(BUILD_LOG_FILE)
-	@echo "ok"
 
 	@echo -n "install.."
 	@$(PYTHON37) -m pip install  --ignore-installed --quiet --force \
@@ -210,19 +200,6 @@ fulltest: build/.install.make_marker build/README.html lint mypy test build
 	@$(PYTHON36) -c "import test_module" | grep "all ok" >> $(BUILD_LOG_FILE)
 	@echo "ok"
 
-	@echo -n "py35.."
-	@$(PYTHON35) -m pip install --ignore-installed --quiet --force \
-		$(DIST_WHEEL_TEST) >> $(BUILD_LOG_FILE)
-	@echo -n "installed.."
-	@$(PYTHON35) -c "import test_module" | grep "all ok" >> $(BUILD_LOG_FILE)
-	@echo "ok"
-
-	@echo -n "py34.."
-	@$(PYTHON34) -m pip install --ignore-installed --quiet --force \
-		$(DIST_WHEEL_TEST) >> $(BUILD_LOG_FILE)
-	@echo -n "installed.."
-	@$(PYTHON34) -c "import test_module" | grep "all ok" >> $(BUILD_LOG_FILE)
-	@echo "ok"
 	@wait
 
 
