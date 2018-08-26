@@ -148,10 +148,7 @@ build: build/.local_install.make_marker
 	@mkdir -p $(BUILD_LOG_DIR)
 	@echo "writing full build log to $(BUILD_LOG_FILE)"
 	@echo "building lib3to6.."
-	@$(PYTHON36) setup.py sdist
-	# @$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
-	@echo "############################"
-	@tar --gzip --list --file $(SDIST_LIB3TO6)
+	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
 	@echo "build completed for lib3to6"
 
 
@@ -187,7 +184,8 @@ fulltest: build/.install.make_marker build/README.html lint mypy test build
 	@echo "ok"
 
 	@echo -n "build test_project.."
-	@bash -c "cd test_project;$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3" >> $(BUILD_LOG_FILE)
+	@bash -c "cd test_project;$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3" \
+		>> $(BUILD_LOG_FILE)
 	@echo "ok"
 
 	@echo -n "py27.."

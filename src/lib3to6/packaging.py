@@ -49,22 +49,23 @@ def eval_build_config() -> common.BuildConfig:
     }
 
 
-def _ingore_package_files(src: str, names: typ.List[str]) -> typ.List[str]:
+def _ingore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
+    if src.endswith("build"):
+        return names
+    if src.endswith("dist"):
+        return names
     if src.endswith("__pycache__"):
         return names
-    else:
-        return [name for name in names if name.endswith(".pyc")]
+    return [name for name in names if name.endswith(".pyc")]
 
 
 def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
     output_dir = pl.Path("build") / "lib3to6_out"
-    if output_dir.exists():
-        # TODO (mb 2018-08-25): As an optimization, we could
-        #   restrict deletion to files that we manipulate, in
-        #   other words, to *.py files.
-        shutil.rmtree(output_dir)
-
-    output_dir.mkdir(parents=True)
+    try:
+        output_dir.mkdir(parents=True)
+    except Exception:
+        # forgiveness > permission
+        pass
 
     build_package_dir: common.PackageDir = {}
 
@@ -75,15 +76,21 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
         if is_abs_path:
             raise Exception(f"package_dir must use relative paths, got '{src_package_dir}'")
 
-        build_package_subdir = str(output_dir / src_package_dir)
+        build_package_subdir = output_dir / src_package_dir
+
+        # TODO (mb 2018-08-25): As an optimization, we could
+        #   restrict deletion to files that we manipulate, in
+        #   other words, to *.py files.
+        if build_package_subdir.exists():
+            shutil.rmtree(build_package_subdir)
 
         shutil.copytree(
             src_package_dir,
-            build_package_subdir,
-            ignore=_ingore_package_files,
+            str(build_package_subdir),
+            ignore=_ingore_tmp_files,
         )
 
-        build_package_dir[package] = build_package_subdir
+        build_package_dir[package] = str(build_package_subdir)
 
     return build_package_dir
 

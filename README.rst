@@ -11,7 +11,7 @@ similar to Bable https://babeljs.io/.
     :stub-columns: 1
 
     * - package
-      - | |license| |pypi| |version| |wheel| |pyversions|
+      - | |license| |pypi| |wheel| |pyversions| |version|
     * - tests
       - | |travis| |mypy| |coverage|
 
@@ -35,7 +35,7 @@ similar to Bable https://babeljs.io/.
     :target: https://pypi.python.org/pypi/lib3to6
     :alt: PyPI Version
 
-.. |version| image:: https://img.shields.io/badge/CalVer-v201808.0014-blue.svg
+.. |version| image:: https://img.shields.io/badge/CalVer-v201808.0014--alpha-blue.svg
     :target: https://calver.org/
     :alt: CalVer v201808.0014
 
@@ -59,9 +59,13 @@ without sacrificing compatability to older versions of python.
 
     # my_module/__init__.py
     def hello(who: str) -> None:
-        print(f"Hello {who}!")
+        import sys
+        print(f"Hello {who} from {sys.version.split()[0]}!")
 
+
+    print(__file__)
     hello("世界")
+
 
 
 .. code-block:: bash
@@ -78,10 +82,14 @@ without sacrificing compatability to older versions of python.
     from __future__ import print_function
     from __future__ import unicode_literals
 
-    def hello(who):
-        print('Hello {0}!'.format(who))
 
-    hello("世界")
+    def hello(who):
+        import sys
+        print('Hello {0} from {1}!'.format(who, sys.version.split()[0]))
+
+
+    print(__file__)
+    hello('世界')
 
 
 Fixes are applied to match the semantics of python3 code as
@@ -102,6 +110,7 @@ The cli command ``lib3to6`` is nice for demo purposes,
 but for your project it is better to use it in your
 setup.py file.
 
+
 .. code-block:: python
 
     # setup.py
@@ -112,35 +121,56 @@ setup.py file.
     packages = setuptools.find_packages(".")
     package_dir = {"": "."}
 
-    if "sdist" in sys.argv or "bdist_wheel" in sys.argv:
+    if any(arg.startswith("bdist") for arg in sys.argv):
         import lib3to6
-        package_dir = lib3to6.fix_package_dir()
+        package_dir = lib3to6.fix(package_dir)
 
     setuptools.setup(
         name="my-module",
-        version="0.1.0",
+        version="201808.1",
         packages=packages,
         package_dir=package_dir,
-        ...
     )
+
 
 .. code-block:: bash
 
-    $ python setup.py sdist bdist_wheel --python-tag=py2.py3
-    running sdist
-    running egg_info
-    ...
+    ~/my-module $ python setup.py bdist_wheel --python-tag=py2.py3
     running bdist_wheel
-    running build
-    running build_py
-    copying /tmp/lib3to6_qu7ub0bk/my_module/__init__.py -> build/lib/my_module
     ...
+    ~/my-module$ ls -1 dist/
+    my_module-201808.1-py2.py3-none-any.whl
 
-    $ python3 build/lib/my_module/__init__.py
-    Hello 世界!
+    ~/my-module$ python3 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
+    Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
+    Installing collected packages: my-module
+    Successfully installed my-module-201808.1
 
-    $ python2 build/lib/my_module/__init__.py
-    Hello 世界!
+    ~/my-module$ python2 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
+    Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
+    Installing collected packages: my-module
+    Successfully installed my-module-201808.1
+
+
+To make sure we're importing my_module from the installation, as
+opposed to from the local directory, we have to switch
+directories.
+
+
+.. code-block:: bash
+
+    ~/$ python3 -c "import my_module"
+    /home/mbarkhau/my-module/my_module/__init__.py
+    Hello 世界 from 3.6.5!
+
+    ~/my-module$ cd ..
+    ~/$ python3 -c "import my_module"
+    /home/mbarkhau/miniconda3/envs/lib3to6_36/lib/python3.6/site-packages/my_module/__init__.py
+    Hello 世界 from 3.6.5!
+
+    ~$ python2 -c "import my_module"
+    /home/mbarkhau/miniconda3/envs/lib3to6_27/lib/python2.7/site-packages/my_module/__init__.py
+    Hello 世界 from 2.7.15!
 
 
 Feature Support

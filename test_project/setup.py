@@ -4,17 +4,25 @@
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
 
-import lib3to6
+import sys
 import setuptools
+import pkg_resources
 
 
 packages = ["test_module"]
-package_dir = lib3to6.fix(package_dir=None)
+package_dir = {"": "."}
 
+
+if any(arg.startswith("bdist") for arg in sys.argv):
+    import lib3to6
+    package_dir = lib3to6.fix(package_dir)
+
+__version__ = "v201808.0001"
+__normalized_python_version__ = str(pkg_resources.parse_version(__version__))
 
 setuptools.setup(
     name="test-module",
-    version="201808.0001",
+    version=__normalized_python_version__,
     description="A python3.7 module built with lib3to6",
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
@@ -22,7 +30,7 @@ setuptools.setup(
     package_dir=package_dir,
     license="MIT",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production",
         "Environment :: Console",
         "Environment :: Other Environment",
         "Intended Audience :: Developers",

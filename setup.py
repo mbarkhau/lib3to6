@@ -23,14 +23,8 @@ def read(filename):
 packages = setuptools.find_packages(project_path("src"))
 package_dir = {"": "src"}
 
-print("??????????", sys.argv)
 
-is_dist_cmd = any((
-    "sdist" in sys.argv,
-    "build_py" in sys.argv,
-    "bdist_wheel" in sys.argv,
-))
-if is_dist_cmd:
+if any(arg.startswith("bdist") for arg in sys.argv):
     try:
         import lib3to6
         package_dir = lib3to6.fix(package_dir)
