@@ -13,8 +13,6 @@ repos:
     rev: v1.4.0
     hooks:
     -   id: autopep8-wrapper
-    -   id: flake8
-    -   id: pyflakes
     -   id: check-added-large-files
     -   id: check-ast
     -   id: check-builtin-literals
@@ -31,6 +29,7 @@ repos:
     -   id: mixed-line-ending
     -   id: trailing-whitespace
 
+    # -   id: flake8
     # -   id: detect-aws-credentials
     # -   id: forbid-new-submodules
     # -   id: requirements-txt-fixer

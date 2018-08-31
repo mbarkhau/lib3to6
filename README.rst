@@ -11,7 +11,7 @@ similar to Bable https://babeljs.io/.
     :stub-columns: 1
 
     * - package
-      - | |license| |pypi| |wheel| |pyversions| |version|
+      - | |license| |wheel| |pyversions| |pypi| |version|
     * - tests
       - | |travis| |mypy| |coverage|
 
@@ -28,7 +28,7 @@ similar to Bable https://babeljs.io/.
     :alt: Code Coverage
 
 .. |license| image:: https://img.shields.io/pypi/l/lib3to6.svg
-    :target: https://pypi.python.org/pypi/lib3to6
+    :target: https://github.com/mbarkhau/lib3to6/blob/master/LICENSE
     :alt: MIT License
 
 .. |pypi| image:: https://img.shields.io/pypi/v/lib3to6.svg
@@ -40,7 +40,7 @@ similar to Bable https://babeljs.io/.
     :alt: CalVer v201808.0014
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/lib3to6.svg
-    :target: https://pypi.python.org/pypi/lib3to6
+    :target: https://pypi.org/project/lib3to6/#files
     :alt: PyPI Wheel
 
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/lib3to6.svg

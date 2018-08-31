@@ -58,7 +58,7 @@ setuptools.setup(
 
     packages=packages,
     package_dir=package_dir,
-    install_requires=["astor", "pathlib2", "click"],
+    install_requires=["astor", "pathlib2", "click", "typing"],
     zip_safe=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
