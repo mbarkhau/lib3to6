@@ -35,7 +35,7 @@ if any(arg.startswith("bdist") for arg in sys.argv):
             raise
 
 
-__version__ = "v201808.0014-alpha"
+__version__ = "v201808.0015-alpha"
 __normalized_python_version__ = str(pkg_resources.parse_version(__version__))
 
 long_description = (

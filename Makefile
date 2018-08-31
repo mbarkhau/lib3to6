@@ -118,6 +118,19 @@ build/README.html: build/.install.make_marker README.rst CHANGELOG.rst
 	@echo "updated build/README.html"
 
 
+bump_version:
+	date +"v%Y%m." > .new_version.txt
+	awk 'match($$0, /v[0-9]+.([0-9]+)(-[a-z]*)?/, arr) { printf "%04d%s\n", (arr[1]+1), arr[2] }' \
+		version.txt >> .new_version.txt
+	sed -i -z 's/\n//g' .new_version.txt
+	cat version.txt >> old_versions.txt
+	mv .new_version.txt version.txt
+	sed -i "s/__version__ = \".*\"/__version__ = \"$$(cat version.txt)\"/" setup.py
+	sed -i "s/CalVer-.*-blue.svg/CalVer-$$(cat version.txt | sed 's/-/--/')-blue.svg/" \
+		README.rst
+	sed -i "s/CalVer .*/CalVer $$(cat version.txt)/" README.rst
+
+
 readme: build/README.html
 
 
