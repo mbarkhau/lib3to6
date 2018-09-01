@@ -101,13 +101,13 @@ def parse_stmt(code: str) -> ast.stmt:
     return module.body[0]
 
 
-def parsedump_ast(code: str, mode="exec", **kwargs):
+def parsedump_ast(code: str, mode="exec", **kwargs) -> str:
     """Parse some code from a string and pretty-print it."""
     node = ast.parse(clean_whitespace(code), mode=mode)
     return dump_ast(node, **kwargs)
 
 
-def parsedump_source(code: str, mode="exec"):
+def parsedump_source(code: str, mode="exec") -> str:
     node = ast.parse(clean_whitespace(code), mode=mode)
     return astor.to_source(node)
 

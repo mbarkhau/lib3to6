@@ -192,8 +192,8 @@ class NestedScopesFutureFixer(FutureImportFixerBase):
 
 class BuiltinsRenameFixerBase(FixerBase):
 
-    old_name: str
     new_name: str
+    old_name: str
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
@@ -216,8 +216,8 @@ class XrangeToRangeFixer(BuiltinsRenameFixerBase):
         works_until="3.7",
     )
 
-    old_name = "xrange"
     new_name = "range"
+    old_name = "xrange"
 
 
 class UnicodeToStrFixer(BuiltinsRenameFixerBase):
@@ -228,8 +228,8 @@ class UnicodeToStrFixer(BuiltinsRenameFixerBase):
         works_until="3.7",
     )
 
-    old_name = "unicode"
     new_name = "str"
+    old_name = "unicode"
 
 
 class UnichrToChrFixer(BuiltinsRenameFixerBase):
@@ -240,8 +240,8 @@ class UnichrToChrFixer(BuiltinsRenameFixerBase):
         works_until="3.7",
     )
 
-    old_name = "unichr"
     new_name = "chr"
+    old_name = "unichr"
 
 
 class RawInputToInputFixer(BuiltinsRenameFixerBase):
@@ -252,8 +252,8 @@ class RawInputToInputFixer(BuiltinsRenameFixerBase):
         works_until="3.7",
     )
 
-    old_name = "raw_input"
     new_name = "input"
+    old_name = "raw_input"
 
 
 class RemoveFunctionDefAnnotationsFixer(FixerBase):

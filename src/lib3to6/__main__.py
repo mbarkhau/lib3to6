@@ -70,5 +70,5 @@ def main(
             print(fixed_source_text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()      # type: ignore
