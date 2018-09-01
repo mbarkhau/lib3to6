@@ -762,6 +762,74 @@ FIXTURES = [
         ])
         """
     ),
+    FixerFixture(
+        "config_parser_import_fallback",
+        "2.7",
+        """
+        import configparser
+
+        configparser.ConfigParser()
+        """,
+        """
+        try:
+            import configparser
+        except ImportError:
+            import ConfigParser as configparser
+
+        configparser.ConfigParser()
+        """
+    ),
+    FixerFixture(
+        "config_parser_import_fallback",
+        "2.7",
+        """
+        import configparser as cp
+
+        cp.ConfigParser()
+        """,
+        """
+        try:
+            import configparser as cp
+        except ImportError:
+            import ConfigParser as cp
+
+        cp.ConfigParser()
+        """
+    ),
+    FixerFixture(
+        "config_parser_import_fallback",
+        "2.7",
+        """
+        from configparser import RawConfigParser
+
+        RawConfigParser("")
+        """,
+        """
+        try:
+            from configparser import RawConfigParser
+        except ImportError:
+            from ConfigParser import RawConfigParser
+
+        RawConfigParser("")
+        """
+    ),
+    FixerFixture(
+        "http_cookiejar_import_fallback",
+        "2.7",
+        """
+        from http.cookiejar import CookieJar
+
+        jar = CookieJar
+        """,
+        """
+        try:
+            from http.cookiejar import CookieJar
+        except ImportError:
+            from cookielib import CookieJar
+
+        jar = CookieJar
+        """
+    ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",
