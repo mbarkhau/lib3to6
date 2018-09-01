@@ -23,7 +23,7 @@ similar to Bable https://babeljs.io/.
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
-.. |coverage| image:: https://img.shields.io/badge/coverage-86%25-green.svg
+.. |coverage| image:: https://img.shields.io/badge/coverage-87%25-green.svg
     :target: https://travis-ci.org/mbarkhau/lib3to6
     :alt: Code Coverage
 
@@ -35,9 +35,9 @@ similar to Bable https://babeljs.io/.
     :target: https://pypi.python.org/pypi/lib3to6
     :alt: PyPI Version
 
-.. |version| image:: https://img.shields.io/badge/CalVer-v201809.0016--alpha-blue.svg
+.. |version| image:: https://img.shields.io/badge/CalVer-v201809.0017--alpha-blue.svg
     :target: https://calver.org/
-    :alt: CalVer v201809.0016-alpha
+    :alt: CalVer v201809.0017-alpha
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/lib3to6.svg
     :target: https://pypi.org/project/lib3to6/#files
