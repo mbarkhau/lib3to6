@@ -35,7 +35,7 @@ BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
 build/.install.make_marker: setup.py build/envs.txt
 	$(PYTHON36) -m pip install --upgrade --quiet \
 		pip setuptools wheel twine \
-		pre-commit flake8 mypy typing-extensions \
+		flake8 mypy typing-extensions \
 		rst2html5 \
 		pytest pytest-cov \
 		ipython pudb \
@@ -53,10 +53,6 @@ clean:
 	rm -f build/envs.txt
 	rm -f build/.setup_conda_envs.make_marker
 	rm -f build/.install.make_marker
-
-
-pc:
-	@$(PYTHON36) -m pre_commit
 
 
 # NOTE (mb 2018-08-23): The linter has an issue running with
