@@ -122,6 +122,8 @@ bump_version:
 	cat version.txt >> old_versions.txt
 	mv .new_version.txt version.txt
 	sed -i "s/__version__ = \".*\"/__version__ = \"$$(cat version.txt)\"/" setup.py
+	sed -i "s/__version__ = \".*\"/__version__ = \"$$(cat version.txt)\"/" \
+		src/lib3to6/__init__.py
 	sed -i "s/CalVer-.*-blue.svg/CalVer-$$(cat version.txt | sed 's/-/--/')-blue.svg/" \
 		README.rst
 	sed -i "s/CalVer .*/CalVer $$(cat version.txt)/" README.rst
