@@ -4,6 +4,8 @@ Changelog for lib3to6
 v201809.0018-alpha
 ------------------
 
+ - CheckErrors include log line numbers
+ - Transpile errors now include filenames
  - Added fixers for renamed modules, e.g.
 
     .. code-block:: diff

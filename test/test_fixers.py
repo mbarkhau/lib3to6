@@ -859,28 +859,28 @@ def test_fixers(fixture):
     expected_coding, expected_header = transpile.parse_module_header(expected_source)
 
     test_source = utils.clean_whitespace(fixture.test_source)
-    test_ast = utils.parsedump_ast(test_source)
-    print(">>>>>>>>" * 9)
-    print(test_ast)
-    print("--------" * 9)
-    print(repr(test_source))
-    print(">>>>>>>>" * 9)
+    # test_ast = utils.parsedump_ast(test_source)
+    # print(">>>>>>>>" * 9)
+    # print(test_ast)
+    # print("--------" * 9)
+    # print(repr(test_source))
+    # print(">>>>>>>>" * 9)
 
-    print("????????" * 9)
+    # print("????????" * 9)
     # print(expected_ast)
     # print("--------" * 9)
-    print(repr(expected_source))
-    print("????????" * 9)
+    # print(repr(expected_source))
+    # print("????????" * 9)
 
     cfg = {"fixers": fixture.names, "target_version": fixture.target_version}
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
     result_ast = utils.parsedump_ast(result_source)
 
-    print("<<<<<<<<" * 9)
+    # print("<<<<<<<<" * 9)
     # print(result_ast)
     # print("--------" * 9)
-    print(repr(result_source))
-    print("<<<<<<<<" * 9)
+    # print(repr(result_source))
+    # print("<<<<<<<<" * 9)
 
     assert result_coding == expected_coding
     assert result_header == expected_header

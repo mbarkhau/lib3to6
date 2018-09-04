@@ -219,10 +219,11 @@ class ModuleImportFallbackFixerBase(TransformerFixerBase):
             asname = alias.asname
         elif "." in self.new_name:
             asname = self.new_name.replace('.', "_")
-            raise common.CheckError(
+            msg = (
                 f"Prohibited use of 'import {self.new_name}', "
                 f"use 'import {self.new_name} as {asname}' instead."
             )
+            raise common.CheckError(msg, node)
         else:
             asname = self.new_name
 

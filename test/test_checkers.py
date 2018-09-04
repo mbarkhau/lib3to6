@@ -14,21 +14,21 @@ CheckFixture = namedtuple("CheckFixture", [
 
 FIXTURES = [
     CheckFixture(
-        "no_overridden_stdlib_imports",
+        "no_overridden_fixer_imports",
         """
         import itertools
         """,
         None,
     ),
     CheckFixture(
-        "no_overridden_stdlib_imports",
+        "no_overridden_fixer_imports",
         """
         itertools = "foo"
         """,
         "Prohibited override of import 'itertools'",
     ),
     CheckFixture(
-        "no_overridden_stdlib_imports",
+        "no_overridden_fixer_imports",
         """
         def itertools():
             pass
@@ -36,7 +36,7 @@ FIXTURES = [
         "Prohibited override of import 'itertools'",
     ),
     CheckFixture(
-        "no_overridden_stdlib_imports",
+        "no_overridden_fixer_imports",
         """
         import x as itertools
         """,
@@ -260,11 +260,11 @@ def test_checkers(fixture):
         utils.transpile_and_dump(test_source, cfg)
         assert fixture.expected_error_msg is None
     except CheckError as result_error:
-        result_error_msg = str(result_error)
-        print("!!!", repr(result_error_msg))
+        # result_error_msg = str(result_error)
+        # print("!!!", repr(result_error_msg))
 
         assert fixture.expected_error_msg is not None
 
         for expected_error_msg in expected_error_messages:
-            print("???", repr(expected_error_msg))
+            # print("???", repr(expected_error_msg))
             assert expected_error_msg in str(result_error)

@@ -19,7 +19,14 @@ class InvalidPackage(Exception):
 class CheckError(Exception):
 
     # TODO (mb 2018-06-14): line numbers and file path
-    pass
+    def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
+        node_lineno = getattr(node, "lineno", None)
+        parent_lineno = getattr(parent, "lineno", None)
+        lineno = node_lineno or parent_lineno
+
+        if lineno:
+            msg += f" on line {lineno}"
+        super().__init__(msg)
 
 
 class FixerError(Exception):

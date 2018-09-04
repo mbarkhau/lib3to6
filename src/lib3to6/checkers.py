@@ -44,30 +44,43 @@ class NoStarImports(CheckerBase):
 
             for alias in node.names:
                 if alias.name == "*":
-                    raise common.CheckError(f"Prohibited from {node.module} import *.")
+                    raise common.CheckError(f"Prohibited from {node.module} import *.", node)
 
 
-class NoOverriddenStdlibImportsChecker(CheckerBase):
+def _iter_scope_names(tree: ast.Module) -> typ.Iterable[typ.Tuple[str, ast.AST]]:
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            yield node.name, node
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            yield node.id, node
+        elif isinstance(node, (ast.ImportFrom, ast.Import)):
+            for alias in node.names:
+                name = alias.name if alias.asname is None else alias.asname
+                yield name, node
+        elif isinstance(node, ast.arg):
+            yield node.arg, node
+
+
+class NoOverriddenFixerImportsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
     version_info = VersionInfo()
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-                name_in_scope = node.name
-            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                name_in_scope = node.id
-            elif isinstance(node, ast.alias) and node.asname:
-                name_in_scope = node.asname
-            elif isinstance(node, ast.arg):
-                name_in_scope = node.arg
-            else:
+        for name_in_scope, node in _iter_scope_names(tree):
+            is_fixer_import = (
+                isinstance(node, ast.Import) and
+                len(node.names) == 1 and
+                node.names[0].asname is None and
+                node.names[0].name == name_in_scope
+            )
+            if is_fixer_import:
                 continue
 
-            if name_in_scope and name_in_scope in self.prohibited_import_overrides:
-                raise common.CheckError(f"Prohibited override of import '{name_in_scope}'")
+            if name_in_scope in self.prohibited_import_overrides:
+                msg = f"Prohibited override of import '{name_in_scope}'"
+                raise common.CheckError(msg, node)
 
 
 class NoOverriddenBuiltinsChecker(CheckerBase):
@@ -76,20 +89,10 @@ class NoOverriddenBuiltinsChecker(CheckerBase):
     version_info = VersionInfo()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-                name_in_scope = node.name
-            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-                name_in_scope = node.id
-            elif isinstance(node, ast.alias):
-                name_in_scope = node.name if node.asname is None else node.asname
-            elif isinstance(node, ast.arg):
-                name_in_scope = node.arg
-            else:
-                continue
-
-            if name_in_scope and name_in_scope in common.BUILTIN_NAMES:
-                raise common.CheckError(f"Prohibited override of builtin '{name_in_scope}'")
+        for name_in_scope, node in _iter_scope_names(tree):
+            if name_in_scope in common.BUILTIN_NAMES:
+                msg = f"Prohibited override of builtin '{name_in_scope}'"
+                raise common.CheckError(msg, node)
 
 
 MODULE_BACKPORTS = {
@@ -140,21 +143,19 @@ class NoOpenWithEncodingChecker(CheckerBase):
                 if isinstance(mode_node, ast.Str):
                     mode = mode_node.s
                 else:
-                    raise common.CheckError(
+                    msg = (
                         "Prohibited value for argument 'mode' of builtin.open. " +
                         f"Expected ast.Str node, got: {mode_node}"
                     )
+                    raise common.CheckError(msg, node)
 
             if len(node.args) > 3:
-                raise common.CheckError(
-                    f"Prohibited positional arguments to builtin.open"
-                )
+                raise common.CheckError(f"Prohibited positional arguments to builtin.open", node)
 
             for kw in node.keywords:
                 if kw.arg in PROHIBITED_OPEN_ARGUMENTS:
-                    raise common.CheckError(
-                        f"Prohibited keyword argument '{kw.arg}' to builtin.open."
-                    )
+                    msg = f"Prohibited keyword argument '{kw.arg}' to builtin.open."
+                    raise common.CheckError(msg, node)
                 if kw.arg != "mode":
                     continue
 
@@ -162,16 +163,18 @@ class NoOpenWithEncodingChecker(CheckerBase):
                 if isinstance(mode_node, ast.Str):
                     mode = mode_node.s
                 else:
-                    raise common.CheckError(
+                    msg = (
                         "Prohibited value for argument 'mode' of builtin.open. " +
                         f"Expected ast.Str node, got: {mode_node}"
                     )
+                    raise common.CheckError(msg, node)
 
             if "b" not in mode:
-                raise common.CheckError(
+                msg = (
                     f"Prohibited value '{mode}' for argument 'mode' of builtin.open. " +
                     "Only binary modes are allowed, use io.open as an alternative."
                 )
+                raise common.CheckError(msg, node)
 
 
 ASYNC_AWAIT_NODE_TYPES = (
@@ -189,7 +192,7 @@ class NoAsyncAwait(CheckerBase):
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for node in ast.walk(tree):
             if isinstance(node, ASYNC_AWAIT_NODE_TYPES):
-                raise common.CheckError("Prohibited use of async/await")
+                raise common.CheckError("Prohibited use of async/await", node)
 
 
 class NoComplexNamedTuple(CheckerBase):
@@ -231,19 +234,21 @@ class NoComplexNamedTuple(CheckerBase):
                     if subnode.value:
                         tgt = subnode.target
                         assert isinstance(tgt, ast.Name)
-                        raise common.CheckError(
+                        msg = (
                             f"Prohibited use of default value " +
                             f"for field '{tgt.id}' of class '{node.name}'"
                         )
+                        raise common.CheckError(msg, subnode, node)
+
                 elif isinstance(subnode, ast.FunctionDef):
-                    raise common.CheckError(
+                    msg = (
                         f"Prohibited definition of method " +
                         f"'{subnode.name}' for class '{node.name}'"
                     )
+                    raise common.CheckError(msg, subnode, node)
                 else:
-                    raise common.CheckError(
-                        f"Unexpected subnode defined for class {node.name}: {subnode}"
-                    )
+                    msg = f"Unexpected subnode defined for class {node.name}: {subnode}"
+                    raise common.CheckError(msg, subnode, node)
 
 
 # NOTE (mb 2018-06-24): I don't know how this could be done reliably.
