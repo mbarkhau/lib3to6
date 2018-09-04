@@ -41,6 +41,13 @@ build/.install.make_marker: setup.py build/envs.txt requirements*.txt
 		$$(cat requirements-test.txt) \
 		$$(cat requirements-dev.txt);
 
+	# NOTE (mb 2018-08-23): The linter has an issue running with
+	# 	python 3.7 because some code in pycodestyle=2.3.1
+	#	but we have to wait for a flake8 update because
+	#	reasons... https://github.com/PyCQA/pycodestyle/issues/728
+	$(PYTHON37) -m pip install --src . \
+		-e "git+https://gitlab.com/pycqa/flake8@master#egg=flake8";
+
 	@mkdir -p build/
 	@touch build/.install.make_marker
 
@@ -49,12 +56,6 @@ clean:
 	rm -f build/envs.txt
 	rm -f build/.setup_conda_envs.make_marker
 	rm -f build/.install.make_marker
-
-
-# NOTE (mb 2018-08-23): The linter has an issue running with
-# 	python 3.7 because some code in pycodestyle=2.3.1
-#	but we have to wait for a flake8 update because
-#	reasons... https://github.com/PyCQA/pycodestyle/issues/728
 
 
 lint: build/.install.make_marker

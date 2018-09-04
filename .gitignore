@@ -29,6 +29,7 @@ var/
 .pytest_cache/
 
 # source dirs have to be explicitly added
+flake8/
 src/
 
 # PyInstaller

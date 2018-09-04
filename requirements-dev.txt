@@ -3,4 +3,3 @@ pip
 twine
 ipython
 pudb
--e git+https://gitlab.com/pycqa/flake8@master#egg=flake8
