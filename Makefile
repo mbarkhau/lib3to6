@@ -1,7 +1,7 @@
 .PHONY: setup_conda_envs install \
 	test devtest fulltest lint \
 	clean rm_site_packages \
-	build readme upload
+	build readme bump_version upload
 
 
 build/.setup_conda_envs.make_marker:
