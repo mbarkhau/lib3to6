@@ -1,11 +1,14 @@
+os: linux
+dist: xenial
 language: python
+cache: pip
 
 python:
   - "3.6"
-  # - "3.7"
+  - "3.7"
 
 install:
-  - pip install rst2html5 flake8 pytest pytest-cov mypy typing-extensions
+  - pip install $(cat requirements-test.txt)
   - pip install .
 
 script:

@@ -34,16 +34,13 @@ BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
 
 build/.install.make_marker: setup.py build/envs.txt
 	$(PYTHON36) -m pip install --upgrade --quiet \
-		pip setuptools wheel twine \
-		flake8 mypy typing-extensions \
-		rst2html5 \
-		pytest pytest-cov \
-		ipython pudb \
-		astor pathlib2 click;
+		$$(cat requirements-dev.txt) \
+		$$(cat requirements-test.txt) \
+		$$(cat requirements.txt);
 
-	$(PYTHON37) -m pip install --upgrade --quiet pip setuptools wheel astor;
-	$(PYTHON36) -m pip install --upgrade --quiet pip setuptools wheel astor;
-	$(PYTHON27) -m pip install --upgrade --quiet pip setuptools wheel astor;
+	$(PYTHON37) -m pip install --upgrade --quiet $$(cat requirements.txt);
+	$(PYTHON36) -m pip install --upgrade --quiet $$(cat requirements.txt);
+	$(PYTHON27) -m pip install --upgrade --quiet $$(cat requirements.txt);
 
 	@mkdir -p build/
 	@touch build/.install.make_marker
