@@ -22,12 +22,10 @@ script:
   # first test module from installed wheel
   - python -m pip uninstall -y lib3to6
   - python -m pip install $(ls -1t dist/lib3to6*.whl | head -n 1)
-  - "grep 'coding: utf-8' $(python -c 'import lib3to6;print(lib3to6.__file__)')"
   - python -m pytest --cov=lib3to6 test/
 
   # next test module from src/
   - export PYTHONPATH=src/:$PYTHONPATH
-  - "grep 'coding: utf-8' $(python -c 'import lib3to6;print(lib3to6.__file__)') || exit 1"
   - python -m pytest --cov=lib3to6 test/
 
   - rst2html5 --strict README.rst > /dev/null
