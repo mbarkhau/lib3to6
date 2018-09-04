@@ -48,6 +48,28 @@ similar to Bable https://babeljs.io/.
     :alt: Supported Python Versions
 
 
+Project Status (as of 2018-09-02): Experimental
+-----------------------------------------------
+
+Only use this library if you intend to participate in testing or
+development. I'm using it on personal projects and am still
+finding bugs. Currently I'm adding fixers and checkers based on
+issues found in those projects.
+
+The ultimate goal would be to cover all cases documented on
+http://python-future.org and either:
+
+ 1. Transpile to code that will work on any version
+ 2. Raise an error, ideally pointing to a page and section on
+    python-future.org or other documentation describing
+    alternative methods of writing backwards compatible code.
+
+https://docs.python.org/3.X/whatsnew/ also contains much info on
+API changes that might be checked for, but checks and fixers for
+these will only be written if they are common enough, otherwise
+it's just too much work (patches are welcome though).
+
+
 Motivation
 ----------
 
@@ -160,16 +182,16 @@ directories.
 .. code-block:: bash
 
     ~/$ python3 -c "import my_module"
-    /home/mbarkhau/my-module/my_module/__init__.py
+    /home/user/my-module/my_module/__init__.py
     Hello 世界 from 3.6.5!
 
     ~/my-module$ cd ..
     ~/$ python3 -c "import my_module"
-    /home/mbarkhau/miniconda3/envs/lib3to6_36/lib/python3.6/site-packages/my_module/__init__.py
+    /home/user/envs/py36/lib/python3.6/site-packages/my_module/__init__.py
     Hello 世界 from 3.6.5!
 
     ~$ python2 -c "import my_module"
-    /home/mbarkhau/miniconda3/envs/lib3to6_27/lib/python2.7/site-packages/my_module/__init__.py
+    /home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
     Hello 世界 from 2.7.15!
 
 
@@ -206,28 +228,6 @@ Some new libraries have backports, which warnings will point to:
  - csv -> backports.csv
  - lzma -> backports.lzma
  - enum -> flufl.enum
-
-
-Project Status (as of 2018-08-18): Experimental
------------------------------------------------
-
-Only use this library if you intend to participate in testing or
-development. I'm using it on personal projects and am still
-finding bugs. This README serves partially as a TODO list, not
-everything advertised is implemented yet.
-
-The goal is to go through all of http://python-future.org and
-either:
-
- 1. Transpile to code that will work on any version
- 2. Raise an error, ideally pointing to a page and section on
-    python-future.org or other documentation describing
-    alternative methods of writing backwards compatible code.
-
-https://docs.python.org/3.X/whatsnew/ also contains much info on
-api changes that might be checked for, but checks and fixers for
-these will only be written if they are common enough, otherwise
-it's just too much work (patches are welcome though).
 
 
 How it works

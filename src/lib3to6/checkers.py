@@ -33,12 +33,6 @@ class CheckerBase:
         raise NotImplementedError()
 
 
-class VisitorCheckerBase(CheckerBase, ast.NodeVisitor):
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
-        return self.visit(tree)
-
-
 class NoStarImports(CheckerBase):
 
     version_info = VersionInfo()

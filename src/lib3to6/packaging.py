@@ -123,7 +123,7 @@ def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir
         build_package(cfg, package, build_dir)
 
 
-def fix(package_dir: common.PackageDir=None) -> common.PackageDir:
+def fix(package_dir: common.PackageDir = None) -> common.PackageDir:
     if package_dir is None:
         package_dir = {"": "."}
 

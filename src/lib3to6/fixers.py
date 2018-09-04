@@ -30,7 +30,7 @@ class VersionInfo:
     works_until: typ.Optional[str]
 
     def __init__(
-        self, apply_since: str, apply_until: str, works_since: str=None, works_until: str=None,
+        self, apply_since: str, apply_until: str, works_since: str = None, works_until: str = None,
     ) -> None:
 
         self.apply_since = apply_since

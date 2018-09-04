@@ -32,15 +32,14 @@ BUILD_LOG_DIR = "test_build_logs/"
 BUILD_LOG_FILE := $(shell date +"$(BUILD_LOG_DIR)%Y%m%dt%H%M%S%N.log")
 
 
-build/.install.make_marker: setup.py build/envs.txt
-	$(PYTHON36) -m pip install --upgrade --quiet \
-		$$(cat requirements-dev.txt) \
-		$$(cat requirements-test.txt) \
-		$$(cat requirements.txt);
-
+build/.install.make_marker: setup.py build/envs.txt requirements*.txt
 	$(PYTHON37) -m pip install --upgrade --quiet $$(cat requirements.txt);
 	$(PYTHON36) -m pip install --upgrade --quiet $$(cat requirements.txt);
 	$(PYTHON27) -m pip install --upgrade --quiet $$(cat requirements.txt);
+
+	$(PYTHON37) -m pip install --upgrade \
+		$$(cat requirements-test.txt) \
+		$$(cat requirements-dev.txt);
 
 	@mkdir -p build/
 	@touch build/.install.make_marker
@@ -60,7 +59,7 @@ clean:
 
 lint: build/.install.make_marker
 	@echo -n "lint.."
-	@$(PYTHON36) -m flake8 src/lib3to6/
+	@$(PYTHON37) -m flake8 src/lib3to6/
 	@echo "ok"
 
 
