@@ -1,5 +1,7 @@
 os: linux
 dist: xenial
+sudo: true
+
 language: python
 cache: pip
 
@@ -9,18 +11,14 @@ python:
 
 install:
   - pip install $(cat requirements-test.txt)
-  - pip install .
+  - pyhton setup.py install .
 
 script:
   - export PYTHONPATH=src/:$PYTHONPATH
   - export MYPYPATH=stubs/
   - python -m flake8 src/lib3to6/
   - python -m mypy src/lib3to6/
+  - python setup.py bdist_wheel --python-tag=py2.py3
+  - python -m pip install $(ls -1t dist/lib3to6*.whl | head -n 1)
   - python -m pytest --cov=lib3to6 test/
   - rst2html5 --strict README.rst > /dev/null
-
-matrix:
-  include:
-    - python: 3.7
-      dist: xenial
-      sudo: true
