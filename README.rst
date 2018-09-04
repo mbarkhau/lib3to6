@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmbarkhau%2Flib3to6.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmbarkhau%2Flib3to6?ref=badge_shield)
+
 lib3to6: compatibility matters
 ==============================
 
@@ -363,3 +365,6 @@ FAQ
    The scope of ``lib3to6`` is more general than 3to2, as you can
    use it even if all you care about is converting from python 3.6
    to 3.5.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmbarkhau%2Flib3to6.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmbarkhau%2Flib3to6?ref=badge_large)
