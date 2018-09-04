@@ -13,7 +13,7 @@ install:
   - python -m pip install $(cat requirements-test.txt)
   - python -m pip install .
   - python setup.py bdist_wheel --python-tag=py2.py3
-  - python -m pip uninstall lib3to6
+  - python -m pip uninstall -y lib3to6
   - python -m pip install $(ls -1t dist/lib3to6*.whl | head -n 1)
 
 script:
