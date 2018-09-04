@@ -18,3 +18,9 @@ script:
   - python -m mypy src/lib3to6/
   - python -m pytest --cov=lib3to6 test/
   - rst2html5 --strict README.rst > /dev/null
+
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
