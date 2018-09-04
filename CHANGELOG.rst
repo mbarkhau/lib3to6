@@ -1,7 +1,7 @@
 Changelog for lib3to6
 =====================
 
-v201809.0018-alpha
+v201809.0019-alpha
 ------------------
 
 - CheckErrors include log line numbers

@@ -117,6 +117,7 @@ bump_version:
 		version.txt >> .new_version.txt
 	sed -i -z 's/\n//g' .new_version.txt
 	cat version.txt >> old_versions.txt
+	echo "" >> old_versions.txt
 	mv .new_version.txt version.txt
 	sed -i "s/__version__ = \".*\"/__version__ = \"$$(cat version.txt)\"/" setup.py
 	sed -i "s/__version__ = \".*\"/__version__ = \"$$(cat version.txt)\"/" \

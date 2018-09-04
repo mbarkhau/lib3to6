@@ -35,9 +35,9 @@ similar to Bable https://babeljs.io/.
     :target: https://pypi.python.org/pypi/lib3to6
     :alt: PyPI Version
 
-.. |version| image:: https://img.shields.io/badge/CalVer-v201809.0018--alpha-blue.svg
+.. |version| image:: https://img.shields.io/badge/CalVer-v201809.0019--alpha-blue.svg
     :target: https://calver.org/
-    :alt: CalVer v201809.0018-alpha
+    :alt: CalVer v201809.0019-alpha
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/lib3to6.svg
     :target: https://pypi.org/project/lib3to6/#files
