@@ -94,7 +94,7 @@ build/README.html: build/.install.make_marker README.rst CHANGELOG.rst
 	@cat README.rst > build/.full_readme.rst
 	@echo "\n" >> build/.full_readme.rst
 	@cat CHANGELOG.rst >> build/.full_readme.rst
-	@$(PYENV36)/bin/rst2html5 --strict \
+	@$(PYENV37)/bin/rst2html5 --strict \
 		build/.full_readme.rst > build/README.html.tmp
 	@mv build/README.html.tmp build/README.html
 	@echo "updated build/README.html"
@@ -208,4 +208,4 @@ setup_conda_envs: build/.setup_conda_envs.make_marker
 install: build/.install.make_marker
 
 run_main:
-	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON36) -m lib3to6 --help
+	PYTHONPATH=src/:$$PYTHONPATH $(PYTHON37) -m lib3to6 --help

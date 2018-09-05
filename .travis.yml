@@ -28,7 +28,7 @@ script:
   # next test module from src/
   - export PYTHONPATH=src/:$PYTHONPATH
   - python -m pytest --cov=lib3to6 test/
+  - codecov
 
   - rst2html5 --strict README.rst > /dev/null
   - rst2html5 --strict CHANGELOG.rst > /dev/null
-  - codecov
