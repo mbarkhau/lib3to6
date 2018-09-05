@@ -23,8 +23,8 @@ similar to Bable https://babeljs.io/.
     :target: http://mypy-lang.org/
     :alt: Checked with mypy
 
-.. |coverage| image:: https://img.shields.io/badge/coverage-87%25-green.svg
-    :target: https://travis-ci.org/mbarkhau/lib3to6
+.. |coverage| image:: https://codecov.io/gh/mbarkhau/lib3to6/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/mbarkhau/lib3to6
     :alt: Code Coverage
 
 .. |license| image:: https://img.shields.io/pypi/l/lib3to6.svg
