@@ -45,7 +45,8 @@ build/.install.make_marker: setup.py build/envs.txt requirements*.txt
 	# 	python 3.7 because some code in pycodestyle=2.3.1
 	#	but we have to wait for a flake8 update because
 	#	reasons... https://github.com/PyCQA/pycodestyle/issues/728
-	$(PYTHON37) -m pip install --src . \
+	@mkdir -p lib/
+	$(PYTHON37) -m pip install --src lib/ \
 		-e "git+https://gitlab.com/pycqa/flake8@master#egg=flake8";
 
 	@mkdir -p build/
@@ -60,7 +61,7 @@ clean:
 
 lint: build/.install.make_marker
 	@echo -n "lint.."
-	@$(PYTHON37) -m flake8 src/lib3to6/
+	@$(PYENV37)/bin/flake8 src/lib3to6/
 	@echo "ok"
 
 
@@ -73,7 +74,7 @@ mypy: build/.install.make_marker
 
 test: build/.install.make_marker
 	@PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest \
+		$(PYTHON37) -m pytest \
 		--cov-report html \
 		--cov=lib3to6 \
 		test/
@@ -81,7 +82,7 @@ test: build/.install.make_marker
 
 devtest: build/.install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
-		$(PYTHON36) -m pytest -v \
+		$(PYTHON37) -m pytest -v \
 		--cov-report term \
 		--cov=lib3to6 \
 		--capture=no \
@@ -125,17 +126,18 @@ build/.src_files.txt: setup.py build/envs.txt src/lib3to6/*.py
 
 
 rm_site_packages:
-	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6/
-	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6*.dist-info/
-	rm -rf $(PYENV36)/lib/python3.6/site-packages/lib3to6*.egg-info/
-	rm -f $(PYENV36)/lib/python3.6/site-packages/lib3to6*.egg
+	# whackamole
+	rm -rf $(PYENV37)/lib/python3.6/site-packages/lib3to6/
+	rm -rf $(PYENV37)/lib/python3.6/site-packages/lib3to6*.dist-info/
+	rm -rf $(PYENV37)/lib/python3.6/site-packages/lib3to6*.egg-info/
+	rm -f $(PYENV37)/lib/python3.6/site-packages/lib3to6*.egg
 
 
 build/.local_install.make_marker: build/.src_files.txt rm_site_packages
 	@echo "installing lib3to6.."
-	@$(PYTHON36) setup.py install --no-compile --verbose
+	@$(PYTHON37) setup.py install --no-compile --verbose
 	@mkdir -p build/
-	@$(PYTHON36) -c "import lib3to6"
+	@$(PYTHON37) -c "import lib3to6"
 	@echo "install completed for lib3to6"
 	@touch build/.local_install.make_marker
 
@@ -144,13 +146,13 @@ build: build/.local_install.make_marker
 	@mkdir -p $(BUILD_LOG_DIR)
 	@echo "writing full build log to $(BUILD_LOG_FILE)"
 	@echo "building lib3to6.."
-	@$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
+	@$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3 >> $(BUILD_LOG_FILE)
 	@echo "build completed for lib3to6"
 
 
 upload: build/.install.make_marker build/README.html
-	$(PYTHON36) setup.py bdist_wheel --python-tag=py2.py3
-	$(PYENV36)/bin/twine upload $(BDIST_WHEEL_LIB3TO6)
+	$(PYTHON37) setup.py bdist_wheel --python-tag=py2.py3
+	$(PYENV37)/bin/twine upload $(BDIST_WHEEL_LIB3TO6)
 
 
 fulltest: build/.install.make_marker build/README.html lint mypy test build
