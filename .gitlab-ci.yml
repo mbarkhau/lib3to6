@@ -3,10 +3,10 @@ image: alpine:latest
 pages:
   stage: deploy
   script:
-  - mkdir htmlcov_build
-  - cp htmlcov/* htmlcov_build/
+  - mkdir public
+  - cp htmlcov/* public/
   artifacts:
     paths:
-    - htmlcov_build
+    - public
   only:
   - master
