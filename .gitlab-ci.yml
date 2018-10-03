@@ -3,9 +3,10 @@ image: alpine:latest
 pages:
   stage: deploy
   script:
-  - echo 'Nothing to do...'
+  - mkdir htmlcov_build
+  - cp htmlcov/* htmlcov_build/
   artifacts:
     paths:
-    - htmlcov
+    - htmlcov_build
   only:
   - master

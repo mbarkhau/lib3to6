@@ -84,6 +84,7 @@ devtest: build/.install.make_marker
 	PYTHONPATH=src/:$$PYTHONPATH \
 		$(PYTHON37) -m pytest -v \
 		--cov-report term \
+		--cov-report html \
 		--cov=lib3to6 \
 		--capture=no \
 		--exitfirst \
