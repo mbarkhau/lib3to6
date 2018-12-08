@@ -21,6 +21,7 @@ lib64/
 vendor/
 parts/
 sdist/
+integration_test_dist/
 var/
 public/
 .mypy_cache/
