@@ -8,7 +8,7 @@ from .packaging import fix
 from .transpile import transpile_module
 from .utils import parsedump_ast, parsedump_source
 
-__version__ = "v201809.0019-alpha"
+__version__ = "v201812.0020-alpha"
 
 __all__ = [
     "fix",
