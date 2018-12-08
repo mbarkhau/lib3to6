@@ -10,6 +10,7 @@ unit:
     - make lint
     - make mypy
     - make test
+    - make integration_test
   coverage: '/^(TOTAL|src).*?(\d+\%)$/'
   artifacts:
     paths:

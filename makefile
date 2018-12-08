@@ -338,15 +338,6 @@ test:
 		$(shell cd src/ && ls -1 */__init__.py | awk '{ print "--cov "substr($$1,0,index($$1,"/")-1) }') \
 		test/ src/;
 
-	# Next we install the package and run the test suite against it.
-
-	IFS=' ' read -r -a env_paths <<< "$(CONDA_ENV_PATHS)"; \
-	for i in $${!env_paths[@]}; do \
-		env_py=$${env_paths[i]}/bin/python; \
-		$${env_py} -m pip install --upgrade .; \
-		ENV=$${ENV-dev} $${env_py} -m pytest test/; \
-	done;
-
 	@rm -rf ".pytest_cache";
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
