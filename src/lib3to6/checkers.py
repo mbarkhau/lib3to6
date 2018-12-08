@@ -230,7 +230,10 @@ class NoComplexNamedTuple(CheckerBase):
                 continue
 
             for subnode in node.body:
-                if isinstance(subnode, ast.AnnAssign):
+                if isinstance(subnode, ast.Expr) and isinstance(subnode.value, ast.Str):
+                    # docstring is fine
+                    pass
+                elif isinstance(subnode, ast.AnnAssign):
                     if subnode.value:
                         tgt = subnode.target
                         assert isinstance(tgt, ast.Name)

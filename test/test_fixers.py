@@ -1,5 +1,5 @@
 import sys
-from collections import namedtuple
+import collections
 
 import pytest
 
@@ -7,7 +7,7 @@ from lib3to6 import transpile
 from lib3to6 import utils
 
 
-FixerFixture = namedtuple("FixerFixture", [
+FixerFixture = collections.namedtuple("FixerFixture", [
     "names", "target_version", "test_source", "expected_source",
 ])
 
@@ -712,6 +712,7 @@ FIXTURES = [
         import typing
 
         class Foo(typing.NamedTuple):
+            '''Docstring'''
             bar: int
             baz: bool
         """,
