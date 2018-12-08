@@ -96,7 +96,7 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
 
 
 def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None:
-    for root, dirs, files in os.walk(build_dir):
+    for root, _dirs, files in os.walk(build_dir):
         for filename in files:
             filepath = pl.Path(root) / filename
             if filepath.suffix != ".py":

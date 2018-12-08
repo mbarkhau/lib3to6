@@ -914,7 +914,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
             raise TypeError(f"Unexpected node type {type(node)}")
 
     def expand_stararg_g12n(self, node: ast.AST, parent: ast.AST, field_name: str) -> ast.expr:
-        """Convert fn(*x, *[1, 2], z) -> fn(*(list(x) + [1, 2, z]))
+        """Convert fn(*x, *[1, 2], z) -> fn(*(list(x) + [1, 2, z])).
 
         NOTE (mb 2018-07-06): The goal here is to create an expression
           which is a list, by either creating

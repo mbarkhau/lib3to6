@@ -17,13 +17,15 @@ NodeOrNodelist = typ.Union[ast.AST, typ.List[typ.Any]]
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
 def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, indent="  "):
-    """
-    Return a formatted dump of the tree in *node*.  This is mainly useful for
-    debugging purposes.  The returned string will show the names and the values
-    for fields.  This makes the code impossible to evaluate, so if evaluation is
-    wanted *annotate_fields* must be set to False.  Attributes such as line
-    numbers and column offsets are not dumped by default.  If this is wanted,
-    *include_attributes* can be set to True.
+    """Return a formatted dump of the tree in *node*.
+
+    This is mainly useful for debugging purposes.  The returned
+    string will show the names and the values for fields.  This
+    makes the code impossible to evaluate, so if evaluation is
+    wanted *annotate_fields* must be set to False.  Attributes
+    such as line numbers and column offsets are not dumped by
+    default.  If this is wanted, *include_attributes* can be set
+    to True.
     """
     def _format(node: NodeOrNodelist, level=1):
         if isinstance(node, ast.AST):
