@@ -8,7 +8,7 @@ import ast
 import builtins
 import typing as typ
 
-PackageDir = typ.Dict[str, str]
+PackageDir  = typ.Dict[str, str]
 BuildConfig = typ.Dict[str, str]
 
 
@@ -20,9 +20,9 @@ class CheckError(Exception):
 
     # TODO (mb 2018-06-14): line numbers and file path
     def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
-        node_lineno = getattr(node, "lineno", None)
+        node_lineno   = getattr(node  , "lineno", None)
         parent_lineno = getattr(parent, "lineno", None)
-        lineno = node_lineno or parent_lineno
+        lineno        = node_lineno or parent_lineno
 
         if lineno:
             msg += f" on line {lineno}"
@@ -31,13 +31,13 @@ class CheckError(Exception):
 
 class FixerError(Exception):
 
-    msg: str
-    node: ast.AST
+    msg   : str
+    node  : ast.AST
     module: typ.Optional[ast.Module]
 
     def __init__(self, msg: str, node: ast.AST, module: ast.Module = None) -> None:
-        self.msg = msg
-        self.node = node
+        self.msg    = msg
+        self.node   = node
         self.module = module
 
 
@@ -221,8 +221,4 @@ BUILTIN_NAMES = {
 
 # In case somebody is working on py4k or something
 
-BUILTIN_NAMES.update([
-    name
-    for name in dir(builtins)
-    if not name.startswith("__")
-])
+BUILTIN_NAMES.update([name for name in dir(builtins) if not name.startswith("__")])

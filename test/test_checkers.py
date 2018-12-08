@@ -7,9 +7,7 @@ from lib3to6 import utils
 from collections import namedtuple
 
 
-CheckFixture = namedtuple("CheckFixture", [
-    "names", "test_source", "expected_error_msg",
-])
+CheckFixture = namedtuple("CheckFixture", ["names", "test_source", 'expected_error_msg'])
 
 
 FIXTURES = [
@@ -251,10 +249,7 @@ def test_checkers(fixture):
         expected_error_messages = fixture.expected_error_msg
     else:
         expected_error_messages = [fixture.expected_error_msg]
-    cfg = {
-        "checkers": fixture.names,
-        "target_version": "2.7",
-    }
+    cfg         = {'checkers': fixture.names, 'target_version': "2.7"}
     test_source = utils.clean_whitespace(fixture.test_source)
     try:
         utils.transpile_and_dump(test_source, cfg)

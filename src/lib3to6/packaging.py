@@ -20,11 +20,11 @@ ENV_PATH = str(pl.Path(sys.executable).parent.parent)
 
 
 PYTHON_TAG_PREFIXES = {
-    "py": "Generic Python",
-    "cp": "CPython",
-    "ip": "IronPython",
-    "pp": "PyPy",
-    "jy": "Jython",
+    'py': "Generic Python",
+    'cp': "CPython",
+    'ip': "IronPython",
+    'pp': "PyPy",
+    'jy': "Jython",
 }
 
 
@@ -41,12 +41,7 @@ def eval_build_config() -> common.BuildConfig:
     #         else:
     #             python_tags = sys.argv[argi + 1]
 
-    return {
-        "target_version"  : "2.7",
-        "force_transpile" : "1",
-        "fixers"          : "",
-        "checkers"        : "",
-    }
+    return {'target_version': "2.7", 'force_transpile': "1", 'fixers': "", 'checkers': ""}
 
 
 def _ingore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
@@ -84,11 +79,7 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
         if build_package_subdir.exists():
             shutil.rmtree(build_package_subdir)
 
-        shutil.copytree(
-            src_package_dir,
-            str(build_package_subdir),
-            ignore=_ingore_tmp_files,
-        )
+        shutil.copytree(src_package_dir, str(build_package_subdir), ignore=_ingore_tmp_files)
 
         build_package_dir[package] = str(build_package_subdir)
 
@@ -105,13 +96,13 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
             with open(filepath, mode="rb") as fh:
                 module_source_data = fh.read()
 
-            filehash = hl.sha1(module_source_data).hexdigest()
+            filehash   = hl.sha1(module_source_data).hexdigest()
             cache_path = CACHE_DIR / (filehash + ".py")
 
-            if int(cfg["force_transpile"]) or not cache_path.exists():
+            if int(cfg['force_transpile']) or not cache_path.exists():
                 try:
                     fixed_module_source_data = transpile.transpile_module_data(
-                        cfg, module_source_data,
+                        cfg, module_source_data
                     )
                 except common.CheckError as err:
                     err.args = (err.args[0] + f" in file {filepath} ",) + err.args[1:]
@@ -135,6 +126,6 @@ def fix(package_dir: common.PackageDir = None) -> common.PackageDir:
         package_dir = {"": "."}
 
     build_package_dir = init_build_package_dir(package_dir)
-    build_cfg = eval_build_config()
+    build_cfg         = eval_build_config()
     build_packages(build_cfg, build_package_dir)
     return build_package_dir

@@ -27,24 +27,21 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
     default.  If this is wanted, *include_attributes* can be set
     to True.
     """
+
     def _format(node: NodeOrNodelist, level=1):
         if isinstance(node, ast.AST):
             fields = [(a, _format(b, level + 1)) for a, b in ast.iter_fields(node)]
             if include_attributes and node._attributes:
-                fields.extend([
-                    (a, _format(getattr(node, a), level + 1))
-                    for a in node._attributes
-                ])
+                fields.extend([(a, _format(getattr(node, a), level + 1)) for a in node._attributes])
 
             if annotate_fields:
                 field_parts = ["%s=%s" % field for field in fields]
             else:
                 field_parts = [b for a, b in fields]
 
-            node_name = node.__class__.__name__
-            is_short_node = (
-                len(field_parts) <= 1 or
-                isinstance(node, (ast.Name, ast.Num, ast.Str, ast.Bytes, ast.alias))
+            node_name     = node.__class__.__name__
+            is_short_node = len(field_parts) <= 1 or isinstance(
+                node, (ast.Name, ast.Num, ast.Str, ast.Bytes, ast.alias)
             )
 
             if is_short_node:
@@ -63,10 +60,7 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
             if len(subnodes) == 1:
                 return "[" + _format(subnodes[0], level) + "]"
 
-            lines = [
-                indent * level + _format(subnode, level + 1) + ","
-                for subnode in subnodes
-            ]
+            lines = [indent * level + _format(subnode, level + 1) + "," for subnode in subnodes]
             return "[\n" + "\n".join(lines) + "\n" + indent * (level - 1) + "]"
         return repr(node)
 
@@ -79,22 +73,13 @@ def clean_whitespace(fixture_str: str):
     if fixture_str.strip().count("\n") == 0:
         return fixture_str.strip()
 
-    fixture_lines = [
-        line
-        for line in fixture_str.splitlines()
-        if line.strip()
-    ]
-    line_indents = [
-        len(line) - len(line.lstrip())
-        for line in fixture_lines
-    ]
+    fixture_lines = [line for line in fixture_str.splitlines() if line.strip()]
+    line_indents  = [len(line) - len(line.lstrip()) for line in fixture_lines]
     if not any(line_indents) or min(line_indents) == 0:
         return fixture_str
 
     indent = min(line_indents)
-    return "\n".join([
-        line[indent:] for line in fixture_lines
-    ]).strip() + "\n"
+    return "\n".join([line[indent:] for line in fixture_lines]).strip() + "\n"
 
 
 def parse_stmt(code: str) -> ast.stmt:
@@ -125,9 +110,7 @@ def transpile_and_dump(module_str: str, cfg=None):
 
 
 def has_base_class(
-    cls_node: ast.ClassDef,
-    module_name: str = None,
-    base_class_name: str = None,
+    cls_node: ast.ClassDef, module_name: str = None, base_class_name: str = None
 ) -> bool:
     if not (module_name or base_class_name):
         return False

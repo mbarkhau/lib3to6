@@ -1,5 +1,3 @@
-
-
 # kwonly must be statically determined to be immutable
 
 """

@@ -25,8 +25,8 @@ class CheckerBase:
 
     def is_prohibited_for(self, version: str) -> bool:
         return (
-            self.version_info.prohibited_until is None or
-            self.version_info.prohibited_until >= version
+            self.version_info.prohibited_until is None
+            or self.version_info.prohibited_until >= version
         )
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
@@ -64,16 +64,16 @@ def _iter_scope_names(tree: ast.Module) -> typ.Iterable[typ.Tuple[str, ast.AST]]
 class NoOverriddenFixerImportsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
-    version_info = VersionInfo()
+    version_info                = VersionInfo()
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
         for name_in_scope, node in _iter_scope_names(tree):
             is_fixer_import = (
-                isinstance(node, ast.Import) and
-                len(node.names) == 1 and
-                node.names[0].asname is None and
-                node.names[0].name == name_in_scope
+                isinstance(node, ast.Import)
+                and len(node.names) == 1
+                and node.names[0].asname is None
+                and node.names[0].name == name_in_scope
             )
             if is_fixer_import:
                 continue
@@ -96,18 +96,18 @@ class NoOverriddenBuiltinsChecker(CheckerBase):
 
 
 MODULE_BACKPORTS = {
-    "lzma"                : ((3, 3), "backports.lzma"),
-    "pathlib"             : ((3, 4), "pathlib2"),
-    "statistics"          : ((3, 4), "statistics"),
-    "ipaddress"           : ((3, 4), "py2-ipaddress"),
-    "asyncio"             : ((3, 4), None),
-    "selectors"           : ((3, 4), None),
-    "enum"                : ((3, 4), "enum34"),
-    "zipapp"              : ((3, 5), None),
-    "typing"              : ((3, 5), "typing"),
-    "contextvars"         : ((3, 7), "contextvars"),
-    "dataclasses"         : ((3, 7), "dataclasses"),
-    "importlib.resources" : ((3, 7), "importlib_resources"),
+    'lzma'               : ((3, 3), "backports.lzma"),
+    'pathlib'            : ((3, 4), "pathlib2"),
+    'statistics'         : ((3, 4), "statistics"),
+    'ipaddress'          : ((3, 4), "py2-ipaddress"),
+    'asyncio'            : ((3, 4), None),
+    'selectors'          : ((3, 4), None),
+    'enum'               : ((3, 4), "enum34"),
+    'zipapp'             : ((3, 5), None),
+    'typing'             : ((3, 5), "typing"),
+    'contextvars'        : ((3, 7), "contextvars"),
+    'dataclasses'        : ((3, 7), "dataclasses"),
+    "importlib.resources": ((3, 7), "importlib_resources"),
 }
 
 
@@ -144,8 +144,8 @@ class NoOpenWithEncodingChecker(CheckerBase):
                     mode = mode_node.s
                 else:
                     msg = (
-                        "Prohibited value for argument 'mode' of builtin.open. " +
-                        f"Expected ast.Str node, got: {mode_node}"
+                        "Prohibited value for argument 'mode' of builtin.open. "
+                        + f"Expected ast.Str node, got: {mode_node}"
                     )
                     raise common.CheckError(msg, node)
 
@@ -156,7 +156,7 @@ class NoOpenWithEncodingChecker(CheckerBase):
                 if kw.arg in PROHIBITED_OPEN_ARGUMENTS:
                     msg = f"Prohibited keyword argument '{kw.arg}' to builtin.open."
                     raise common.CheckError(msg, node)
-                if kw.arg != "mode":
+                if kw.arg != 'mode':
                     continue
 
                 mode_node = kw.value
@@ -164,25 +164,20 @@ class NoOpenWithEncodingChecker(CheckerBase):
                     mode = mode_node.s
                 else:
                     msg = (
-                        "Prohibited value for argument 'mode' of builtin.open. " +
-                        f"Expected ast.Str node, got: {mode_node}"
+                        "Prohibited value for argument 'mode' of builtin.open. "
+                        + f"Expected ast.Str node, got: {mode_node}"
                     )
                     raise common.CheckError(msg, node)
 
             if "b" not in mode:
                 msg = (
-                    f"Prohibited value '{mode}' for argument 'mode' of builtin.open. " +
-                    "Only binary modes are allowed, use io.open as an alternative."
+                    f"Prohibited value '{mode}' for argument 'mode' of builtin.open. "
+                    + "Only binary modes are allowed, use io.open as an alternative."
                 )
                 raise common.CheckError(msg, node)
 
 
-ASYNC_AWAIT_NODE_TYPES = (
-    ast.AsyncFor,
-    ast.AsyncWith,
-    ast.AsyncFunctionDef,
-    ast.Await,
-)
+ASYNC_AWAIT_NODE_TYPES = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
 
 
 class NoAsyncAwait(CheckerBase):
@@ -200,21 +195,21 @@ class NoComplexNamedTuple(CheckerBase):
     version_info = VersionInfo(prohibited_until="3.4")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
-        _typing_module_name: typ.Optional[str] = None
+        _typing_module_name   : typ.Optional[str] = None
         _namedtuple_class_name: str = "NamedTuple"
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name == "typing":
+                    if alias.name == 'typing':
                         if alias.asname is None:
                             _typing_module_name = alias.name
                         else:
                             _typing_module_name = alias.asname
 
-            if isinstance(node, ast.ImportFrom) and node.module == "typing":
+            if isinstance(node, ast.ImportFrom) and node.module == 'typing':
                 for alias in node.names:
-                    if alias.name == "NamedTuple":
+                    if alias.name == 'NamedTuple':
                         if alias.asname is None:
                             _namedtuple_class_name = alias.name
                         else:
@@ -238,15 +233,15 @@ class NoComplexNamedTuple(CheckerBase):
                         tgt = subnode.target
                         assert isinstance(tgt, ast.Name)
                         msg = (
-                            f"Prohibited use of default value " +
-                            f"for field '{tgt.id}' of class '{node.name}'"
+                            f"Prohibited use of default value "
+                            + f"for field '{tgt.id}' of class '{node.name}'"
                         )
                         raise common.CheckError(msg, subnode, node)
 
                 elif isinstance(subnode, ast.FunctionDef):
                     msg = (
-                        f"Prohibited definition of method " +
-                        f"'{subnode.name}' for class '{node.name}'"
+                        f"Prohibited definition of method "
+                        + f"'{subnode.name}' for class '{node.name}'"
                     )
                     raise common.CheckError(msg, subnode, node)
                 else:

@@ -23,18 +23,21 @@ DEFAULT_SOURCE_ENCODING = "utf-8"
 DEFAULT_TARGET_VERSION = "2.7"
 
 # https://www.python.org/dev/peps/pep-0263/
-SOURCE_ENCODING_RE = re.compile(r"""
+SOURCE_ENCODING_RE = re.compile(
+    r"""
     ^
     [ \t\v]*
     \#.*?coding[:=][ \t]*
     (?P<coding>[-_.a-zA-Z0-9]+)
-""", re.VERBOSE)
+""",
+    re.VERBOSE,
+)
 
 
 def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, str]:
-    shebang = False
+    shebang         = False
     coding_declared = False
-    coding = DEFAULT_SOURCE_ENCODING
+    coding          = DEFAULT_SOURCE_ENCODING
 
     header_lines: typ.List[str] = []
 
@@ -52,7 +55,7 @@ def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, 
             else:
                 m = SOURCE_ENCODING_RE.match(line)
                 if m:
-                    coding = m.group("coding").strip()
+                    coding          = m.group("coding").strip()
                     coding_declared = True
 
         if not line.rstrip() or line.rstrip().startswith("#"):
@@ -81,15 +84,13 @@ CheckerOrFixer = typ.Union[CheckerType, FixerType]
 def normalize_name(name: str) -> str:
     name = name.strip().lower().replace("_", "").replace("-", "")
     if name.endswith("fixer"):
-        name = name[:-len("fixer")]
+        name = name[: -len("fixer")]
     if name.endswith("checker"):
-        name = name[:-len("checker")]
+        name = name[: -len("checker")]
     return name
 
 
-def get_available_classes(
-    module: object, clazz: CheckerOrFixer
-) -> typ.Dict[str, CheckerOrFixer]:
+def get_available_classes(module: object, clazz: CheckerOrFixer) -> typ.Dict[str, CheckerOrFixer]:
 
     assert isinstance(clazz, type)
     clazz_name = clazz.__name__
@@ -97,9 +98,7 @@ def get_available_classes(
     assert getattr(module, clazz_name) is clazz
 
     maybe_classes = {
-        name: getattr(module, name)
-        for name in dir(module)
-        if not name.endswith(clazz_name)
+        name: getattr(module, name) for name in dir(module) if not name.endswith(clazz_name)
     }
 
     return {
@@ -134,7 +133,7 @@ def get_selected_names(names: FuzzyNames, available_names: typ.Set[str]) -> typ.
 
 def iter_fuzzy_selected_checkers(names: FuzzyNames) -> typ.Iterable[checkers.CheckerBase]:
     available_classes = get_available_classes(checkers, checkers.CheckerBase)
-    selected_names = get_selected_names(names, set(available_classes))
+    selected_names    = get_selected_names(names, set(available_classes))
     for name in selected_names:
         checker_type = typ.cast(CheckerType, available_classes[name])
         yield checker_type()
@@ -142,7 +141,7 @@ def iter_fuzzy_selected_checkers(names: FuzzyNames) -> typ.Iterable[checkers.Che
 
 def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBase]:
     available_classes = get_available_classes(fixers, fixers.FixerBase)
-    selected_names = get_selected_names(names, set(available_classes))
+    selected_names    = get_selected_names(names, set(available_classes))
     for name in selected_names:
         fixer_type = typ.cast(FixerType, available_classes[name])
         yield fixer_type()
@@ -150,19 +149,17 @@ def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBa
 
 def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
     future_imports_offset = -1
-    imports_end_offset = -1
+    imports_end_offset    = -1
 
     import_decls: typ.Set[common.ImportDecl] = set()
 
     for body_offset, node in enumerate(tree.body):
         is_docstring = (
-            body_offset == 0 and
-            isinstance(node, ast.Expr) and
-            isinstance(node.value, ast.Str)
+            body_offset == 0 and isinstance(node, ast.Expr) and isinstance(node.value, ast.Str)
         )
         if is_docstring:
             future_imports_offset = body_offset
-            imports_end_offset = body_offset
+            imports_end_offset    = body_offset
             continue
 
         if isinstance(node, ast.Import):
@@ -175,9 +172,9 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
                     import_decls.add(common.ImportDecl(alias.name, None))
         elif isinstance(node, ast.ImportFrom):
             imports_end_offset = body_offset
-            module_name = node.module
+            module_name        = node.module
             if module_name:
-                if module_name == "__future__":
+                if module_name == '__future__':
                     future_imports_offset = body_offset
 
                 for alias in node.names:
@@ -189,11 +186,7 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
         else:
             break
 
-    return (
-        future_imports_offset,
-        imports_end_offset,
-        import_decls,
-    )
+    return (future_imports_offset, imports_end_offset, import_decls)
 
 
 def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.ImportDecl]):
@@ -210,29 +203,25 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
     a side effect, a module may end up being imported twice, if
     the module is imported after some statement.
     """
-    (
-        future_imports_offset,
-        imports_end_offset,
-        found_imports,
-    ) = parse_imports(tree)
+    (future_imports_offset, imports_end_offset, found_imports) = parse_imports(tree)
 
     missing_imports = sorted(required_imports - found_imports)
 
     import_node: ast.stmt
     for import_decl in missing_imports:
         if import_decl.import_name is None:
-            import_node = ast.Import(names=[
-                ast.alias(name=import_decl.module_name, asname=None)
-            ])
+            import_node = ast.Import(names=[ast.alias(name=import_decl.module_name, asname=None)])
         else:
-            import_node = ast.ImportFrom(module=import_decl.module_name, level=0, names=[
-                ast.alias(name=import_decl.import_name, asname=None)
-            ])
+            import_node = ast.ImportFrom(
+                module=import_decl.module_name,
+                level=0,
+                names=[ast.alias(name=import_decl.import_name, asname=None)],
+            )
 
-        if import_decl.module_name == "__future__":
+        if import_decl.module_name == '__future__':
             tree.body.insert(future_imports_offset + 1, import_node)
             future_imports_offset += 1
-            imports_end_offset += 1
+            imports_end_offset    += 1
         else:
             tree.body.insert(imports_end_offset + 1, import_node)
             imports_end_offset += 1
@@ -257,12 +246,12 @@ def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str])
 
 def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     checker_names: FuzzyNames = cfg.get("checkers", "")
-    fixer_names: FuzzyNames = cfg.get("fixers", "")
+    fixer_names  : FuzzyNames = cfg.get("fixers"  , "")
     module_tree = ast.parse(module_source)
-    required_imports: typ.Set[common.ImportDecl] = set()
-    module_declarations: typ.Set[str] = set()
+    required_imports   : typ.Set[common.ImportDecl] = set()
+    module_declarations: typ.Set[str              ] = set()
 
-    ver = sys.version_info
+    ver         = sys.version_info
     src_version = f"{ver.major}.{ver.minor}"
     tgt_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
 
@@ -289,6 +278,6 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
 
 def transpile_module_data(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
     coding, header = parse_module_header(module_source_data)
-    module_source = module_source_data.decode(coding)
+    module_source       = module_source_data.decode(coding)
     fixed_module_source = transpile_module(cfg, module_source)
     return fixed_module_source.encode(coding)

@@ -10,9 +10,4 @@ from .utils import parsedump_ast, parsedump_source
 
 __version__ = "v201812.0020-alpha"
 
-__all__ = [
-    "fix",
-    "transpile_module",
-    "parsedump_ast",
-    "parsedump_source",
-]
+__all__ = ["fix", "transpile_module", "parsedump_ast", 'parsedump_source']

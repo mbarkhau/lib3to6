@@ -7,9 +7,9 @@ from lib3to6 import transpile
 from lib3to6 import utils
 
 
-FixerFixture = collections.namedtuple("FixerFixture", [
-    "names", "target_version", "test_source", "expected_source",
-])
+FixerFixture = collections.namedtuple(
+    "FixerFixture", ["names", "target_version", "test_source", 'expected_source']
+)
 
 
 def test_numeric_literals_with_underscore():
@@ -24,7 +24,7 @@ def test_numeric_literals_with_underscore():
 
 def test_header_preserved():
     return
-    test_source = """
+    test_source     = """
     #!/usr/bin/env python
     # This file is part of the lib3to6 project
     # https://github.com/mbarkhau/lib3to6
@@ -47,15 +47,15 @@ def test_header_preserved():
     from __future__ import unicode_literals
     hello = 'world'
     """
-    test_source = utils.clean_whitespace(test_source)
+    test_source     = utils.clean_whitespace(test_source)
     expected_source = utils.clean_whitespace(expected_source)
 
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source)
-    assert result_coding == "utf-8"
+    assert result_coding   == "utf-8"
     assert expected_source == result_source
 
     expected_ast = utils.parsedump_ast(expected_source)
-    result_ast = utils.parsedump_ast(result_source)
+    result_ast   = utils.parsedump_ast(result_source)
     assert expected_ast == result_ast
 
 
@@ -105,7 +105,7 @@ FIXTURES = [
     ),
     FixerFixture(
         [
-            "annotations_future",       # not applied to old versions
+            "annotations_future",  # not applied to old versions
             "absolute_import_future",
             "division_future",
             "print_function_future",
@@ -176,7 +176,7 @@ FIXTURES = [
             def foo(self, arg):
                 def nested_fn(f=22):
                     pass
-        """
+        """,
     ),
     FixerFixture(
         "f_string_to_str_format",
@@ -684,7 +684,7 @@ FIXTURES = [
         """
         range = getattr(__builtins__, "xrange", range)
         myrange = range
-        """
+        """,
     ),
     FixerFixture(
         "xrange_to_range,unicode_to_str",
@@ -703,7 +703,7 @@ FIXTURES = [
             if True:
                 for x in range(9):
                     print(str(x))
-        """
+        """,
     ),
     FixerFixture(
         "named_tuple_class_to_assign",
@@ -723,7 +723,7 @@ FIXTURES = [
             ("bar", int),
             ("baz", bool),
         ])
-        """
+        """,
     ),
     FixerFixture(
         "named_tuple_class_to_assign",
@@ -742,7 +742,7 @@ FIXTURES = [
             ("bar", int),
             ("baz", bool),
         ])
-        """
+        """,
     ),
     FixerFixture(
         "named_tuple_class_to_assign",
@@ -761,7 +761,7 @@ FIXTURES = [
             ("bar", int),
             ("baz", bool),
         ])
-        """
+        """,
     ),
     FixerFixture(
         "config_parser_import_fallback",
@@ -778,7 +778,7 @@ FIXTURES = [
             import ConfigParser as configparser
 
         configparser.ConfigParser()
-        """
+        """,
     ),
     FixerFixture(
         "config_parser_import_fallback",
@@ -795,7 +795,7 @@ FIXTURES = [
             import ConfigParser as cp
 
         cp.ConfigParser()
-        """
+        """,
     ),
     FixerFixture(
         "config_parser_import_fallback",
@@ -812,7 +812,7 @@ FIXTURES = [
             from ConfigParser import RawConfigParser
 
         RawConfigParser("")
-        """
+        """,
     ),
     FixerFixture(
         "http_cookiejar_import_fallback",
@@ -829,7 +829,7 @@ FIXTURES = [
             from cookielib import CookieJar
 
         jar = CookieJar
-        """
+        """,
     ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
@@ -844,7 +844,7 @@ FIXTURES = [
 
 def _normalized_source(in_source):
     """This is mostly to get rid of comments"""
-    in_source = utils.clean_whitespace(in_source)
+    in_source  = utils.clean_whitespace(in_source)
     out_source = utils.parsedump_source(in_source)
     assert utils.parsedump_ast(out_source) == utils.parsedump_ast(in_source)
     return out_source
@@ -856,7 +856,7 @@ def test_fixers(fixture):
         print()
 
     expected_source = utils.clean_whitespace(fixture.expected_source)
-    expected_ast = utils.parsedump_ast(expected_source)
+    expected_ast    = utils.parsedump_ast(expected_source)
     expected_coding, expected_header = transpile.parse_module_header(expected_source)
 
     test_source = utils.clean_whitespace(fixture.test_source)
@@ -873,7 +873,7 @@ def test_fixers(fixture):
     # print(repr(expected_source))
     # print("????????" * 9)
 
-    cfg = {"fixers": fixture.names, "target_version": fixture.target_version}
+    cfg = {'fixers': fixture.names, 'target_version': fixture.target_version}
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
     result_ast = utils.parsedump_ast(result_source)
 
