@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # This file is part of the lib3to6 project
-# https://github.com/mbarkhau/lib3to6
+# https://gitlab.com/mbarkhau/lib3to6
 #
-# (C) 2018 Manuel Barkhau (@mbarkhau)
+# Copyright (c) 2018 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import io
@@ -12,6 +12,16 @@ import typing as typ
 import difflib
 from . import packaging
 from . import transpile
+
+
+try:
+    import backtrace
+
+    # To enable pretty tracebacks:
+    #   echo "export ENABLE_BACKTRACE=1;" >> ~/.bashrc
+    backtrace.hook(align=True, strip_path=True, enable_on_envvar_only=True)
+except ImportError:
+    pass
 
 
 @click.command()

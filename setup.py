@@ -1,13 +1,12 @@
 # This file is part of the lib3to6 project
-# https://github.com/mbarkhau/lib3to6
+# https://gitlab.com/mbarkhau/lib3to6
 #
-# (C) 2018 Manuel Barkhau (@mbarkhau)
+# Copyright (c) 2018 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import os
 import sys
 import setuptools
-import pkg_resources
 
 
 def project_path(*sub_paths):
@@ -15,9 +14,16 @@ def project_path(*sub_paths):
     return os.path.join(project_dirpath, *sub_paths)
 
 
-def read(filename):
-    with open(project_path(filename), mode="rb") as fh:
+def read(*sub_paths):
+    with open(project_path(*sub_paths), mode="rb") as fh:
         return fh.read().decode("utf-8")
+
+
+install_requires = [
+    line.strip()
+    for line in read("requirements", "pypi.txt").splitlines()
+    if line.strip() and not line.startswith("#")
+]
 
 
 packages = setuptools.find_packages(project_path("src"))
@@ -35,30 +41,26 @@ if any(arg.startswith("bdist") for arg in sys.argv):
             raise
 
 
-__version__ = "v201809.0019-alpha"
-__normalized_python_version__ = str(pkg_resources.parse_version(__version__))
+long_description = (read("README.md") + "\n\n" + read("CHANGELOG.md"))
 
-long_description = (
-    read("README.rst") +
-    "\n\n" +
-    read("CHANGELOG.rst")
-)
 
 setuptools.setup(
     name="lib3to6",
     license="MIT",
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
-    url="https://github.com/mbarkhau/lib3to6",
-    version=__normalized_python_version__,
+    url="https://gitlab.com/mbarkhau/lib3to6",
+    version="201809.19a0",
+    keywords="six lib2to3 astor ast",
 
-    description="Build universal python from a substantial subset of Python 3.7 syntax.",
+    description="Build universal python from a substantial subset of Python 3.7.",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
 
     packages=packages,
     package_dir=package_dir,
-    install_requires=["astor", "pathlib2", "click", "typing"],
+    python_requires=">=3.6",
+    install_requires=install_requires,
     zip_safe=True,
     classifiers=[
         "Development Status :: 3 - Alpha",

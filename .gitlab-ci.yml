@@ -1,12 +1,29 @@
-image: alpine:latest
+stages:
+  - test
+  - build
 
-pages:
-  stage: deploy
+
+unit:
+  stage: test
+  image: registry.gitlab.com/mbarkhau/lib3to6/base
   script:
-  - mkdir public
-  - cp htmlcov/* public/
+    - make lint
+    - make mypy
+    - make test
+  coverage: '/^(TOTAL|src).*?(\d+\%)$/'
   artifacts:
     paths:
-    - public
+      - htmlcov/
+  allow_failure: false
+
+
+pages:
+  stage: build
+  script:
+    - mkdir -p public/cov
+    - cp htmlcov/* public/cov/
+  artifacts:
+    paths:
+      - public
   only:
-  - master
+    - master

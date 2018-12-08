@@ -1,5 +1,0 @@
-setuptools
-pathlib2
-astor
-typing
-click
