@@ -32,19 +32,19 @@ except ImportError:
     "--diff", default=False, is_flag=True, help="Output diff instead of transpiled source."
 )
 @click.option("--in-place", default=False, is_flag=True, help="Write result back to input file.")
-@click.option(
-    "--config",
-    default="lib3to6.toml",
-    required=False,
-    metavar="<path>",
-    help="Path to config file.",
-)
+# @click.option(
+#     "--config",
+#     default="lib3to6.toml",
+#     required=False,
+#     metavar="<path>",
+#     help="Path to config file.",
+# )
 @click.argument("source_files", metavar="<source_file>", nargs=-1, type=click.File(mode="r"))
 def main(
     target_version: str,
     diff          : bool,
     in_place      : bool,
-    config        : str,
+    # config        : str,
     source_files  : typ.Iterable[io.TextIOWrapper],
 ) -> None:
     # TODO (mb 2018-07-12): evaluate build config
