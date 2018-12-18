@@ -12,6 +12,7 @@ import typing as typ
 import difflib
 from . import packaging
 from . import transpile
+from . import common
 
 
 try:
@@ -52,7 +53,12 @@ def main(
     differ = difflib.Differ()
     for src_file in source_files:
         source_text       = src_file.read()
-        fixed_source_text = transpile.transpile_module(cfg, source_text)
+        try:
+            fixed_source_text = transpile.transpile_module(cfg, source_text)
+        except common.CheckError as err:
+            err.args = (err.args[0] + f" of file {src_file.name} ",) + err.args[1:]
+            raise
+
         if diff:
             source_lines       = source_text.splitlines()
             fixed_source_lines = fixed_source_text.splitlines()

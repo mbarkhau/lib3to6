@@ -105,7 +105,7 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
                         cfg, module_source_data
                     )
                 except common.CheckError as err:
-                    err.args = (err.args[0] + f" in file {filepath} ",) + err.args[1:]
+                    err.args = (err.args[0] + f" of file {filepath} ",) + err.args[1:]
                     raise
 
                 with open(cache_path, mode="wb") as fh:

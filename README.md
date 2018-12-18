@@ -41,8 +41,8 @@ Code Quality/CI:
 
 I've been using this library on personal projects and am still
 finding bugs. Currently I'm adding fixers and checkers based on
-issues found in those projects. The error messages could be
-better, but I've already found it to be quite useful.
+issues found in those projects. Nonetheless, I've already found
+it to be quite useful and encourage you to give it a try.
 
 The ultimate goal would be to cover all cases documented on
 http://python-future.org and either:
@@ -64,7 +64,7 @@ it's just too much work (patches are welcome though).
 
 
 The main motivation for this project is to be able to use `mypy`
-without sacrificing compatability to older versions of python.
+without sacrificing compatibility to older versions of python.
 
 ```python
 # my_module/__init__.py
@@ -271,7 +271,7 @@ Module(body=[Expr(value=Call(
 ```
 
 
-Of course this does not cover every aspect of compatability.
+Of course this does not cover every aspect of compatibility.
 Changes in APIs cannot be translated automatically in this way.
 
 An obvious example, is that there is no way to transpile code
@@ -297,15 +297,21 @@ TypeError: 'encoding' is an invalid keyword argument for this function
 
 Usually there are alternative ways to write equivalent code that
 works on all versions of python. For these common
-incompatabilities lib3to6 will raise an error and suggest an
+incompatibilities lib3to6 will raise an error and suggest an
 alternative, such as in this case using `io.open` instead.
 
 ```bash
 $ lib3to6 open_example.py
-TODO:
-
-$ lib3to6 open_example.py --diff
-TODO:
+Traceback (Most recent call last):
+11  lib3to6      <module>         --> sys.exit(main())
+764 core.py      __call__         --> return self.main(*args, **kwargs)
+717 core.py      main             --> rv = self.invoke(ctx)
+956 core.py      invoke           --> return ctx.invoke(self.callback, **ctx.params)
+555 core.py      invoke           --> return callback(*args, **kwargs)
+55  __main__.py  main             --> fixed_source_text = transpile.transpile_module(cfg, source_text)
+260 transpile.py transpile_module --> checker(cfg, module_tree)
+158 checkers.py  __call__         --> raise common.CheckError(msg, node)
+CheckError: Prohibited keyword argument 'encoding' to builtin.open. on line 1 of open_example.py
 ```
 
 
@@ -349,10 +355,10 @@ version, but want their libraries to work on older versions.
    environment, while developers increasingly move to using
    python 3.
 
-   Additionally, lib3to6 is not just for compatability with
+   Additionally, lib3to6 is not just for compatibility with
    python 2.7, it also allows you to use new features like f""
    strings and variable annotations, while still maintaining
-   compatability with older versions of python 3.
+   compatibility with older versions of python 3.
 
  - Q: Why not `lib3to2`?
  - A: I can't honestly say much about `lib3to2`. It seems to not
