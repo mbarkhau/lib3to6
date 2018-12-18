@@ -315,14 +315,12 @@ CheckError: Prohibited keyword argument 'encoding' to builtin.open. on line 1 of
 ```
 
 
-Here `lib3to6` you will ge
+Here `lib3to6` you will give you a ``CheckError`, however it
+remains your responsibility to write your code so that this
+syntactic translation is semantically equivalent in both python3
+and python2.
 
-however it remains your
-responsibility to write your code so that this syntactic
-translation is semantically equivalent in both python3 and
-python2.
-
-lib3to6 uses the python ast module to parse your code. This
+`lib3to6` uses the python `ast` module to parse your code. This
 means that you need a modern python interpreter to transpile from
 modern python to legacy python interpreter. You cannot transpile
 features which your interpreter cannot parse. The intended use is
