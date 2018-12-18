@@ -44,7 +44,7 @@ def eval_build_config() -> common.BuildConfig:
     return {'target_version': "2.7", 'force_transpile': "1", 'fixers': "", 'checkers': ""}
 
 
-def _ingore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
+def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
     if src.endswith("build"):
         return names
     if src.endswith("dist"):
@@ -79,7 +79,7 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
         if build_package_subdir.exists():
             shutil.rmtree(build_package_subdir)
 
-        shutil.copytree(src_package_dir, str(build_package_subdir), ignore=_ingore_tmp_files)
+        shutil.copytree(src_package_dir, str(build_package_subdir), ignore=_ignore_tmp_files)
 
         build_package_dir[package] = str(build_package_subdir)
 
