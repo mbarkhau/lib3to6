@@ -37,12 +37,12 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2018-09-02): Experimental
+## Project Status (as of 2018-12-18): Experimental
 
-Only use this library if you intend to participate in testing or
-development. I'm using it on personal projects and am still
+I've been using this library on personal projects and am still
 finding bugs. Currently I'm adding fixers and checkers based on
-issues found in those projects.
+issues found in those projects. The error messages could be
+better, but I've already found it to be quite useful.
 
 The ultimate goal would be to cover all cases documented on
 http://python-future.org and either:
@@ -336,10 +336,23 @@ version, but want their libraries to work on older versions.
    able to use f"" strings on python 3.5, but most annotations
    will work fine.
 
- - Q: Why keep python2.7 alive, just let it die already?
- - A: This is not just for python 2.7, it also allows you to use
-   new features like f"" strings and variable annotations, and
-   build wheels which work for python 3.5.
+ - Q: Why keep python2.7 alive? Just let it die already!
+ - A: Indeed, and lib3to6 can help with that. Put yourself in the
+   shoes of somebody who is working on an old codebase. It's not
+   realistic hold all other development efforts while the
+   codebase is migrated and tested, while everything else waits.
+
+   Instead an incremental approach is usually the only option.
+   With lib3to6, individual modules of the codebase can be
+   migrated to python3, leaving the rest of the codebase
+   untouched. The project can still run in a python 2.7
+   environment, while developers increasingly move to using
+   python 3.
+
+   Additionally, lib3to6 is not just for compatability with
+   python 2.7, it also allows you to use new features like f""
+   strings and variable annotations, while still maintaining
+   compatability with older versions of python 3.
 
  - Q: Why not `lib3to2`?
  - A: I can't honestly say much about `lib3to2`. It seems to not

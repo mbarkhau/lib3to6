@@ -1,5 +1,10 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
+## v201812.0021-beta
+
+ - Recursivly apply some fixers.
+
+
 ## v201812.0020-alpha
 
  - Move to gitlab.com
