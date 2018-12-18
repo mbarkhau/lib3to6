@@ -730,6 +730,7 @@ class NewStyleClassesFixer(TransformerFixerBase):
     version_info = VersionInfo(apply_since="2.0", apply_until="2.7")
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
+        self.generic_visit(node)
         if len(node.bases) == 0:
             node.bases.append(ast.Name(id="object", ctx=ast.Load()))
         return node
@@ -1161,6 +1162,7 @@ class NamedTupleClassToAssignFixer(TransformerFixerBase):
         return node
 
     def visit_ClassDef(self, node: ast.ClassDef) -> typ.Union[ast.ClassDef, ast.Assign]:
+        self.generic_visit(node)
         if len(node.bases) == 0:
             return node
 

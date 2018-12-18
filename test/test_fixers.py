@@ -210,6 +210,22 @@ FIXTURES = [
     ),
     FixerFixture(
         "new_style_classes",
+        "2.7",
+        """
+        class Bar:
+            def foo(self):
+                class Foo:
+                    pass
+        """,
+        """
+        class Bar(object):
+            def foo(self):
+                class Foo(object):
+                    pass
+        """,
+    ),
+    FixerFixture(
+        "new_style_classes",
         "3.4",
         """
         class Foo:
@@ -723,6 +739,30 @@ FIXTURES = [
             ("bar", int),
             ("baz", bool),
         ])
+        """,
+    ),
+    FixerFixture(
+        "named_tuple_class_to_assign",
+        "2.7",
+        """
+        import typing
+
+        class Bar:
+            def foo(self):
+                class Foo(typing.NamedTuple):
+                    '''Docstring'''
+                    bar: int
+                    baz: bool
+        """,
+        """
+        import typing
+
+        class Bar:
+            def foo(self):
+                Foo = typing.NamedTuple("Foo", [
+                    ("bar", int),
+                    ("baz", bool),
+                ])
         """,
     ),
     FixerFixture(
