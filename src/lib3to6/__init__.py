@@ -8,6 +8,6 @@ from .packaging import fix
 from .transpile import transpile_module
 from .utils import parsedump_ast, parsedump_source
 
-__version__ = "v201812.0023-beta"
+__version__ = "v201812.0024-beta"
 
 __all__ = ["fix", "transpile_module", "parsedump_ast", 'parsedump_source']

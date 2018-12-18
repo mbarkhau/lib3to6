@@ -8,7 +8,7 @@ Project/Repo:
 
 [![MIT License][license_img]][license_ref]
 [![Supported Python Versions][pyversions_img]][pyversions_ref]
-[![PyCalVer v201812.0023-beta][version_img]][version_ref]
+[![PyCalVer v201812.0024-beta][version_img]][version_ref]
 [![PyPI Version][pypi_img]][pypi_ref]
 [![PyPI Downloads][downloads_img]][downloads_ref]
 
@@ -392,7 +392,7 @@ version, but want their libraries to work on older versions.
 [downloads_img]: https://pepy.tech/badge/lib3to6
 [downloads_ref]: https://pepy.tech/project/lib3to6
 
-[version_img]: https://img.shields.io/badge/PyCalVer-v201812.0023--beta-blue.svg
+[version_img]: https://img.shields.io/badge/PyCalVer-v201812.0024--beta-blue.svg
 [version_ref]: https://pypi.org/project/pycalver/
 
 [pyversions_img]: https://img.shields.io/pypi/pyversions/lib3to6.svg
