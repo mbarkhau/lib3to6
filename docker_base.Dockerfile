@@ -17,7 +17,7 @@ ARG SSH_PRIVATE_RSA_KEY
 ENV ENV_SSH_PRIVATE_RSA_KEY=${SSH_PRIVATE_RSA_KEY}
 
 # Write private key and generate public key
-RUN if [[ "$ENV_SSH_PRIVATE_RSA_KEY" ]]; then \
+RUN if ! test -z "${ENV_SSH_PRIVATE_RSA_KEY}"; then \
     echo -n "-----BEGIN RSA PRIVATE KEY-----" >> /root/.ssh/id_rsa && \
     echo -n ${ENV_SSH_PRIVATE_RSA_KEY} \
     | sed 's/-----BEGIN RSA PRIVATE KEY-----//' \
