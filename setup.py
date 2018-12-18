@@ -50,7 +50,7 @@ setuptools.setup(
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
     url="https://gitlab.com/mbarkhau/lib3to6",
-    version="201812.23b0",
+    version="201812.23b1",
     keywords="six lib2to3 astor ast",
 
     description="Build universal python from a substantial subset of Python 3.7.",
