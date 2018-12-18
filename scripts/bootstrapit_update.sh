@@ -104,7 +104,7 @@ if [[ -z $MODULE_NAME ]]; then
 fi
 
 if [[ -z $PACKAGE_VERSION ]]; then
-    PACKAGE_VERSION="$(date + 'v%Y%m.0001-alpha')"
+    PACKAGE_VERSION="$(date +'v%Y%m.0001-alpha')"
 fi
 
 if [[ -z $DEFAULT_PYTHON_VERSION ]]; then
@@ -363,6 +363,7 @@ copy_template CONTRIBUTING.md;
 copy_template CHANGELOG.md;
 copy_template license.header;
 copy_template stubs/README.md;
+copy_template MANIFEST.in;
 
 copy_template setup.py;
 copy_template setup.cfg;
