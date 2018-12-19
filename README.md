@@ -34,6 +34,13 @@ Code Quality/CI:
 
 [](TOC)
 
+  - [Project Status (as of 2018-12-18): Experimental](#project-status-as-of-2018-12-18-experimental)
+  - [Getting started with Development](#getting-started-with-development)
+  - [Motivation](#motivation)
+  - [Feature Support](#feature-support)
+  - [How it works](#how-it-works)
+  - [FAQ](#faq)
+
 [](TOC)
 
 
@@ -58,6 +65,18 @@ these will only be written if they are common enough, otherwise
 it's just too much work (patches are welcome though).
 
 
+## Getting started with Development
+
+
+```shell
+$ git clone https://gitlab.com/mbarkhau/lib3to6.git
+$ cd lib3to6/
+lib3to6 $ make install
+...
+lib3to6 $ make test
+...
+lib3to6 $ make help
+```
 
 
 ## Motivation
