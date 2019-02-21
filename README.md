@@ -1,8 +1,7 @@
 # [lib3to6][repo_ref]
 
-Build universal python from a substantial subset of Python 3.7
-syntax. (Python 3.7 -> Python 2.7+ and 3.4+). The idea is quite
-similar to Bable https://babeljs.io/.
+Compile Python 3.7 code to Python 2.7+. The idea is quite similar to Bable
+https://babeljs.io/. Develop using the newest interpreter and (most) new language features and compile to backward compatible syntax for tests and distributions.
 
 Project/Repo:
 

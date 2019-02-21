@@ -4,7 +4,7 @@ AUTHOR_NAME="Manuel Barkhau"
 AUTHOR_EMAIL="mbarkhau@gmail.com"
 
 KEYWORDS="six lib2to3 astor ast"
-DESCRIPTION="Build universal python from a substantial subset of Python 3.7."
+DESCRIPTION="Compile Python 3.7 code to Python 2.7+"
 
 LICENSE_ID="MIT"
 
@@ -15,8 +15,10 @@ GIT_REPO_DOMAIN="gitlab.com"
 
 PACKAGE_VERSION="v201812.0024-beta"
 
-DEFAULT_PYTHON_VERSION="python=3.6"
-SUPPORTED_PYTHON_VERSIONS="python=2.7 python=3.6 python=3.7"
+DEFAULT_PYTHON_VERSION="python=3.7"
+# Note: python2.7 is not supported, but we need the interpreter
+#   to be installed so we can test compatibility.
+SUPPORTED_PYTHON_VERSIONS="python=3.7 python=2.7 pypy3.5"
 
 IS_PUBLIC=1
 
