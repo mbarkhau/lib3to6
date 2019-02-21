@@ -29,7 +29,7 @@ class CheckerBase:
             or self.version_info.prohibited_until >= version
         )
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         raise NotImplementedError()
 
 
@@ -37,7 +37,7 @@ class NoStarImports(CheckerBase):
 
     version_info = VersionInfo()
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
                 continue
@@ -67,7 +67,7 @@ class NoOverriddenFixerImportsChecker(CheckerBase):
     version_info                = VersionInfo()
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for name_in_scope, node in _iter_scope_names(tree):
             is_fixer_import = (
                 isinstance(node, ast.Import)
@@ -88,7 +88,7 @@ class NoOverriddenBuiltinsChecker(CheckerBase):
 
     version_info = VersionInfo()
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for name_in_scope, node in _iter_scope_names(tree):
             if name_in_scope in common.BUILTIN_NAMES:
                 msg = f"Prohibited override of builtin '{name_in_scope}'"
@@ -115,7 +115,7 @@ class NoThreeOnlyImports(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="2.7")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         pass
 
 
@@ -126,7 +126,7 @@ class NoOpenWithEncodingChecker(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="2.7")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
@@ -184,7 +184,7 @@ class NoAsyncAwait(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="3.4")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if isinstance(node, ASYNC_AWAIT_NODE_TYPES):
                 raise common.CheckError("Prohibited use of async/await", node)
@@ -194,7 +194,7 @@ class NoComplexNamedTuple(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="3.4")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         _typing_module_name   : typ.Optional[str] = None
         _namedtuple_class_name: str = "NamedTuple"
 

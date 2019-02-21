@@ -189,7 +189,7 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
     return (future_imports_offset, imports_end_offset, import_decls)
 
 
-def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.ImportDecl]):
+def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.ImportDecl]) -> None:
     """Add imports required by fixers.
 
     Some fixers depend on modules which may not be imported in
@@ -227,7 +227,7 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
             imports_end_offset += 1
 
 
-def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str]):
+def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str]) -> None:
     """Add global declarations required by fixers.
 
     Some fixers declare globals (or override builtins) the source

@@ -7,6 +7,8 @@
 import ast
 import astor
 import typing as typ
+
+from . import common
 from . import transpile
 
 
@@ -16,7 +18,12 @@ NodeOrNodelist = typ.Union[ast.AST, typ.List[typ.Any]]
 
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
-def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, indent="  "):
+def dump_ast(
+    node              : typ.Any,
+    annotate_fields   : bool = True,
+    include_attributes: bool = False,
+    indent            : str  = "  ",
+) -> str:
     """Return a formatted dump of the tree in *node*.
 
     This is mainly useful for debugging purposes.  The returned
@@ -28,7 +35,7 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
     to True.
     """
 
-    def _format(node: NodeOrNodelist, level=1):
+    def _format(node: NodeOrNodelist, level: int = 1) -> str:
         if isinstance(node, ast.AST):
             fields = [(a, _format(b, level + 1)) for a, b in ast.iter_fields(node)]
             if include_attributes and node._attributes:
@@ -64,12 +71,13 @@ def dump_ast(node: typ.Any, annotate_fields=True, include_attributes=False, inde
             return "[\n" + "\n".join(lines) + "\n" + indent * (level - 1) + "]"
         return repr(node)
 
-    if not isinstance(node, (ast.AST, list)):
+    if isinstance(node, (ast.AST, list)):
+        return _format(node)
+    else:
         raise TypeError("expected AST, got %r" % node.__class__.__name__)
-    return _format(node)
 
 
-def clean_whitespace(fixture_str: str):
+def clean_whitespace(fixture_str: str) -> str:
     if fixture_str.strip().count("\n") == 0:
         return fixture_str.strip()
 
@@ -78,8 +86,9 @@ def clean_whitespace(fixture_str: str):
     if not any(line_indents) or min(line_indents) == 0:
         return fixture_str
 
-    indent = min(line_indents)
-    return "\n".join([line[indent:] for line in fixture_lines]).strip() + "\n"
+    indent         = min(line_indents)
+    dedented_lines = [line[indent:] for line in fixture_lines]
+    return "\n".join(dedented_lines).strip() + "\n"
 
 
 def parse_stmt(code: str) -> ast.stmt:
@@ -88,18 +97,20 @@ def parse_stmt(code: str) -> ast.stmt:
     return module.body[0]
 
 
-def parsedump_ast(code: str, mode="exec", **kwargs) -> str:
+def parsedump_ast(code: str, mode: str = "exec", **kwargs) -> str:
     """Parse some code from a string and pretty-print it."""
     node = ast.parse(clean_whitespace(code), mode=mode)
     return dump_ast(node, **kwargs)
 
 
-def parsedump_source(code: str, mode="exec") -> str:
+def parsedump_source(code: str, mode: str = "exec") -> str:
     node = ast.parse(clean_whitespace(code), mode=mode)
     return astor.to_source(node)
 
 
-def transpile_and_dump(module_str: str, cfg=None):
+def transpile_and_dump(
+    module_str: str, cfg: typ.Optional[common.BuildConfig] = None
+) -> typ.Tuple[str, str, str]:
     if cfg is None:
         cfg = {}
 

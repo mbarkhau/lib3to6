@@ -17,11 +17,9 @@ class InvalidPackage(Exception):
 
 
 class CheckError(Exception):
-
-    # TODO (mb 2018-06-14): line numbers and file path
     def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
-        node_lineno   = getattr(node  , "lineno", None)
-        parent_lineno = getattr(parent, "lineno", None)
+        node_lineno   = node.lineno if isinstance(node, (ast.stmt, ast.expr)) else 0
+        parent_lineno = parent.lineno if isinstance(parent, (ast.stmt, ast.expr)) else 0
         lineno        = node_lineno or parent_lineno
 
         if lineno:

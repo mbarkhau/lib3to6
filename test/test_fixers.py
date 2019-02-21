@@ -24,7 +24,7 @@ def test_numeric_literals_with_underscore():
 
 def test_header_preserved():
     return
-    test_source     = """
+    test_source = """
     #!/usr/bin/env python
     # This file is part of the lib3to6 project
     # https://github.com/mbarkhau/lib3to6

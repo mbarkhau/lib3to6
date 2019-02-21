@@ -645,33 +645,31 @@ class InlineKWOnlyArgsFixer(TransformerFixerBase):
         kw_defaults = reversed(node.args.kw_defaults)
         for arg, default in zip(kwonlyargs, kw_defaults):
             arg_name = arg.arg
-            if default is None:
-                new_node = ast.Assign(
-                    targets=[ast.Name(id=arg_name, ctx=ast.Store())],
-                    value=ast.Subscript(
-                        value=ast.Name(id=kw_name, ctx=ast.Load()),
-                        slice=ast.Index(value=ast.Str(s=arg_name)),
-                        ctx=ast.Load(),
-                    ),
-                )
-            else:
-                if not isinstance(default, ImmutableValueNodes):
-                    msg = (
-                        f"Keyword only arguments must be immutable. "
-                        f"Found: {default} for {arg_name}"
-                    )
-                    raise common.FixerError(msg, node)
+            node_value: ast.expr
 
-                new_node = ast.Assign(
-                    targets=[ast.Name(id=arg_name, ctx=ast.Store())],
-                    value=ast.Call(
-                        func=ast.Attribute(
-                            value=ast.Name(id=kw_name, ctx=ast.Load()), attr="get", ctx=ast.Load()
-                        ),
-                        args=[ast.Str(s=arg_name), default],
-                        keywords=[],
-                    ),
+            if default is None:
+                node_value = ast.Subscript(
+                    value=ast.Name(id=kw_name, ctx=ast.Load()),
+                    slice=ast.Index(value=ast.Str(s=arg_name)),
+                    ctx=ast.Load(),
                 )
+            elif not isinstance(default, ImmutableValueNodes):
+                msg = (
+                    f"Keyword only arguments must be immutable. " f"Found: {default} for {arg_name}"
+                )
+                raise common.FixerError(msg, node)
+            else:
+                node_value = ast.Call(
+                    func=ast.Attribute(
+                        value=ast.Name(id=kw_name, ctx=ast.Load()), attr="get", ctx=ast.Load()
+                    ),
+                    args=[ast.Str(s=arg_name), default],
+                    keywords=[],
+                )
+
+            new_node = ast.Assign(
+                targets=[ast.Name(id=arg_name, ctx=ast.Store())], value=node_value
+            )
 
             node.body.insert(0, new_node)
 
@@ -1016,7 +1014,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
             new_node = self.expand_starstararg_g12n(new_node, parent, field_name)
         return new_node
 
-    def is_stmtlist(self, nodelist: typ.Any):
+    def is_stmtlist(self, nodelist: typ.Any) -> bool:
         return isinstance(nodelist, list) and all(isinstance(n, ast.stmt) for n in nodelist)
 
     def walk_stmtlist(
