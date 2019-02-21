@@ -50,7 +50,7 @@ setuptools.setup(
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
     url="https://gitlab.com/mbarkhau/lib3to6",
-    version="201902.25b0",
+    version="201902.26",
     keywords="six lib2to3 astor ast",
     description="Compile Python 3.7 code to Python 2.7+",
     long_description=long_description,
