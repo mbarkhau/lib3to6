@@ -33,7 +33,7 @@ Code Quality/CI:
 
 [](TOC)
 
-  - [Project Status (as of 2018-12-18): Experimental](#project-status-as-of-2018-12-18-experimental)
+  - [Project Status (as of 2019-02-21): Experimental](#project-status-as-of-2019-02-21-experimental)
   - [Getting started with Development](#getting-started-with-development)
   - [Motivation](#motivation)
   - [Feature Support](#feature-support)
@@ -43,12 +43,12 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2018-12-18): Experimental
+## Project Status (as of 2019-02-21): Experimental
 
-I've been using this library on personal projects and am still
-finding bugs. Currently I'm adding fixers and checkers based on
-issues found in those projects. Nonetheless, I've already found
-it to be quite useful and encourage you to give it a try.
+I've been using this library mainly for the
+[PyCalVer](https://pypi.org/project/pycalver/) project without any issues. I
+won't be adding any new fixers or checkers until Python 3.8 nears its release.
+Please give it a try and send your feedback.
 
 The ultimate goal would be to cover all cases documented on
 http://python-future.org and either:
