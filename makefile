@@ -353,15 +353,6 @@ test:
 		$(shell cd src/ && ls -1 */__init__.py | awk '{ print "--cov "substr($$1,0,index($$1,"/")-1) }') \
 		test/ src/;
 
-	# Next we install the package and run the test suite against it.
-
-	IFS=' ' read -r -a env_py_paths <<< "$(CONDA_ENV_BIN_PYTHON_PATHS)"; \
-	for i in $${!env_py_paths[@]}; do \
-		env_py=$${env_py_paths[i]}/bin/python; \
-		$${env_py} -m pip install --upgrade .; \
-		ENV=$${ENV-dev} $${env_py} -m pytest test/; \
-	done;
-
 	@rm -rf ".pytest_cache";
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
@@ -466,7 +457,7 @@ endif
 .PHONY: citest
 citest:
 	docker build --file Dockerfile --tag tmp_citest_$(PKG_NAME) .
-	docker run --tty tmp_citest_$(PKG_NAME) make lint mypy test
+	docker run --tty tmp_citest_$(PKG_NAME) make lint mypy test integration_test
 
 
 ## -- Build/Deploy --

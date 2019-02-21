@@ -4,6 +4,7 @@ ADD src/ src/
 ADD stubs/ stubs/
 ADD test/ test/
 ADD requirements/ requirements/
+ADD test_project/ test_project/
 ADD setup.cfg setup.cfg
 ADD setup.py setup.py
 ADD README.md README.md
@@ -15,4 +16,4 @@ ADD makefile.extra.make makefile.extra.make
 
 ENV PYTHONPATH="src/:vendor/"
 
-CMD make serve
+CMD make integration_test
