@@ -1,7 +1,7 @@
 # This file is part of the lib3to6 project
-# https://github.com/mbarkhau/lib3to6
+# https://gitlab.com/mbarkhau/lib3to6
 #
-# (C) 2018 Manuel Barkhau (@mbarkhau)
+# Copyright (c) 2019 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import sys
