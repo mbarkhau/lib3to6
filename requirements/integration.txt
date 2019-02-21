@@ -14,7 +14,7 @@ flake8-builtins
 flake8-comprehensions
 pylint
 mypy
-pytest
+pytest<5.0
 pytest-cov
 
 readme_renderer[md]
@@ -24,3 +24,6 @@ setuptools
 md-toc
 straitjacket
 pycalver
+
+# needed for mypy coverage report
+lxml

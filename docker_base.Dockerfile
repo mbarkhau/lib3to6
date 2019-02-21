@@ -41,7 +41,7 @@ RUN make install
 RUN rm -f /root/.ssh/id_rsa
 
 # Deleting pkgs implies that `conda install`
-# will at have to pull all packages again.
+# will have to pull all packages again.
 RUN conda clean --all --yes
 # Conda docs say that it is not safe to delete pkgs
 # because there may be symbolic links, so we verify

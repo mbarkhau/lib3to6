@@ -1,7 +1,7 @@
 # This file is part of the lib3to6 project
 # https://gitlab.com/mbarkhau/lib3to6
 #
-# Copyright (c) 2018 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
+# Copyright (c) 2019 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import os
@@ -52,20 +52,21 @@ setuptools.setup(
     url="https://gitlab.com/mbarkhau/lib3to6",
     version="201812.24b2",
     keywords="six lib2to3 astor ast",
-
-    description="Build universal python from a substantial subset of Python 3.7.",
+    description="Compile Python 3.7 code to Python 2.7+",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
     packages=packages,
     package_dir=package_dir,
-    python_requires=">=3.6",
     install_requires=install_requires,
     entry_points="""
         [console_scripts]
         lib3to6=lib3to6.__main__:main
     """,
+    python_requires=">=3.7",
     zip_safe=True,
+
+    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

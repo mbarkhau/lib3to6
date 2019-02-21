@@ -44,6 +44,16 @@ CONDA_ENV_NAMES := \
 CONDA_ENV_PATHS := \
 	$(subst pypy,$(ENV_PREFIX)/$(PKG_NAME)_pypy,$(subst python=,$(ENV_PREFIX)/$(PKG_NAME)_py,$(subst .,,$(SUPPORTED_PYTHON_VERSIONS))))
 
+# envname/bin/python is unfortunately not always the correct
+# interpreter. In the case of pypy it is either envname/bin/pypy or
+# envname/bin/pypy3
+CONDA_ENV_BIN_PYTHON_PATHS := \
+	$(shell echo "$(CONDA_ENV_PATHS)" \
+	| sed 's!\(_py[[:digit:]]\+\)!\1/bin/python!g' \
+	| sed 's!\(_pypy2[[:digit:]]\)!\1/bin/pypy!g' \
+	| sed 's!\(_pypy3[[:digit:]]\)!\1/bin/pypy3!g' \
+)
+
 
 empty :=
 literal_space := $(empty) $(empty)
@@ -92,6 +102,7 @@ build/envs.txt: requirements/conda.txt
 	@SUPPORTED_PYTHON_VERSIONS="$(SUPPORTED_PYTHON_VERSIONS)" \
 		CONDA_ENV_NAMES="$(CONDA_ENV_NAMES)" \
 		CONDA_ENV_PATHS="$(CONDA_ENV_PATHS)" \
+		CONDA_ENV_BIN_PYTHON_PATHS="$(CONDA_ENV_BIN_PYTHON_PATHS)" \
 		CONDA_BIN="$(CONDA_BIN)" \
 		bash scripts/setup_conda_envs.sh;
 
@@ -109,6 +120,7 @@ build/deps.txt: build/envs.txt requirements/*.txt
 	@SUPPORTED_PYTHON_VERSIONS="$(SUPPORTED_PYTHON_VERSIONS)" \
 		CONDA_ENV_NAMES="$(CONDA_ENV_NAMES)" \
 		CONDA_ENV_PATHS="$(CONDA_ENV_PATHS)" \
+		CONDA_ENV_BIN_PYTHON_PATHS="$(CONDA_ENV_BIN_PYTHON_PATHS)" \
 		CONDA_BIN="$(CONDA_BIN)" \
 		bash scripts/update_conda_env_deps.sh;
 
@@ -131,9 +143,8 @@ build/deps.txt: build/envs.txt requirements/*.txt
 
 	@rm -f build/deps.txt.tmp;
 
-	@for env_name in $(CONDA_ENV_NAMES); do \
-		env_py="$(ENV_PREFIX)/$${env_name}/bin/python"; \
-		printf "\npip freeze for $${env_name}:\n" >> build/deps.txt.tmp; \
+	@for env_py in $(CONDA_ENV_BIN_PYTHON_PATHS); do \
+		printf "\n# pip freeze for $${env_py}:\n" >> build/deps.txt.tmp; \
 		$${env_py} -m pip freeze >> build/deps.txt.tmp; \
 		printf "\n\n" >> build/deps.txt.tmp; \
 	done
@@ -192,8 +203,8 @@ help:
 
 
 ## Full help message for each task.
-.PHONY: fullhelp
-fullhelp:
+.PHONY: helpverbose
+helpverbose:
 	@printf "Available make targets for \033[97m$(PKG_NAME)\033[0m:\n";
 
 	@awk '{ \
@@ -303,7 +314,9 @@ mypy:
 	@rm -rf ".mypy_cache";
 
 	@printf "mypy ....\n"
-	@MYPYPATH=stubs/:vendor/ $(DEV_ENV_PY) -m mypy src/
+	@MYPYPATH=stubs/:vendor/ $(DEV_ENV_PY) -m mypy \
+		--html-report mypycov \
+		src/ | sed "/Generated HTML report/d"
 	@printf "\e[1F\e[9C ok\n"
 
 
@@ -340,6 +353,15 @@ test:
 		$(shell cd src/ && ls -1 */__init__.py | awk '{ print "--cov "substr($$1,0,index($$1,"/")-1) }') \
 		test/ src/;
 
+	# Next we install the package and run the test suite against it.
+
+	IFS=' ' read -r -a env_py_paths <<< "$(CONDA_ENV_BIN_PYTHON_PATHS)"; \
+	for i in $${!env_py_paths[@]}; do \
+		env_py=$${env_py_paths[i]}/bin/python; \
+		$${env_py} -m pip install --upgrade .; \
+		ENV=$${ENV-dev} $${env_py} -m pytest test/; \
+	done;
+
 	@rm -rf ".pytest_cache";
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
@@ -355,7 +377,7 @@ fmt:
 		 src/ test/
 
 
-## Shortcut for make fmt lint pylint test
+## Shortcut for make fmt lint mypy test
 .PHONY: check
 check:  fmt lint mypy test
 
@@ -440,6 +462,13 @@ endif
 	@rm -rf "test/__pycache__";
 
 
+## Run `make lint mypy test` using docker
+.PHONY: citest
+citest:
+	docker build --file Dockerfile --tag tmp_citest_$(PKG_NAME) .
+	docker run --tty tmp_citest_$(PKG_NAME) make lint mypy test
+
+
 ## -- Build/Deploy --
 
 
@@ -467,15 +496,16 @@ bump_version:
 
 
 ## Create python sdist and bdist_wheel files
-.PHONY: build_dists
-build_dists:
+.PHONY: dist_build
+dist_build:
 	$(DEV_ENV_PY) setup.py sdist;
 	$(DEV_ENV_PY) setup.py bdist_wheel --python-tag=$(BDIST_WHEEL_PYTHON_TAG);
+	@rm -rf src/*.egg-info
 
 
 ## Upload sdist and bdist files to pypi
-.PHONY: upload_dists
-upload_dists:
+.PHONY: dist_upload
+dist_upload:
 	@if [[ "1" != "1" ]]; then \
 		echo "FAILSAFE! Not publishing a private package."; \
 		echo "  To avoid this set IS_PUBLIC=1 in bootstrap.sh and run it."; \
@@ -484,12 +514,13 @@ upload_dists:
 
 	$(DEV_ENV)/bin/twine check $$($(SDIST_FILE_CMD));
 	$(DEV_ENV)/bin/twine check $$($(BDIST_WHEEL_FILE_CMD));
-	$(DEV_ENV)/bin/twine upload $$($(SDIST_FILE_CMD)) $$($(BDIST_WHEEL_FILE_CMD));
+	$(DEV_ENV)/bin/twine upload --skip-existing \
+		$$($(SDIST_FILE_CMD)) $$($(BDIST_WHEEL_FILE_CMD));
 
 
-## Publish on pypi
-.PHONY: publish
-publish: bump_version build_dists upload_dists
+## bump_version dist_build dist_upload
+.PHONY: dist_publish
+dist_publish: bump_version dist_build dist_upload
 
 
 ## Build docker images. Must be run when dependencies are added
@@ -500,8 +531,8 @@ publish: bump_version build_dists upload_dists
 ##   2. Your docker daemon is not running
 ##   3. You're using WSL and docker is not exposed on tcp://localhost:2375
 ##   4. You're using WSL but didn't do export DOCKER_HOST="tcp://localhost:2375"
-.PHONY: build_docker
-build_docker:
+.PHONY: docker_build
+docker_build:
 	@if [[ -f "$(RSA_KEY_PATH)" ]]; then \
 		docker build \
 			--build-arg SSH_PRIVATE_RSA_KEY="$$(cat '$(RSA_KEY_PATH)')" \

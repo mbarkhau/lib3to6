@@ -2,10 +2,11 @@
 # This file is part of the lib3to6 project
 # https://gitlab.com/mbarkhau/lib3to6
 #
-# Copyright (c) 2018 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
+# Copyright (c) 2019 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import io
+import os
 import click
 import typing as typ
 
@@ -15,14 +16,15 @@ from . import transpile
 from . import common
 
 
-try:
+# To enable pretty tracebacks:
+#   echo "export ENABLE_BACKTRACE=1;" >> ~/.bashrc
+if os.environ.get('ENABLE_BACKTRACE') == '1':
     import backtrace
 
-    # To enable pretty tracebacks:
-    #   echo "export ENABLE_BACKTRACE=1;" >> ~/.bashrc
     backtrace.hook(align=True, strip_path=True, enable_on_envvar_only=True)
-except ImportError:
-    pass
+
+
+click.disable_unicode_literals_warning = True
 
 
 @click.command()
@@ -46,13 +48,13 @@ def main(
     diff          : bool,
     in_place      : bool,
     # config        : str,
-    source_files  : typ.Iterable[io.TextIOWrapper],
+    source_files: typ.Iterable[io.TextIOWrapper],
 ) -> None:
     # TODO (mb 2018-07-12): evaluate build config
     cfg    = packaging.eval_build_config()
     differ = difflib.Differ()
     for src_file in source_files:
-        source_text       = src_file.read()
+        source_text = src_file.read()
         try:
             fixed_source_text = transpile.transpile_module(cfg, source_text)
         except common.CheckError as err:

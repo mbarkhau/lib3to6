@@ -13,10 +13,10 @@ Project/Repo:
 
 Code Quality/CI:
 
-[![Type Checked with mypy][mypy_img]][mypy_ref]
-[![Code Style: sjfmt][style_img]][style_ref]
-[![Code Coverage][codecov_img]][codecov_ref]
 [![Build Status][build_img]][build_ref]
+[![Type Checked with mypy][mypy_img]][mypy_ref]
+[![Code Coverage][codecov_img]][codecov_ref]
+[![Code Style: sjfmt][style_img]][style_ref]
 
 
 |               Name                  |    role           |  since  | until |
@@ -397,7 +397,7 @@ version, but want their libraries to work on older versions.
 [license_ref]: https://gitlab.com/mbarkhau/lib3to6/blob/master/LICENSE
 
 [mypy_img]: https://img.shields.io/badge/mypy-checked-green.svg
-[mypy_ref]: http://mypy-lang.org/
+[mypy_ref]: https://mbarkhau.gitlab.io/lib3to6/mypycov
 
 [style_img]: https://img.shields.io/badge/code%20style-%20sjfmt-f71.svg
 [style_ref]: https://gitlab.com/mbarkhau/straitjacket/
@@ -405,7 +405,7 @@ version, but want their libraries to work on older versions.
 [pypi_img]: https://img.shields.io/badge/PyPI-wheels-green.svg
 [pypi_ref]: https://pypi.org/project/lib3to6/#files
 
-[downloads_img]: https://pepy.tech/badge/lib3to6
+[downloads_img]: https://pepy.tech/badge/lib3to6/month
 [downloads_ref]: https://pepy.tech/project/lib3to6
 
 [version_img]: https://img.shields.io/badge/PyCalVer-v201812.0024--beta-blue.svg
