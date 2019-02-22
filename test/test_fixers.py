@@ -99,8 +99,8 @@ FIXTURES = [
         #!/usr/bin/env python
         # -*- coding: utf-8 -*-
         \"\"\"Module Docstring\"\"\"
-        from __future__ import division, absolute_import, print_function
         from __future__ import unicode_literals
+        from __future__ import division, absolute_import, print_function
         """,
     ),
     FixerFixture(
@@ -708,6 +708,22 @@ FIXTURES = [
         """,
     ),
     FixerFixture(
+        "unicode_literals_future, unicode_to_str",
+        "2.7",
+        """
+        assert isinstance("foobar", str)
+        """,
+        """
+        from __future__ import unicode_literals
+        try:
+            import builtins
+        except ImportError:
+            import __builtin__ as builtins
+        str = getattr(builtins, "unicode", str)
+        assert isinstance("foobar", str)
+        """,
+    ),
+    FixerFixture(
         "xrange_to_range,unicode_to_str",
         "2.7",
         """
@@ -915,12 +931,14 @@ def test_fixers(fixture):
     # print(test_ast)
     # print("--------" * 9)
     # print(repr(test_source))
+    # print(test_source)
     # print(">>>>>>>>" * 9)
 
     # print("????????" * 9)
     # print(expected_ast)
     # print("--------" * 9)
     # print(repr(expected_source))
+    # print(expected_source)
     # print("????????" * 9)
 
     cfg = {'fixers': fixture.names, 'target_version': fixture.target_version}
@@ -931,6 +949,7 @@ def test_fixers(fixture):
     # print(result_ast)
     # print("--------" * 9)
     # print(repr(result_source))
+    # print(result_source)
     # print("<<<<<<<<" * 9)
 
     assert result_coding == expected_coding

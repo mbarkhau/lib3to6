@@ -147,6 +147,65 @@ def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBa
         yield fixer_type()
 
 
+def find_import_decls(node: ast.AST) -> typ.Iterable[common.ImportDecl]:
+    if not isinstance(node, (ast.Try, ast.Import, ast.ImportFrom)):
+        return
+
+    if isinstance(node, ast.Try):
+        if not (len(node.body) == 1 and len(node.handlers) == 1):
+            return
+
+        except_handler = node.handlers[0]
+
+        is_import_error_handler = (
+            isinstance(except_handler.type, ast.Name)
+            and except_handler.type.id == 'ImportError'
+            and len(except_handler.body) == 1
+        )
+        if not is_import_error_handler:
+            return
+
+        maybe_import = node.body[0]
+        if isinstance(maybe_import, ast.Import):
+            default_import = maybe_import
+        else:
+            return
+
+        maybe_fallback_import = except_handler.body[0]
+        if isinstance(maybe_fallback_import, ast.Import):
+            fallback_import = maybe_fallback_import
+        else:
+            return
+
+        if len(default_import.names) == 1 and len(fallback_import.names) == 1:
+            default_import_alias  = default_import.names[0]
+            fallback_import_alias = fallback_import.names[0]
+            yield common.ImportDecl(
+                default_import_alias.name, default_import_alias.asname, fallback_import_alias.name
+            )
+
+    elif isinstance(node, ast.Import):
+        if len(node.names) != 1 and any(alias.asname for alias in node.names):
+            # we never use multi name imports or asname, so this is user code
+            return
+        else:
+            alias = node.names[0]
+            yield common.ImportDecl(alias.name, None, None)
+    elif isinstance(node, ast.ImportFrom):
+        if any(alias.asname for alias in node.names):
+            # we never use multi name imports or asname, so this is user code
+            return
+        else:
+            module_name = node.module
+            if not module_name:
+                return
+
+            for alias in node.names:
+                yield common.ImportDecl(module_name, alias.name, None)
+    else:
+        return
+
+
 def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
     future_imports_offset = 0
     imports_end_offset    = 0
@@ -162,29 +221,17 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
             imports_end_offset    = body_offset + 1
             continue
 
-        if isinstance(node, ast.Import):
-            imports_end_offset = body_offset
-            for alias in node.names:
-                if alias.asname:
-                    # we never use asname, so this is user code
-                    pass
-                else:
-                    import_decls.add(common.ImportDecl(alias.name, None, None))
-        elif isinstance(node, ast.ImportFrom):
-            imports_end_offset = body_offset
-            module_name        = node.module
-            if module_name:
-                if module_name == '__future__':
-                    future_imports_offset = body_offset + 1
-
-                for alias in node.names:
-                    if alias.asname:
-                        # we never use asname, so this is user code
-                        pass
-                    else:
-                        import_decls.add(common.ImportDecl(module_name, alias.name, None))
-        else:
+        node_import_decls = list(find_import_decls(node))
+        if not node_import_decls:
+            # stop when we've passed the initial imports,
+            # everything else is user code
             break
+
+        for import_decl in node_import_decls:
+            if import_decl.module_name == '__future__':
+                future_imports_offset = body_offset
+            imports_end_offset = body_offset
+            import_decls.add(import_decl)
 
     return (future_imports_offset, imports_end_offset, import_decls)
 
