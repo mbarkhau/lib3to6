@@ -98,7 +98,7 @@ class FutureImportFixerBase(FixerBase):
     future_name: str
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        self.required_imports.add(common.ImportDecl("__future__", self.future_name))
+        self.required_imports.add(common.ImportDecl("__future__", self.future_name, None))
         return tree
 
 
@@ -506,15 +506,18 @@ class BuiltinsRenameFixerBase(FixerBase):
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
-            if not (isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)):
-                continue
+            is_access_to_builtin = (
+                isinstance(node, ast.Name)
+                and isinstance(node.ctx, ast.Load)
+                and node.id == self.new_name
+            )
 
-            if node.id == self.new_name:
-                self.module_declarations.add(
-                    f"""
-                {self.new_name} = getattr(__builtins__, '{self.old_name}', {self.new_name})
-                """.strip()
-                )
+            if is_access_to_builtin:
+                self.required_imports.add(common.ImportDecl("builtins", None, "__builtin__"))
+                builtin_renmae_decl_str = f"""
+                {self.new_name} = getattr(builtins, '{self.old_name}', {self.new_name})
+                """
+                self.module_declarations.add(builtin_renmae_decl_str.strip())
 
         return tree
 
@@ -751,7 +754,7 @@ class ItertoolsBuiltinsFixer(TransformerFixerBase):
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
         if isinstance(node.ctx, ast.Load) and node.id in ("map", "zip", "filter"):
-            self.required_imports.add(common.ImportDecl("itertools", None))
+            self.required_imports.add(common.ImportDecl("itertools", None, None))
             global_decl = f"{node.id} = getattr(itertools, 'i{node.id}', {node.id})"
             self.module_declarations.add(global_decl)
 
@@ -981,7 +984,7 @@ class UnpackingGeneralizationsFixer(FixerBase):
                 raise TypeError(f"Unexpected node type {node}")
         else:
             assert isinstance(node, ast.Call)
-            self.required_imports.add(common.ImportDecl("itertools", None))
+            self.required_imports.add(common.ImportDecl("itertools", None, None))
             chain_args = []
             for val in chain_values:
                 items_func = ast.Attribute(value=val, attr='items', ctx=ast.Load())

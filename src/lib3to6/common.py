@@ -46,6 +46,7 @@ class FixerError(Exception):
 class ImportDecl(typ.NamedTuple):
     module_name: str
     import_name: typ.Optional[str]
+    py2_module_name: typ.Optional[str]
 
 
 # NOTE (mb 2018-06-24): This also includes builtins from py27

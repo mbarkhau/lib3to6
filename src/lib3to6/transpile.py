@@ -148,8 +148,8 @@ def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBa
 
 
 def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
-    future_imports_offset = -1
-    imports_end_offset    = -1
+    future_imports_offset = 0
+    imports_end_offset    = 0
 
     import_decls: typ.Set[common.ImportDecl] = set()
 
@@ -158,8 +158,8 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
             body_offset == 0 and isinstance(node, ast.Expr) and isinstance(node.value, ast.Str)
         )
         if is_docstring:
-            future_imports_offset = body_offset
-            imports_end_offset    = body_offset
+            future_imports_offset = body_offset + 1
+            imports_end_offset    = body_offset + 1
             continue
 
         if isinstance(node, ast.Import):
@@ -169,20 +169,20 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
                     # we never use asname, so this is user code
                     pass
                 else:
-                    import_decls.add(common.ImportDecl(alias.name, None))
+                    import_decls.add(common.ImportDecl(alias.name, None, None))
         elif isinstance(node, ast.ImportFrom):
             imports_end_offset = body_offset
             module_name        = node.module
             if module_name:
                 if module_name == '__future__':
-                    future_imports_offset = body_offset
+                    future_imports_offset = body_offset + 1
 
                 for alias in node.names:
                     if alias.asname:
                         # we never use asname, so this is user code
                         pass
                     else:
-                        import_decls.add(common.ImportDecl(module_name, alias.name))
+                        import_decls.add(common.ImportDecl(module_name, alias.name, None))
         else:
             break
 
@@ -218,12 +218,30 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
                 names=[ast.alias(name=import_decl.import_name, asname=None)],
             )
 
+        if import_decl.py2_module_name:
+            asname          = import_decl.import_name or import_decl.module_name
+            fallback_import = ast.Import(
+                names=[ast.alias(name=import_decl.py2_module_name, asname=asname)]
+            )
+            import_node = ast.Try(
+                body=[import_node],
+                handlers=[
+                    ast.ExceptHandler(
+                        type=ast.Name(id='ImportError', ctx=ast.Load()),
+                        name=None,
+                        body=[fallback_import],
+                    )
+                ],
+                orelse=[],
+                finalbody=[],
+            )
+
         if import_decl.module_name == '__future__':
-            tree.body.insert(future_imports_offset + 1, import_node)
+            tree.body.insert(future_imports_offset, import_node)
             future_imports_offset += 1
             imports_end_offset    += 1
         else:
-            tree.body.insert(imports_end_offset + 1, import_node)
+            tree.body.insert(imports_end_offset, import_node)
             imports_end_offset += 1
 
 

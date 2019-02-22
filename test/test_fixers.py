@@ -698,7 +698,12 @@ FIXTURES = [
         myrange = range
         """,
         """
-        range = getattr(__builtins__, "xrange", range)
+        try:
+            import builtins
+        except ImportError:
+            import __builtin__ as builtins
+
+        range = getattr(builtins, "xrange", range)
         myrange = range
         """,
     ),
@@ -712,8 +717,13 @@ FIXTURES = [
                     print(str(x))
         """,
         """
-        range = getattr(__builtins__, "xrange", range)
-        str = getattr(__builtins__, "unicode", str)
+        try:
+            import builtins
+        except ImportError:
+            import __builtin__ as builtins
+
+        range = getattr(builtins, "xrange", range)
+        str = getattr(builtins, "unicode", str)
 
         def foo():
             if True:
