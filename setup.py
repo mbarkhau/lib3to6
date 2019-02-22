@@ -52,7 +52,7 @@ setuptools.setup(
     url="https://gitlab.com/mbarkhau/lib3to6",
     version="201902.27",
     keywords="six lib2to3 astor ast",
-    description="Compile Python 3.7 code to Python 2.7+",
+    description="Compile Python 3.6+ code to Python 2.7+",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
@@ -63,7 +63,7 @@ setuptools.setup(
         [console_scripts]
         lib3to6=lib3to6.__main__:main
     """,
-    python_requires=">=3.7",
+    python_requires=">=3.6",
     zip_safe=True,
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -78,6 +78,7 @@ setuptools.setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS :: MacOS X",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Software Development :: Libraries",

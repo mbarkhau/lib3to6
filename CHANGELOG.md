@@ -1,6 +1,6 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
-## v201902.0027
+## v201902.0028
 
  - Fix python 2 builtins were not always overridden correctly.
  - Fix pypy compatability testing
