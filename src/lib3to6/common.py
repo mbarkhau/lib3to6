@@ -44,8 +44,8 @@ class FixerError(Exception):
 #   detected as already imported, and another import (without the
 #   asname) will be added to the module.
 class ImportDecl(typ.NamedTuple):
-    module_name: str
-    import_name: typ.Optional[str]
+    module_name    : str
+    import_name    : typ.Optional[str]
     py2_module_name: typ.Optional[str]
 
 
