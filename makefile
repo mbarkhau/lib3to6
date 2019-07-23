@@ -49,7 +49,7 @@ CONDA_ENV_PATHS := \
 # envname/bin/pypy3
 CONDA_ENV_BIN_PYTHON_PATHS := \
 	$(shell echo "$(CONDA_ENV_PATHS)" \
-	| sed 's!\(_py[[:digit:]]\+\)!\1/bin/python!g' \
+	| sed 's!\(_py[[:digit:]]\{1,\}\)!\1/bin/python!g' \
 	| sed 's!\(_pypy2[[:digit:]]\)!\1/bin/pypy!g' \
 	| sed 's!\(_pypy3[[:digit:]]\)!\1/bin/pypy3!g' \
 )
@@ -76,6 +76,8 @@ DOCKER_BASE_IMAGE := registry.gitlab.com/mbarkhau/lib3to6/base
 
 GIT_HEAD_REV = $(shell git rev-parse --short HEAD)
 DOCKER_IMAGE_VERSION = $(shell date -u +'%Y%m%dt%H%M%S')_$(GIT_HEAD_REV)
+
+MAX_LINE_LEN = $(shell grep 'max-line-length' setup.cfg | sed 's/[^0-9]{1,}//')
 
 
 build/envs.txt: requirements/conda.txt
@@ -163,7 +165,7 @@ help:
 						helpCommand, helpMessage; \
 					helpMessage = ""; \
 				} \
-			} else if ($$0 ~ /^[a-zA-Z\-\_0-9.]+:/) { \
+			} else if ($$0 ~ /^[a-zA-Z\-\_0-9.\/]+:/) { \
 				helpCommand = substr($$0, 0, index($$0, ":")); \
 				if (helpMessage) { \
 					printf "\033[36m%-20s\033[0m %s\n", \
@@ -215,7 +217,7 @@ helpverbose:
 						helpCommand, helpMessage; \
 					helpMessage = ""; \
 				} \
-			} else if ($$0 ~ /^[a-zA-Z\-\_0-9.]+:/) { \
+			} else if ($$0 ~ /^[a-zA-Z\-\_0-9.\/]+:/) { \
 				helpCommand = substr($$0, 0, index($$0, ":")); \
 				if (helpMessage) { \
 					printf "\033[36m%-20s\033[0m %s\n", \
@@ -307,6 +309,15 @@ lint:
 	@$(DEV_ENV)/bin/flake8 src/
 	@printf "\e[1F\e[9C ok\n"
 
+	@printf "sjfmt ..\n"
+	@$(DEV_ENV)/bin/sjfmt \
+		--target-version=py36 \
+		--skip-string-normalization \
+		--line-length=$(MAX_LINE_LEN) \
+		--check \
+		src/ test/ 2>&1 | sed "/All done/d" | sed "/left unchanged/d"
+	@printf "\e[1F\e[9C ok\n"
+
 
 ## Run mypy type checker
 .PHONY: mypy
@@ -364,8 +375,12 @@ test:
 ## Run code formatter on src/ and test/
 .PHONY: fmt
 fmt:
-	@$(DEV_ENV)/bin/sjfmt --py36 --skip-string-normalization --line-length=100 \
-		 src/ test/
+	@$(DEV_ENV)/bin/sjfmt \
+		--target-version=py36 \
+		--skip-string-normalization \
+		--line-length=$(MAX_LINE_LEN) \
+		src/ test/
+
 
 
 ## Shortcut for make fmt lint mypy test
