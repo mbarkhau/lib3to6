@@ -1,11 +1,10 @@
 import sys
-import pytest
-
-from lib3to6.common import CheckError
-from lib3to6 import utils
-
 from collections import namedtuple
 
+import pytest
+
+from lib3to6 import utils
+from lib3to6.common import CheckError
 
 CheckFixture = namedtuple("CheckFixture", ["names", "test_source", 'expected_error_msg'])
 

@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: MIT
 
 import ast
-import builtins
 import typing as typ
+import builtins
 
 PackageDir  = typ.Dict[str, str]
 BuildConfig = typ.Dict[str, str]

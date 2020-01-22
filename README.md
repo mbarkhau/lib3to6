@@ -44,14 +44,17 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2019-02-21): Experimental
+## Project Status (as of 2020-01-19): Beta
 
-I've been using this library mainly for the
-[PyCalVer](https://pypi.org/project/pycalver/) project without any issues. I
-won't be adding any new fixers or checkers until Python 3.8 nears its release.
+I've been using this library for a year on a few projects without much incident.
+An example of such a project is [PyCalVer](https://pypi.org/project/pycalver/). I
+have tested with Python 3.8 and made some fixes and updates. The library serves
+my purposes and I don't anticipate major updates, but I will refrain from calling
+it stable until there has been more adoption by projects other than my own.
+
 Please give it a try and send your feedback.
 
-The ultimate goal would be to cover all cases documented on
+In an ideal world, the project would cover all cases documented on
 http://python-future.org and either:
 
  1. Transpile to code that will work on any version
@@ -334,7 +337,7 @@ CheckError: Prohibited keyword argument 'encoding' to builtin.open. on line 1 of
 ```
 
 
-Here `lib3to6` you will give you a ``CheckError`, however it
+Here `lib3to6` you will give you a `CheckError`, however it
 remains your responsibility to write your code so that this
 syntactic translation is semantically equivalent in both python3
 and python2.

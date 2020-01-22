@@ -7,8 +7,8 @@
 import ast
 import typing as typ
 
-from . import common
 from . import utils
+from . import common
 
 
 class VersionInfo:

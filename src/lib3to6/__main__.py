@@ -7,14 +7,14 @@
 
 import io
 import os
-import click
 import typing as typ
-
 import difflib
+
+import click
+
+from . import common
 from . import packaging
 from . import transpile
-from . import common
-
 
 # To enable pretty tracebacks:
 #   echo "export ENABLE_BACKTRACE=1;" >> ~/.bashrc

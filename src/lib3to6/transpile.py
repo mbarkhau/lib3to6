@@ -7,14 +7,14 @@
 import re
 import ast
 import sys
-import astor
 import typing as typ
+
+import astor
 
 from . import utils
 from . import common
 from . import fixers
 from . import checkers
-
 
 DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
 

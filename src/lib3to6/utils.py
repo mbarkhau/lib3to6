@@ -5,12 +5,12 @@
 # SPDX-License-Identifier: MIT
 
 import ast
-import astor
 import typing as typ
+
+import astor
 
 from . import common
 from . import transpile
-
 
 # Recursive types not fully supported yet, nested types replaced with "Any"
 # NodeOrNodelist = typ.Union[ast.AST, typ.List["NodeOrNodelist"]]

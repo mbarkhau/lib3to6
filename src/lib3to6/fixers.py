@@ -8,9 +8,8 @@ import ast
 import sys
 import typing as typ
 
-from . import common
 from . import utils
-
+from . import common
 
 ContainerNodes      = (ast.List, ast.Set, ast.Tuple)
 ImmutableValueNodes = (ast.Num , ast.Str, ast.Bytes, ast.NameConstant)

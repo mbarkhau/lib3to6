@@ -305,8 +305,15 @@ git_hooks:
 ## Run flake8 linter
 .PHONY: lint
 lint:
-	@printf "flake8 ..\n"
-	@$(DEV_ENV)/bin/flake8 src/
+	@printf "isort ..\n"
+	@$(DEV_ENV)/bin/isort \
+		--check-only \
+		--force-single-line-imports \
+		--length-sort \
+		--recursive \
+		--line-width=$(MAX_LINE_LEN) \
+		--project $(PKG_NAME) \
+		src/ test/
 	@printf "\e[1F\e[9C ok\n"
 
 	@printf "sjfmt ..\n"
@@ -316,6 +323,10 @@ lint:
 		--line-length=$(MAX_LINE_LEN) \
 		--check \
 		src/ test/ 2>&1 | sed "/All done/d" | sed "/left unchanged/d"
+	@printf "\e[1F\e[9C ok\n"
+
+	@printf "flake8 ..\n"
+	@$(DEV_ENV)/bin/flake8 src/
 	@printf "\e[1F\e[9C ok\n"
 
 
@@ -361,6 +372,7 @@ test:
 		--verbose \
 		--cov-report html \
 		--cov-report term \
+		-k "$${PYTEST_FILTER}" \
 		$(shell cd src/ && ls -1 */__init__.py | awk '{ print "--cov "substr($$1,0,index($$1,"/")-1) }') \
 		test/ src/;
 
@@ -375,6 +387,14 @@ test:
 ## Run code formatter on src/ and test/
 .PHONY: fmt
 fmt:
+	@$(DEV_ENV)/bin/isort \
+		--force-single-line-imports \
+		--length-sort \
+		--recursive \
+		--line-width=$(MAX_LINE_LEN) \
+		--project $(PKG_NAME) \
+		src/ test/;
+
 	@$(DEV_ENV)/bin/sjfmt \
 		--target-version=py36 \
 		--skip-string-normalization \
@@ -441,7 +461,6 @@ devtest:
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
 
-ifdef FILTER
 	ENV=$${ENV-dev} PYTHONPATH=src/:vendor/:$$PYTHONPATH \
 		$(DEV_ENV_PY) -m pytest -v \
 		--doctest-modules \
@@ -450,19 +469,8 @@ ifdef FILTER
 		--capture=no \
 		--exitfirst \
 		--failed-first \
-		-k $(FILTER) \
+		-k "$${PYTEST_FILTER}" \
 		test/ src/;
-else
-	ENV=$${ENV-dev} PYTHONPATH=src/:vendor/:$$PYTHONPATH \
-		$(DEV_ENV_PY) -m pytest -v \
-		--doctest-modules \
-		--no-cov \
-		--verbose \
-		--capture=no \
-		--exitfirst \
-		--failed-first \
-		test/ src/;
-endif
 
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
