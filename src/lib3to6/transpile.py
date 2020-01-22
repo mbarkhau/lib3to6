@@ -37,14 +37,19 @@ SOURCE_ENCODING_RE = re.compile(
 def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, str]:
     shebang = False
     coding  = None
+    line: str
 
     header_lines: typ.List[str] = []
 
     for i, line_data in enumerate(module_source.splitlines()):
         if isinstance(line_data, bytes):
             line = line_data.decode(coding or DEFAULT_SOURCE_ENCODING)
-        else:
+        elif isinstance(line_data, str):
             line = line_data
+        else:
+            bad_type = type(module_source)
+            errmsg   = f"Invalid type: module_source must be str/bytes but was '{bad_type}'"
+            raise TypeError(errmsg)
 
         if i < 2:
             if i == 0 and line.startswith("#!") and "python" in line:

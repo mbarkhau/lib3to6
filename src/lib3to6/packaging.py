@@ -44,7 +44,7 @@ def eval_build_config() -> common.BuildConfig:
     return {'target_version': "2.7", 'force_transpile': "1", 'fixers': "", 'checkers': ""}
 
 
-def _ignore_tmp_files(src: str, names: typ.Iterable[str]) -> typ.List[str]:
+def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
     if isinstance(src, str):
         src_str = src
     else:

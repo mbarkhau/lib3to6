@@ -3,9 +3,8 @@ import collections
 
 import pytest
 
-from lib3to6 import transpile
 from lib3to6 import utils
-
+from lib3to6 import transpile
 
 FixerFixture = collections.namedtuple(
     "FixerFixture", ["names", "target_version", "test_source", 'expected_source']

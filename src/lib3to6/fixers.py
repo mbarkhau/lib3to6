@@ -81,7 +81,6 @@ class FixerBase:
 
 
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
-
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         try:
             return self.visit(tree)
@@ -705,7 +704,9 @@ if sys.version_info >= (3, 6):
 
             return "{" + str(arg_index) + format_spec + "}"
 
-        def _joined_str_str(self, joined_str_node: ast.JoinedStr, arg_nodes: typ.List[ast.expr]) -> str:
+        def _joined_str_str(
+            self, joined_str_node: ast.JoinedStr, arg_nodes: typ.List[ast.expr]
+        ) -> str:
             fmt_str = ""
             for val in joined_str_node.values:
                 if isinstance(val, ast.Str):
@@ -720,7 +721,9 @@ if sys.version_info >= (3, 6):
             arg_nodes: typ.List[ast.expr] = []
 
             fmt_str          = self._joined_str_str(node, arg_nodes)
-            format_attr_node = ast.Attribute(value=ast.Str(s=fmt_str), attr="format", ctx=ast.Load())
+            format_attr_node = ast.Attribute(
+                value=ast.Str(s=fmt_str), attr="format", ctx=ast.Load()
+            )
             return ast.Call(func=format_attr_node, args=arg_nodes, keywords=[])
 
 
