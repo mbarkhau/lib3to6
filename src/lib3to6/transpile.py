@@ -35,40 +35,38 @@ SOURCE_ENCODING_RE = re.compile(
 
 
 def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, str]:
-    shebang         = False
-    coding_declared = False
-    coding          = DEFAULT_SOURCE_ENCODING
+    shebang = False
+    coding  = None
 
     header_lines: typ.List[str] = []
 
-    # NOTE (mb 2018-06-23): Sneaky replacement of coding is done during
-    #   consumption of the generator.
-    source_lines: typ.Iterable[str] = (
-        line.decode(coding, errors="ignore") if isinstance(line, bytes) else line
-        for line in module_source.splitlines()
-    )
+    for i, line_data in enumerate(module_source.splitlines()):
+        if isinstance(line_data, bytes):
+            line = line_data.decode(coding or DEFAULT_SOURCE_ENCODING)
+        else:
+            line = line_data
 
-    for i, line in enumerate(source_lines):
         if i < 2:
             if i == 0 and line.startswith("#!") and "python" in line:
                 shebang = True
             else:
-                m = SOURCE_ENCODING_RE.match(line)
-                if m:
-                    coding          = m.group("coding").strip()
-                    coding_declared = True
+                # elif match := SOURCE_ENCODING_RE.match(line):
+                match = SOURCE_ENCODING_RE.match(line)
+                if match:
+                    coding = match.group("coding").strip()
 
         if not line.rstrip() or line.rstrip().startswith("#"):
             header_lines.append(line)
         else:
             break
 
-    if not coding_declared:
-        coding_declaration = DEFAULT_SOURCE_ENCODING_DECLARATION.format(coding)
+    if coding is None:
+        coding      = DEFAULT_SOURCE_ENCODING
+        coding_decl = DEFAULT_SOURCE_ENCODING_DECLARATION.format(coding)
         if shebang:
-            header_lines.insert(1, coding_declaration)
+            header_lines.insert(1, coding_decl)
         else:
-            header_lines.insert(0, coding_declaration)
+            header_lines.insert(0, coding_decl)
 
     header = "\n".join(header_lines) + "\n"
     return coding, header

@@ -44,13 +44,20 @@ def eval_build_config() -> common.BuildConfig:
     return {'target_version': "2.7", 'force_transpile': "1", 'fixers': "", 'checkers': ""}
 
 
-def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
-    if src.endswith("build"):
+def _ignore_tmp_files(src: str, names: typ.Iterable[str]) -> typ.List[str]:
+    if isinstance(src, str):
+        src_str = src
+    else:
+        # https://bugs.python.org/issue39390
+        src_str = str(src)
+
+    if src_str.endswith("build"):
         return names
-    if src.endswith("dist"):
+    if src_str.endswith("dist"):
         return names
-    if src.endswith("__pycache__"):
+    if src_str.endswith("__pycache__"):
         return names
+
     return [name for name in names if name.endswith(".pyc")]
 
 
