@@ -34,7 +34,7 @@ Code Quality/CI:
 
 [](TOC)
 
-  - [Project Status (as of 2019-02-21): Experimental](#project-status-as-of-2019-02-21-experimental)
+  - [Project Status (as of 2020-01-19): Beta](#project-status-as-of-2020-01-19-beta)
   - [Getting started with Development](#getting-started-with-development)
   - [Motivation](#motivation)
   - [Feature Support](#feature-support)

@@ -1,5 +1,11 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
+## v202001.0031
+
+ - Compatibility fixes for Python 3.8
+ - Add support for f-string `=` specifier
+
+
 ## v201902.0030
 
  - Fix python 2 builtins were not always overridden correctly.

@@ -50,7 +50,6 @@ def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, 
             if i == 0 and line.startswith("#!") and "python" in line:
                 shebang = True
             else:
-                # elif match := SOURCE_ENCODING_RE.match(line):
                 match = SOURCE_ENCODING_RE.match(line)
                 if match:
                     coding = match.group("coding").strip()
