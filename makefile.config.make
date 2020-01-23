@@ -6,7 +6,7 @@ PACKAGE_NAME := lib3to6
 # - `make ipy`
 # - `make lint`
 # - `make devtest`
-DEVELOPMENT_PYTHON_VERSION := python=3.8
+DEVELOPMENT_PYTHON_VERSION := python=3.7
 
 # These must be valid (space separated) conda package names.
 # A separate conda environment will be created for each of these.
