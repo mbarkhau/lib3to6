@@ -10,6 +10,57 @@ import typing as typ
 
 from . import utils
 from . import common
+from . import fixer_base as fb
+from .fixers_future import DivisionFutureFixer
+from .fixers_future import GeneratorsFutureFixer
+from .fixers_future import AnnotationsFutureFixer
+from .fixers_future import NestedScopesFutureFixer
+from .fixers_future import GeneratorStopFutureFixer
+from .fixers_future import PrintFunctionFutureFixer
+from .fixers_future import WithStatementFutureFixer
+from .fixers_future import AbsoluteImportFutureFixer
+from .fixers_future import UnicodeLiteralsFutureFixer
+from .fixers_builtin_rename import UnichrToChrFixer
+from .fixers_builtin_rename import UnicodeToStrFixer
+from .fixers_builtin_rename import XrangeToRangeFixer
+from .fixers_builtin_rename import RawInputToInputFixer
+from .fixers_import_fallback import QueueImportFallbackFixer
+from .fixers_import_fallback import DbmGnuImportFallbackFixer
+from .fixers_import_fallback import PickleImportFallbackFixer
+from .fixers_import_fallback import ThreadImportFallbackFixer
+from .fixers_import_fallback import WinRegImportFallbackFixer
+from .fixers_import_fallback import CopyRegImportFallbackFixer
+from .fixers_import_fallback import ReprLibImportFallbackFixer
+from .fixers_import_fallback import TkinterImportFallbackFixer
+from .fixers_import_fallback import BuiltinsImportFallbackFixer
+from .fixers_import_fallback import HtmlParserImportFallbackFixer
+from .fixers_import_fallback import HttpClientImportFallbackFixer
+from .fixers_import_fallback import TkinterDndImportFallbackFixer
+from .fixers_import_fallback import TkinterTixImportFallbackFixer
+from .fixers_import_fallback import TkinterTtkImportFallbackFixer
+from .fixers_import_fallback import DummyThreadImportFallbackFixer
+from .fixers_import_fallback import HttpCookiesImportFallbackFixer
+from .fixers_import_fallback import TkinterFontImportFallbackFixer
+from .fixers_import_fallback import UrllibErrorImportFallbackFixer
+from .fixers_import_fallback import UrllibParseImportFallbackFixer
+from .fixers_import_fallback import ConfigParserImportFallbackFixer
+from .fixers_import_fallback import SocketServerImportFallbackFixer
+from .fixers_import_fallback import XMLRPCClientImportFallbackFixer
+from .fixers_import_fallback import XmlrpcServerImportFallbackFixer
+from .fixers_import_fallback import EmailMimeBaseImportFallbackFixer
+from .fixers_import_fallback import EmailMimeTextImportFallbackFixer
+from .fixers_import_fallback import HttpCookiejarImportFallbackFixer
+from .fixers_import_fallback import TkinterDialogImportFallbackFixer
+from .fixers_import_fallback import UrllibRequestImportFallbackFixer
+from .fixers_import_fallback import EmailMimeImageImportFallbackFixer
+from .fixers_import_fallback import TkinterConstantsImportFallbackFixer
+from .fixers_import_fallback import TkinterMessageboxImportFallbackFixer
+from .fixers_import_fallback import UrllibRobotParserImportFallbackFixer
+from .fixers_import_fallback import EmailMimeMultipartImportFallbackFixer
+from .fixers_import_fallback import TkinterColorchooserImportFallbackFixer
+from .fixers_import_fallback import TkinterCommonDialogImportFallbackFixer
+from .fixers_import_fallback import TkinterScrolledTextImportFallbackFixer
+from .fixers_import_fallback import EmailMimeNonmultipartImportFallbackFixer
 
 ContainerNodes      = (ast.List, ast.Set, ast.Tuple)
 ImmutableValueNodes = (ast.Num , ast.Str, ast.Bytes, ast.NameConstant)
@@ -29,535 +80,9 @@ ArgUnpackNodes   = (ast.Call, ast.List, ast.Tuple, ast.Set)
 KwArgUnpackNodes = (ast.Call, ast.Dict)
 
 
-class VersionInfo:
+class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
-    apply_since: typ.List[int]
-    apply_until: typ.List[int]
-    works_since: typ.List[int]
-    works_until: typ.Optional[typ.List[int]]
-
-    def __init__(
-        self, apply_since: str, apply_until: str, works_since: str = None, works_until: str = None
-    ) -> None:
-
-        self.apply_since = [int(part) for part in apply_since.split(".")]
-        self.apply_until = [int(part) for part in apply_until.split(".")]
-        if works_since is None:
-            # Implicitly, if it's applied since a version, it
-            # also works since then.
-            self.works_since = self.apply_since
-        else:
-            self.works_since = [int(part) for part in works_since.split(".")]
-        self.works_until = [int(part) for part in works_until.split(".")] if works_until else None
-
-
-class FixerBase:
-
-    version_info       : VersionInfo
-    required_imports   : typ.Set[common.ImportDecl]
-    module_declarations: typ.Set[str]
-
-    def __init__(self) -> None:
-        self.required_imports    = set()
-        self.module_declarations = set()
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        raise NotImplementedError()
-
-    def is_required_for(self, version: str) -> bool:
-        version_num = [int(part) for part in version.split(".")]
-        nfo         = self.version_info
-        return nfo.apply_since <= version_num <= nfo.apply_until
-
-    def is_compatible_with(self, version: str) -> bool:
-        version_num = [int(part) for part in version.split(".")]
-        nfo         = self.version_info
-        return nfo.works_since <= version_num and (
-            nfo.works_until is None or version_num <= nfo.works_until
-        )
-
-    def is_applicable_to(self, src_version: str, tgt_version: str) -> bool:
-        return self.is_compatible_with(src_version) and self.is_required_for(tgt_version)
-
-
-class TransformerFixerBase(FixerBase, ast.NodeTransformer):
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        try:
-            return self.visit(tree)
-        except common.FixerError as ex:
-            if ex.module is None:
-                ex.module = tree
-            raise
-
-
-# NOTE (mb 2018-06-24): Version info pulled from:
-# https://docs.python.org/3/library/__future__.html
-
-
-class FutureImportFixerBase(FixerBase):
-
-    future_name: str
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        self.required_imports.add(common.ImportDecl("__future__", self.future_name, None))
-        return tree
-
-
-class AnnotationsFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="3.7", apply_until="3.99")
-
-    future_name = "annotations"
-
-
-class GeneratorStopFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="3.5", apply_until="3.6")
-
-    future_name = "generator_stop"
-
-
-class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.6", apply_until="2.7")
-
-    future_name = "unicode_literals"
-
-
-class PrintFunctionFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.6", apply_until="2.7")
-
-    future_name = "print_function"
-
-
-class WithStatementFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.5", apply_until="2.5")
-
-    future_name = "with_statement"
-
-
-class AbsoluteImportFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.5", apply_until="2.7")
-
-    future_name = "absolute_import"
-
-
-class DivisionFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.2", apply_until="2.7")
-
-    future_name = "division"
-
-
-class GeneratorsFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.2", apply_until="2.2")
-
-    future_name = "generators"
-
-
-class NestedScopesFutureFixer(FutureImportFixerBase):
-
-    version_info = VersionInfo(apply_since="2.1", apply_until="2.1")
-
-    future_name = "nested_scopes"
-
-
-class ModuleImportFallbackFixerBase(TransformerFixerBase):
-
-    new_name: str
-    old_name: str
-
-    def _try_fallback(self, node: ast.stmt, fallback_node: ast.stmt) -> ast.Try:
-        return ast.Try(
-            body=[node],
-            handlers=[
-                ast.ExceptHandler(
-                    type=ast.Name(id="ImportError", ctx=ast.Load()), name=None, body=[fallback_node]
-                )
-            ],
-            orelse=[],
-            finalbody=[],
-        )
-
-    def visit_Import(self, node: ast.Import) -> ast.stmt:
-        if len(node.names) != 1:
-            return node
-
-        alias = node.names[0]
-        if alias.name != self.new_name:
-            return node
-
-        if alias.asname:
-            asname = alias.asname
-        elif "." in self.new_name:
-            asname = self.new_name.replace(".", "_")
-            msg    = (
-                f"Prohibited use of 'import {self.new_name}', "
-                f"use 'import {self.new_name} as {asname}' instead."
-            )
-            raise common.CheckError(msg, node)
-        else:
-            asname = self.new_name
-
-        return self._try_fallback(
-            node, ast.Import(names=[ast.alias(name=self.old_name, asname=asname)])
-        )
-
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.stmt:
-        if node.module != self.new_name:
-            return node
-
-        return self._try_fallback(
-            node, ast.ImportFrom(module=self.old_name, names=node.names, level=node.level)
-        )
-
-
-class ConfigParserImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "configparser"
-    old_name     = "ConfigParser"
-
-
-class SocketServerImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "socketserver"
-    old_name     = "SocketServer"
-
-
-class BuiltinsImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "builtins"
-    old_name     = "__builtin__"
-
-
-class QueueImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "queue"
-    old_name     = "Queue"
-
-
-class CopyRegImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "copyreg"
-    old_name     = "copy_reg"
-
-
-class WinRegImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "winreg"
-    old_name     = "_winreg"
-
-
-class ReprLibImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "reprlib"
-    old_name     = "repr"
-
-
-class ThreadImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "_thread"
-    old_name     = "thread"
-
-
-class DummyThreadImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "_dummy_thread"
-    old_name     = "dummy_thread"
-
-
-# NOTE (mb 2018-09-01): Up to here are the simple cases. Below
-#   here, the fixes only work when using ast.FromImport, or when
-#   using asname. For everything else, we raise a CheckError. The
-#   only other option would be to scan whole tree and rewrite
-#   reverences
-
-
-class HttpCookiejarImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "http.cookiejar"
-    old_name     = "cookielib"
-
-
-class UrllibParseImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "urllib.parse"
-    old_name     = "urlparse"
-
-
-class UrllibRequestImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "urllib.request"
-    old_name     = "urllib2"
-
-
-class UrllibErrorImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "urllib.error"
-    old_name     = "urllib2"
-
-
-class UrllibRobotParserImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "urllib.robotparser"
-    old_name     = "robotparser"
-
-
-class XMLRPCClientImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "xmlrpc.client"
-    old_name     = "xmlrpclib"
-
-
-class XmlrpcServerImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "xmlrpc.server"
-    old_name     = "SimpleXMLRPCServer"
-
-
-class HtmlParserImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "html.parser"
-    old_name     = "HTMLParser"
-
-
-class HttpClientImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "http.client"
-    old_name     = "httplib"
-
-
-class HttpCookiesImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "http.cookies"
-    old_name     = "Cookie"
-
-
-class PickleImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "pickle"
-    old_name     = "cPickle"
-
-
-class DbmGnuImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "dbm.gnu"
-    old_name     = "gdbm"
-
-
-class EmailMimeBaseImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "email.mime.base"
-    old_name     = "email.MIMEBase"
-
-
-class EmailMimeImageImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "email.mime.image"
-    old_name     = "email.MIMEImage"
-
-
-class EmailMimeMultipartImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "email.mime.multipart"
-    old_name     = "email.MIMEMultipart"
-
-
-class EmailMimeNonmultipartImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "email.mime.nonmultipart"
-    old_name     = "email.MIMENonMultipart"
-
-
-class EmailMimeTextImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "email.mime.text"
-    old_name     = "email.MIMEText"
-
-
-class TkinterImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter"
-    old_name     = "Tkinter"
-
-
-class TkinterDialogImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.dialog"
-    old_name     = "Dialog"
-
-
-class TkinterScrolledTextImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.scrolledtext"
-    old_name     = "ScrolledText"
-
-
-class TkinterTixImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.tix"
-    old_name     = "Tix"
-
-
-class TkinterTtkImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.ttk"
-    old_name     = "ttk"
-
-
-class TkinterConstantsImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.constants"
-    old_name     = "Tkconstants"
-
-
-class TkinterDndImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.dnd"
-    old_name     = "Tkdnd"
-
-
-class TkinterColorchooserImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.colorchooser"
-    old_name     = "tkColorChooser"
-
-
-class TkinterCommonDialogImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.commondialog"
-    old_name     = "tkCommonDialog"
-
-
-class TkinterFontImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.font"
-    old_name     = "tkFont"
-
-
-class TkinterMessageboxImportFallbackFixer(ModuleImportFallbackFixerBase):
-
-    version_info = VersionInfo(apply_since="2.3", apply_until="2.7", works_until="3.99")
-    new_name     = "tkinter.messagebox"
-    old_name     = "tkMessageBox"
-
-
-# TODO (mb 2018-09-02): Only ImportFrom is permitted for
-#   certain imports, so that we can determine which old
-#   module to import from
-#
-#     new_name = "http.server"
-#     old_name = "BaseHTTPServer"
-#     old_name = "CGIHTTPServer"
-#     old_name = "SimpleHTTPServer"
-#
-#     new_name = "tkinter.simpledialog"
-#     old_name = "tkSimpleDialog"
-#     old_name = "SimpleDialog"
-#
-#     new_name = "tkinter.filedialog"
-#     old_name = "tkFileDialog"
-#     old_name = "FileDialog"
-
-
-class BuiltinsRenameFixerBase(FixerBase):
-
-    new_name: str
-    old_name: str
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        for node in ast.walk(tree):
-            is_access_to_builtin = (
-                isinstance(node, ast.Name)
-                and isinstance(node.ctx, ast.Load)
-                and node.id == self.new_name
-            )
-
-            if is_access_to_builtin:
-                self.required_imports.add(common.ImportDecl("builtins", None, "__builtin__"))
-                builtin_renmae_decl_str = f"""
-                {self.new_name} = getattr(builtins, '{self.old_name}', {self.new_name})
-                """
-                self.module_declarations.add(builtin_renmae_decl_str.strip())
-
-        return tree
-
-
-class XrangeToRangeFixer(BuiltinsRenameFixerBase):
-
-    version_info = VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
-
-    new_name = "range"
-    old_name = "xrange"
-
-
-class UnicodeToStrFixer(BuiltinsRenameFixerBase):
-
-    version_info = VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
-
-    new_name = "str"
-    old_name = "unicode"
-
-
-class UnichrToChrFixer(BuiltinsRenameFixerBase):
-
-    version_info = VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
-
-    new_name = "chr"
-    old_name = "unichr"
-
-
-class RawInputToInputFixer(BuiltinsRenameFixerBase):
-
-    version_info = VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
-
-    new_name = "input"
-    old_name = "raw_input"
-
-
-class RemoveFunctionDefAnnotationsFixer(FixerBase):
-
-    version_info = VersionInfo(apply_since="1.0", apply_until="2.7")
+    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
@@ -575,9 +100,9 @@ class RemoveFunctionDefAnnotationsFixer(FixerBase):
         return tree
 
 
-class RemoveAnnAssignFixer(TransformerFixerBase):
+class RemoveAnnAssignFixer(fb.TransformerFixerBase):
 
-    version_info = VersionInfo(apply_since="1.0", apply_until="3.5")
+    version_info = fb.VersionInfo(apply_since="1.0", apply_until="3.5")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
         tgt_node = node.target
@@ -592,9 +117,9 @@ class RemoveAnnAssignFixer(TransformerFixerBase):
         return ast.Assign(targets=[tgt_node], value=value)
 
 
-class ShortToLongFormSuperFixer(TransformerFixerBase):
+class ShortToLongFormSuperFixer(fb.TransformerFixerBase):
 
-    version_info = VersionInfo(apply_since="2.2", apply_until="2.7")
+    version_info = fb.VersionInfo(apply_since="2.2", apply_until="2.7")
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         for maybe_method in ast.walk(node):
@@ -627,9 +152,9 @@ class ShortToLongFormSuperFixer(TransformerFixerBase):
         return node
 
 
-class InlineKWOnlyArgsFixer(TransformerFixerBase):
+class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
 
-    version_info = VersionInfo(apply_since="1.0", apply_until="3.5")
+    version_info = fb.VersionInfo(apply_since="1.0", apply_until="3.5")
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         if not node.args.kwonlyargs:
@@ -682,54 +207,9 @@ class InlineKWOnlyArgsFixer(TransformerFixerBase):
         return node
 
 
-if sys.version_info >= (3, 6):
+class NewStyleClassesFixer(fb.TransformerFixerBase):
 
-    class FStringToStrFormatFixer(TransformerFixerBase):
-
-        version_info = VersionInfo(apply_since="2.6", apply_until="3.5")
-
-        def _formatted_value_str(
-            self, fmt_val_node: ast.FormattedValue, arg_nodes: typ.List[ast.expr]
-        ) -> str:
-            arg_index = len(arg_nodes)
-            arg_nodes.append(fmt_val_node.value)
-
-            format_spec_node = fmt_val_node.format_spec
-            if format_spec_node is None:
-                format_spec = ""
-            elif not isinstance(format_spec_node, ast.JoinedStr):
-                raise common.FixerError("Unexpected Node Type", format_spec_node)
-            else:
-                format_spec = ":" + self._joined_str_str(format_spec_node, arg_nodes)
-
-            return "{" + str(arg_index) + format_spec + "}"
-
-        def _joined_str_str(
-            self, joined_str_node: ast.JoinedStr, arg_nodes: typ.List[ast.expr]
-        ) -> str:
-            fmt_str = ""
-            for val in joined_str_node.values:
-                if isinstance(val, ast.Str):
-                    fmt_str += val.s
-                elif isinstance(val, ast.FormattedValue):
-                    fmt_str += self._formatted_value_str(val, arg_nodes)
-                else:
-                    raise common.FixerError("Unexpected Node Type", val)
-            return fmt_str
-
-        def visit_JoinedStr(self, node: ast.JoinedStr) -> ast.Call:
-            arg_nodes: typ.List[ast.expr] = []
-
-            fmt_str          = self._joined_str_str(node, arg_nodes)
-            format_attr_node = ast.Attribute(
-                value=ast.Str(s=fmt_str), attr="format", ctx=ast.Load()
-            )
-            return ast.Call(func=format_attr_node, args=arg_nodes, keywords=[])
-
-
-class NewStyleClassesFixer(TransformerFixerBase):
-
-    version_info = VersionInfo(apply_since="2.0", apply_until="2.7")
+    version_info = fb.VersionInfo(apply_since="2.0", apply_until="2.7")
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         self.generic_visit(node)
@@ -738,9 +218,9 @@ class NewStyleClassesFixer(TransformerFixerBase):
         return node
 
 
-class ItertoolsBuiltinsFixer(TransformerFixerBase):
+class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
 
-    version_info = VersionInfo(
+    version_info = fb.VersionInfo(
         apply_since="2.3",  # introduction of the itertools module
         apply_until="2.7",
         works_until="3.99",
@@ -766,9 +246,9 @@ def is_dict_call(node: ast.expr) -> bool:
     return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "dict"
 
 
-class UnpackingGeneralizationsFixer(FixerBase):
+class UnpackingGeneralizationsFixer(fb.FixerBase):
 
-    version_info = VersionInfo(apply_since="2.0", apply_until="3.4")
+    version_info = fb.VersionInfo(apply_since="2.0", apply_until="3.4")
 
     def _has_stararg_g12n(self, node: ast.expr) -> bool:
         if isinstance(node, ast.Call):
@@ -1131,9 +611,9 @@ class UnpackingGeneralizationsFixer(FixerBase):
         return tree
 
 
-class NamedTupleClassToAssignFixer(TransformerFixerBase):
+class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
 
-    version_info = VersionInfo(apply_since="2.6", apply_until="3.4")
+    version_info = fb.VersionInfo(apply_since="2.6", apply_until="3.4")
 
     _typing_module_name   : typ.Optional[str]
     _namedtuple_class_name: typ.Optional[str]
@@ -1212,13 +692,80 @@ class NamedTupleClassToAssignFixer(TransformerFixerBase):
         )
 
 
-# class GeneratorReturnToStopIterationExceptionFixer(FixerBase):
+if sys.version_info >= (3, 6):
+    from .fixers_fstring import FStringToStrFormatFixer
+
 
 if sys.version_info >= (3, 8):
     from .fixers_namedexpr import NamedExprFixer
 
+
+__all__ = [
+    "AnnotationsFutureFixer",
+    "GeneratorStopFutureFixer",
+    "UnicodeLiteralsFutureFixer",
+    "PrintFunctionFutureFixer",
+    "WithStatementFutureFixer",
+    "AbsoluteImportFutureFixer",
+    "DivisionFutureFixer",
+    "GeneratorsFutureFixer",
+    "NestedScopesFutureFixer",
+    "ConfigParserImportFallbackFixer",
+    "SocketServerImportFallbackFixer",
+    "BuiltinsImportFallbackFixer",
+    "QueueImportFallbackFixer",
+    "CopyRegImportFallbackFixer",
+    "WinRegImportFallbackFixer",
+    "ReprLibImportFallbackFixer",
+    "ThreadImportFallbackFixer",
+    "DummyThreadImportFallbackFixer",
+    "HttpCookiejarImportFallbackFixer",
+    "UrllibParseImportFallbackFixer",
+    "UrllibRequestImportFallbackFixer",
+    "UrllibErrorImportFallbackFixer",
+    "UrllibRobotParserImportFallbackFixer",
+    "XMLRPCClientImportFallbackFixer",
+    "XmlrpcServerImportFallbackFixer",
+    "HtmlParserImportFallbackFixer",
+    "HttpClientImportFallbackFixer",
+    "HttpCookiesImportFallbackFixer",
+    "PickleImportFallbackFixer",
+    "DbmGnuImportFallbackFixer",
+    "EmailMimeBaseImportFallbackFixer",
+    "EmailMimeImageImportFallbackFixer",
+    "EmailMimeMultipartImportFallbackFixer",
+    "EmailMimeNonmultipartImportFallbackFixer",
+    "EmailMimeTextImportFallbackFixer",
+    "TkinterImportFallbackFixer",
+    "TkinterDialogImportFallbackFixer",
+    "TkinterScrolledTextImportFallbackFixer",
+    "TkinterTixImportFallbackFixer",
+    "TkinterTtkImportFallbackFixer",
+    "TkinterConstantsImportFallbackFixer",
+    "TkinterDndImportFallbackFixer",
+    "TkinterColorchooserImportFallbackFixer",
+    "TkinterCommonDialogImportFallbackFixer",
+    "TkinterFontImportFallbackFixer",
+    "TkinterMessageboxImportFallbackFixer",
+    "XrangeToRangeFixer",
+    "UnicodeToStrFixer",
+    "UnichrToChrFixer",
+    "RawInputToInputFixer",
+    "RemoveFunctionDefAnnotationsFixer",
+    "RemoveAnnAssignFixer",
+    "ShortToLongFormSuperFixer",
+    "InlineKWOnlyArgsFixer",
+    "NewStyleClassesFixer",
+    "ItertoolsBuiltinsFixer",
+    "UnpackingGeneralizationsFixer",
+    "NamedTupleClassToAssignFixer",
+    "FStringToStrFormatFixer",
+    "NamedExprFixer",
+]
+
+# class GeneratorReturnToStopIterationExceptionFixer(fb.FixerBase):
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="3.3",
 #     )
@@ -1282,15 +829,15 @@ if sys.version_info >= (3, 8):
 # """in_len_body
 
 
-# class YieldFromFixer(FixerBase):
+# class YieldFromFixer(fb.FixerBase):
 # # see https://www.python.org/dev/peps/pep-0380/
 # NOTE (mb 2018-06-14): We should definetly do the most simple case
 #   but maybe we can also detect the more complex cases involving
 #   send and return values and at least throw an error
 
-# class MetaclassFixer(TransformerFixerBase):
+# class MetaclassFixer(fb.TransformerFixerBase):
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.7",
 #     )
@@ -1299,9 +846,9 @@ if sys.version_info >= (3, 8):
 #         #  class Foo(metaclass=X): => class Foo(object):\n  __metaclass__ = X
 
 
-# class MatMulFixer(TransformerFixerBase):
+# class MatMulFixer(fb.TransformerFixerBase):
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="3.5",
 #     )
@@ -1313,7 +860,7 @@ if sys.version_info >= (3, 8):
 # NOTE (mb 2018-06-24): I'm not gonna do it, but feel free to
 #   implement it if you feel like it.
 #
-# class DecoratorFixer(FixerBase):
+# class DecoratorFixer(fb.FixerBase):
 #     """Replaces use of @decorators with function calls
 #
 #     > @mydec1()
@@ -1326,7 +873,7 @@ if sys.version_info >= (3, 8):
 #     < myfn = mydec1()(myfn)
 #     """
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.4",
 #     )
@@ -1335,7 +882,7 @@ if sys.version_info >= (3, 8):
 # NOTE (mb 2018-06-24): I'm not gonna do it, but feel free to
 #   implement it if you feel like it.
 #
-# class WithStatementToTryExceptFixer(FixerBase):
+# class WithStatementToTryExceptFixer(fb.FixerBase):
 #     """
 #     > with expression as name:
 #     >     name
@@ -1354,7 +901,7 @@ if sys.version_info >= (3, 8):
 #     <         __manager.__exit__(None, None, None)
 #     """
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.4",
 #     )
@@ -1363,14 +910,14 @@ if sys.version_info >= (3, 8):
 # NOTE (mb 2018-06-25): I'm not gonna do it, but feel free to
 #   implement it if you feel like it.
 #
-# class ImplicitFormatIndexesFixer(FixerBase):
+# class ImplicitFormatIndexesFixer(fb.FixerBase):
 #     """Replaces use of @decorators with function calls
 #
 #     > "first: {} second: {:>9}".format(0, 1)
 #     < "first: {0} second: {1:>9}".format(0, 1)
 #     """
 #
-#     version_info = VersionInfo(
+#     version_info = fb.VersionInfo(
 #         apply_since="2.6",
 #         apply_until="2.6",
 #     )

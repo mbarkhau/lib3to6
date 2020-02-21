@@ -15,6 +15,7 @@ from . import utils
 from . import common
 from . import fixers
 from . import checkers
+from . import fixer_base
 
 DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
 
@@ -78,7 +79,7 @@ def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, 
 
 CheckerType = typ.Type[checkers.CheckerBase]
 
-FixerType = typ.Type[fixers.FixerBase]
+FixerType = typ.Type[fixer_base.FixerBase]
 
 CheckerOrFixer = typ.Union[CheckerType, FixerType]
 
@@ -97,7 +98,6 @@ def get_available_classes(module: object, clazz: CheckerOrFixer) -> typ.Dict[str
     assert isinstance(clazz, type)
     clazz_name = clazz.__name__
     assert clazz_name.endswith("Base")
-    assert getattr(module, clazz_name) is clazz
 
     maybe_classes = {
         name: getattr(module, name) for name in dir(module) if not name.endswith(clazz_name)
@@ -141,8 +141,8 @@ def iter_fuzzy_selected_checkers(names: FuzzyNames) -> typ.Iterable[checkers.Che
         yield checker_type()
 
 
-def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixers.FixerBase]:
-    available_classes = get_available_classes(fixers, fixers.FixerBase)
+def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixer_base.FixerBase]:
+    available_classes = get_available_classes(fixers, fixer_base.FixerBase)
     selected_names    = get_selected_names(names, set(available_classes))
     for name in selected_names:
         fixer_type = typ.cast(FixerType, available_classes[name])
