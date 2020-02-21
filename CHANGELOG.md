@@ -1,9 +1,10 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
-## v202001.0031
+## v202002.0031
 
  - Compatibility fixes for Python 3.8
  - Add support for f-string `=` specifier
+ - Add support for `:=` walrus operator (except inside comprehensions)
 
 
 ## v201902.0030

@@ -302,7 +302,7 @@ git_hooks:
 ## -- Integration --
 
 
-## Run flake8 linter
+## Run flake8 linter and check for fmt
 .PHONY: lint
 lint:
 	@printf "isort ..\n"
@@ -338,6 +338,7 @@ mypy:
 	@printf "mypy ....\n"
 	@MYPYPATH=stubs/:vendor/ $(DEV_ENV_PY) -m mypy \
 		--html-report mypycov \
+		--no-error-summary \
 		src/ | sed "/Generated HTML report/d"
 	@printf "\e[1F\e[9C ok\n"
 
@@ -373,7 +374,7 @@ test:
 		--cov-report html \
 		--cov-report term \
 		-k "$${PYTEST_FILTER}" \
-		$(shell cd src/ && ls -1 */__init__.py | awk '{ print "--cov "substr($$1,0,index($$1,"/")-1) }') \
+		$(shell cd src/ && ls -1 */__init__.py | awk '{ sub(/\/__init__.py/, "", $$1); print "--cov "$$1 }') \
 		test/ src/;
 
 	@rm -rf ".pytest_cache";
@@ -399,7 +400,7 @@ fmt:
 		--target-version=py36 \
 		--skip-string-normalization \
 		--line-length=$(MAX_LINE_LEN) \
-		src/ test/
+		src/ test/;
 
 
 
@@ -465,6 +466,7 @@ devtest:
 		$(DEV_ENV_PY) -m pytest -v \
 		--doctest-modules \
 		--no-cov \
+		--durations 5 \
 		--verbose \
 		--capture=no \
 		--exitfirst \

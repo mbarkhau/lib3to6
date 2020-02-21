@@ -34,7 +34,7 @@ Code Quality/CI:
 
 [](TOC)
 
-  - [Project Status (as of 2020-01-19): Beta](#project-status-as-of-2020-01-19-beta)
+  - [Project Status (as of 2020-02-21): Beta](#project-status-as-of-2020-02-21-beta)
   - [Getting started with Development](#getting-started-with-development)
   - [Motivation](#motivation)
   - [Feature Support](#feature-support)
@@ -44,7 +44,7 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2020-01-19): Beta
+## Project Status (as of 2020-02-21): Beta
 
 I've been using this library for a year on a few projects without much incident.
 An example of such a project is [PyCalVer](https://pypi.org/project/pycalver/). I
