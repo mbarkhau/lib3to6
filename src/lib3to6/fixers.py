@@ -1213,6 +1213,10 @@ class NamedTupleClassToAssignFixer(TransformerFixerBase):
 
 
 # class GeneratorReturnToStopIterationExceptionFixer(FixerBase):
+
+if sys.version_info >= (3, 8):
+    from .fixers_namedexpr import NamedExprFixer
+
 #
 #     version_info = VersionInfo(
 #         apply_since="2.0",

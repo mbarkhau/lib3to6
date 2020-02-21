@@ -70,6 +70,10 @@ class Assign(stmt):
     targets = ...  # type: typing.List[expr]
     value = ...  # type: expr
 
+class NamedExpr(stmt):
+    target = ...  # type: expr
+    value = ...  # type: expr
+
 class AugAssign(stmt):
     target = ...  # type: expr
     op = ...  # type: operator
@@ -234,6 +238,11 @@ class Call(expr):
     args = ...  # type: typing.List[expr]
     keywords = ...  # type: typing.List[keyword]
 
+# Deprecated since version 3.8: Old classes ast.Num, ast.Str, ast.Bytes,
+# ast.NameConstant and ast.Ellipsis are still available, but they will be removed
+# in future Python releases. In the meanwhile, instantiating them will return an
+# instance of a different class.
+
 class Num(expr):
     n = ...  # type: Union[int, float]
 
@@ -256,6 +265,11 @@ class NameConstant(expr):
     value = ...  # type: Any
 
 class Ellipsis(expr): ...
+
+# Changed in version 3.8: Class ast.Constant is now used for all constants.
+class Constant(expr):
+    value = ...  # type: Any
+    kind = ...  # type: Any
 
 class Attribute(expr):
     value = ...  # type: expr

@@ -22,7 +22,6 @@ def test_numeric_literals_with_underscore():
 
 
 def test_header_preserved():
-    return
     test_source = """
     #!/usr/bin/env python
     # This file is part of the lib3to6 project
@@ -193,6 +192,18 @@ FIXTURES = [
         """
         who = "World"
         print("Hello {0}!".format(who))
+        """,
+    ),
+    FixerFixture(
+        "f_string_to_str_format",
+        "2.7",
+        """
+        who = "World"
+        print(f"Hello {who=}!")
+        """,
+        """
+        who = "World"
+        print("Hello who={0}!".format(who))
         """,
     ),
     FixerFixture(
@@ -896,6 +907,115 @@ FIXTURES = [
         jar = CookieJar
         """,
     ),
+    FixerFixture(
+        "named_expr",
+        "2.7",
+        """
+        if match1 := pattern1.match(data):
+            result = match1.group(1)
+        else:
+            result = None
+        """,
+        """
+        match1 = pattern1.match(data)
+        if match1:
+            result = match1.group(1)
+        else:
+            result = None
+        """,
+    ),
+    FixerFixture(
+        "named_expr",
+        "2.7",
+        """
+        if (n := len(a)) > 10:
+            print(n)
+        if 10 <= (n := len(a)):
+            print(n)
+        """,
+        """
+        n = len(a)
+        if n > 10:
+            print(n)
+        n = len(a)
+        if 10 <= n:
+            print(n)
+        """,
+    ),
+    FixerFixture(
+        "named_expr",
+        "2.7",
+        """
+        discount = 0.0
+        if (mo := re.search(r'(\\d+)% discount', advertisement)):
+            discount = float(mo.group(1)) / 100.0
+        """,
+        """
+        discount = 0.0
+        mo = re.search(r'(\\d+)% discount', advertisement)
+        if mo:
+            discount = float(mo.group(1)) / 100.0
+        """,
+    ),
+    FixerFixture(
+        "named_expr",
+        "2.7",
+        """
+        def wrap():
+            prelude = 1
+            while (block := f.read(4096)) != '':
+                process(block)
+        """,
+        """
+        def wrap():
+            prelude = 1
+            __loop_condition = True
+            while __loop_condition:
+                block = f.read(4096)
+                __loop_condition = block != ''
+                if __loop_condition:
+                    process(block)
+        """,
+    ),
+    FixerFixture(
+        "named_expr",
+        "2.7",
+        """
+        try:
+            while match1 := pattern1.match(data):
+                a = b
+                result = match1.group(1)
+            else:
+                x = y
+                result = None
+        except Exception as ex:
+            if match1 := pattern1.match(data):
+                result = match1.group(1)
+            elif match2 := pattern2.match(data):
+                result = match2.group(1)
+        """,
+        """
+        try:
+            __loop_condition = True
+            while __loop_condition:
+                match1 = pattern1.match(data)
+                __loop_condition = match1
+                if __loop_condition:
+                    a = b
+                    result = match1.group(1)
+            else:
+                x = y
+                result = None
+        except Exception as ex:
+            match1 = pattern1.match(data)
+            if match1:
+                result = match1.group(1)
+            else:
+                match2 = pattern2.match(data)
+                if match2:
+                    result = match2.group(1)
+        """,
+    )
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",
@@ -920,36 +1040,41 @@ def test_fixers(fixture):
     if "--capture=no" in sys.argv:
         print()
 
+    # DEBUG_VERBOSITY = 0
+
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
     expected_coding, expected_header = transpile.parse_module_header(expected_source)
 
     test_source = utils.clean_whitespace(fixture.test_source)
-    # test_ast = utils.parsedump_ast(test_source)
-    # print(">>>>>>>>" * 9)
-    # print(test_ast)
-    # print("--------" * 9)
-    # print(repr(test_source))
+    # print("TESTCASE " * 9)
+    # if DEBUG_VERBOSITY > 0:
+    #     test_ast = utils.parsedump_ast(test_source)
+    #     print(test_ast)
+    #     print("-------- " * 9)
+    # if DEBUG_VERBOSITY > 1:
+    #     print(repr(test_source))
     # print(test_source)
-    # print(">>>>>>>>" * 9)
 
-    # print("????????" * 9)
-    # print(expected_ast)
-    # print("--------" * 9)
-    # print(repr(expected_source))
+    # print("EXPECTED " * 9)
+    # if DEBUG_VERBOSITY > 0:
+    #     print(expected_ast)
+    #     print("-------- " * 9)
+    # if DEBUG_VERBOSITY > 1:
+    #     print(repr(expected_source))
     # print(expected_source)
-    # print("????????" * 9)
 
     cfg = {'fixers': fixture.names, 'target_version': fixture.target_version}
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
     result_ast = utils.parsedump_ast(result_source)
 
-    # print("<<<<<<<<" * 9)
-    # print(result_ast)
-    # print("--------" * 9)
-    # print(repr(result_source))
+    # print("RESULT " * 9)
+    # if DEBUG_VERBOSITY > 0:
+    #     print(result_ast)
+    #     print("-------- " * 9)
+    # if DEBUG_VERBOSITY > 1:
+    #     print(repr(result_source))
     # print(result_source)
-    # print("<<<<<<<<" * 9)
 
     assert result_coding == expected_coding
     assert result_header == expected_header
