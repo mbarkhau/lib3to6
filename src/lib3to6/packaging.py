@@ -49,9 +49,14 @@ def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
         src_str = src
     else:
         # https://bugs.python.org/issue39390
-        src_str = str(src)
+        if isinstance(src, os.DirEntry):
+            src_str = src.path
+        else:
+            src_str = str(src)
 
-    if src_str.endswith("build"):
+    if src_str.startswith("build") or src_str.startswith("./build"):
+        return names
+    if src_str.endswith(".egg-info"):
         return names
     if src_str.endswith("dist"):
         return names
@@ -72,8 +77,6 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
     build_package_dir: common.PackageDir = {}
 
     for package, src_package_dir in local_package_dir.items():
-        # TODO (mb 2018-08-25): Make sure src_package_dir is a
-        #   relative path.
         is_abs_path = pl.Path(src_package_dir) == pl.Path(src_package_dir).absolute()
         if is_abs_path:
             raise Exception(f"package_dir must use relative paths, got '{src_package_dir}'")
@@ -87,7 +90,6 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
             shutil.rmtree(build_package_subdir)
 
         shutil.copytree(src_package_dir, str(build_package_subdir), ignore=_ignore_tmp_files)
-
         build_package_dir[package] = str(build_package_subdir)
 
     return build_package_dir

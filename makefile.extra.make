@@ -5,8 +5,8 @@ integration_test:
 	@rm -rf integration_test_dist/;
 	@rm -rf test_project/dist/;
 
-	@$(DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist;
-	@$(DEV_ENV_PY) -m pip install integration_test_dist/lib3to6*.whl;
+	@$(DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
+	@$(DEV_ENV_PY) -m pip install -U integration_test_dist/lib3to6*.whl;
 	@bash -c "cd test_project && $(DEV_ENV_PY) setup.py bdist_wheel --python-tag=py2.py3" \
 
 	@IFS=' ' read -r -a env_py_paths <<< "$(CONDA_ENV_BIN_PYTHON_PATHS)"; \

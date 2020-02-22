@@ -515,7 +515,7 @@ bump_version:
 .PHONY: dist_build
 dist_build:
 	$(DEV_ENV_PY) setup.py sdist;
-	$(DEV_ENV_PY) setup.py bdist_wheel --python-tag=py36.py37;
+	$(DEV_ENV_PY) setup.py bdist_wheel --python-tag=py36.py37.py38;
 	@rm -rf src/*.egg-info
 
 
