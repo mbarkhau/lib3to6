@@ -1,7 +1,7 @@
 # [lib3to6][repo_ref]
 
 Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is quite
-similar to Bable https://babeljs.io/. Develop using the newest interpreter and
+similar to Babel https://babeljs.io/. Develop using the newest interpreter and
 use (most) new language features without sacrificing backward compatibility.
 
 Project/Repo:
