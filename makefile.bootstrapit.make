@@ -10,7 +10,6 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 .SUFFIXES:
 
-
 PROJECT_DIR := $(notdir $(abspath .))
 
 ifndef DEVELOPMENT_PYTHON_VERSION
@@ -85,13 +84,13 @@ build/envs.txt: requirements/conda.txt
 	@if [[ ! -f $(CONDA_BIN) ]]; then \
 		echo "installing miniconda ..."; \
 		if [[ $(PLATFORM) == "Linux" ]]; then \
-			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" \
+			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" --location \
 				> build/miniconda3.sh; \
 		elif [[ $(PLATFORM) == "MINGW64_NT-10.0" ]]; then \
-			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" \
+			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" --location \
 				> build/miniconda3.sh; \
 		elif [[ $(PLATFORM) == "Darwin" ]]; then \
-			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" \
+			curl "https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" --location \
 				> build/miniconda3.sh; \
 		fi; \
 		bash build/miniconda3.sh -b -p $(CONDA_ROOT); \
@@ -182,7 +181,7 @@ help:
 				helpMessage = ""; \
 			} \
 		}' \
-		$(MAKEFILE_LIST)
+		makefile.bootstrapit.make makefile
 
 	@if [[ ! -f $(DEV_ENV_PY) ]]; then \
 	echo "Missing python interpreter at $(DEV_ENV_PY) !"; \
@@ -236,7 +235,7 @@ helpverbose:
 				helpMessage = ""; \
 			} \
 		}' \
-		$(MAKEFILE_LIST)
+		makefile.bootstrapit.make makefile
 
 
 ## -- Project Setup --
@@ -564,6 +563,3 @@ docker_build:
 	fi
 
 	docker push $(DOCKER_BASE_IMAGE)
-
-
-
