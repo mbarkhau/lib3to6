@@ -3,6 +3,7 @@
 
 ## v202005.1033 (unpublished)
 
+ - Add: diff colouring
  - Fix #3: --target-version argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
 
 

@@ -29,6 +29,28 @@ if os.environ.get('ENABLE_BACKTRACE') == '1':
 click.disable_unicode_literals_warning = True
 
 
+def _print_diff(source_text: str, fixed_source_text: str) -> None:
+    differ = difflib.Differ()
+
+    source_lines       = source_text.splitlines()
+    fixed_source_lines = fixed_source_text.splitlines()
+    diff_lines         = differ.compare(source_lines, fixed_source_lines)
+    if not sys.stdout.isatty():
+        click.echo("\n".join(diff_lines))
+        return
+
+    for line in diff_lines:
+        if line.startswith("+ "):
+            click.echo("\u001b[32m" + line + "\u001b[0m")
+        elif line.startswith("- "):
+            click.echo("\u001b[31m" + line + "\u001b[0m")
+        elif line.startswith("? "):
+            click.echo("\u001b[36m" + line + "\u001b[0m")
+        else:
+            click.echo(line)
+    print()
+
+
 @click.command()
 @click.option(
     "--target-version", default="2.7", metavar="<version>", help="Target version of python."
@@ -70,9 +92,7 @@ def main(
             raise
 
         if diff:
-            source_lines       = source_text.splitlines()
-            fixed_source_lines = fixed_source_text.splitlines()
-            print("\n".join(differ.compare(source_lines, fixed_source_lines)))
+            _print_diff(source_text, fixed_source_text)
         elif in_place:
             with io.open(src_file.name, mode="w") as fh:
                 fh.write(fixed_source_text)
