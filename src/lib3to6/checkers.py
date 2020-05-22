@@ -150,7 +150,7 @@ class NoOpenWithEncodingChecker(CheckerBase):
                     raise common.CheckError(msg, node)
 
             if len(node.args) > 3:
-                raise common.CheckError(f"Prohibited positional arguments to builtin.open", node)
+                raise common.CheckError("Prohibited positional arguments to builtin.open", node)
 
             for kw in node.keywords:
                 if kw.arg in PROHIBITED_OPEN_ARGUMENTS:
@@ -233,14 +233,14 @@ class NoComplexNamedTuple(CheckerBase):
                         tgt = subnode.target
                         assert isinstance(tgt, ast.Name)
                         msg = (
-                            f"Prohibited use of default value "
+                            "Prohibited use of default value "
                             + f"for field '{tgt.id}' of class '{node.name}'"
                         )
                         raise common.CheckError(msg, subnode, node)
 
                 elif isinstance(subnode, ast.FunctionDef):
                     msg = (
-                        f"Prohibited definition of method "
+                        "Prohibited definition of method "
                         + f"'{subnode.name}' for class '{node.name}'"
                     )
                     raise common.CheckError(msg, subnode, node)
