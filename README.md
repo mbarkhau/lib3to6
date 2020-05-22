@@ -68,6 +68,14 @@ these will only be written if they are common enough, otherwise
 it's just too much work (patches are welcome though).
 
 
+## Alternatives
+
+Since starting this project, I've learned of the
+[py-backwards](https://github.com/nvbn/py-backwards) project, which is
+very, very similar in its approach. I have not evaluated it yet, to
+determine for what projects it might be a better choice.
+
+
 ## Getting started with Development
 
 
