@@ -71,7 +71,7 @@ class Assign(stmt):
     value = ...  # type: expr
 
 class NamedExpr(stmt):
-    target = ...  # type: expr
+    target = ...  # type: Name
     value = ...  # type: expr
 
 class AugAssign(stmt):

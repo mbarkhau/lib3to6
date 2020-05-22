@@ -22,10 +22,8 @@ class NamedExprFixer(fb.TransformerFixerBase):
         if isinstance(expr, ast.NamedExpr):
             new_assigns.append(ast.Assign(targets=[expr.target], value=expr.value))
             new_expr = ast.Name(id=expr.target.id, ctx=ast.Load())
+            return new_assigns, new_expr
         else:
-            # same as (old) expr
-            new_expr = expr
-
             if isinstance(expr, ast.UnaryOp):
                 new_sub_assigns, new_operand = self._extract_and_replace_named_exprs(expr.operand)
                 new_assigns.extend(new_sub_assigns)
@@ -53,7 +51,7 @@ class NamedExprFixer(fb.TransformerFixerBase):
                     new_assigns.extend(new_sub_assigns)
                 expr.comparators = new_comparators
 
-        return new_assigns, new_expr
+            return new_assigns, expr
 
     def _update(self, nodelist: typ.List[ast.stmt], indent: int = 0) -> None:
         i = 0
