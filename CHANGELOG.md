@@ -1,5 +1,11 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
+
+## v202005.1033 (unpublished)
+
+ - Fix #3: --target-version argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
+
+
 ## v202002.0031
 
  - Compatibility fixes for Python 3.8

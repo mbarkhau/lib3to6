@@ -1044,7 +1044,9 @@ def test_fixers(fixture):
 
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
-    expected_coding, expected_header = transpile.parse_module_header(expected_source)
+    expected_coding, expected_header = transpile.parse_module_header(
+        expected_source, fixture.target_version
+    )
 
     test_source = utils.clean_whitespace(fixture.test_source)
     # print("TESTCASE " * 9)

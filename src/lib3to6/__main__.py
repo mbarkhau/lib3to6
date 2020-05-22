@@ -7,6 +7,8 @@
 
 import io
 import os
+import re
+import sys
 import typing as typ
 import difflib
 
@@ -48,11 +50,17 @@ def main(
     diff          : bool,
     in_place      : bool,
     # config        : str,
-    source_files: typ.Iterable[io.TextIOWrapper],
+    source_files: typ.Sequence[io.TextIOWrapper],
 ) -> None:
-    # TODO (mb 2018-07-12): evaluate build config
-    cfg    = packaging.eval_build_config()
-    differ = difflib.Differ()
+    if not any(source_files):
+        print("No files.")
+        sys.exit(1)
+
+    if target_version and not re.match(r"[0-9]+\.[0-9]+", target_version):
+        print(f"Invalid argument --target-version={target_version}")
+        sys.exit(1)
+
+    cfg = packaging.eval_build_config(target_version=target_version)
     for src_file in source_files:
         source_text = src_file.read()
         try:

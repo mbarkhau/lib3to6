@@ -31,7 +31,7 @@ PYTHON_TAG_PREFIXES = {
 CACHE_DIR = pl.Path(tempfile.gettempdir()) / ".lib3to6_cache"
 
 
-def eval_build_config() -> common.BuildConfig:
+def eval_build_config(**kwargs) -> common.BuildConfig:
     # TODO (mb 2018-06-07): Get options from setup.cfg
     # python_tags = "py2.py3"
     # for argi, arg in enumerate(sys.argv):
@@ -41,7 +41,13 @@ def eval_build_config() -> common.BuildConfig:
     #         else:
     #             python_tags = sys.argv[argi + 1]
 
-    return {'target_version': "2.7", 'force_transpile': "1", 'fixers': "", 'checkers': ""}
+    target_version = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
+    return {
+        'target_version' : target_version,
+        'force_transpile': "1",
+        'fixers'         : "",
+        'checkers'       : "",
+    }
 
 
 def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:

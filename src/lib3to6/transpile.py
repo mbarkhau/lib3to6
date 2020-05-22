@@ -24,18 +24,19 @@ DEFAULT_SOURCE_ENCODING = "utf-8"
 DEFAULT_TARGET_VERSION = "2.7"
 
 # https://www.python.org/dev/peps/pep-0263/
-SOURCE_ENCODING_RE = re.compile(
-    r"""
+SOURCE_ENCODING_PATTERN = r"""
     ^
     [ \t\v]*
     \#.*?coding[:=][ \t]*
     (?P<coding>[-_.a-zA-Z0-9]+)
-""",
-    re.VERBOSE,
-)
+"""
+
+SOURCE_ENCODING_RE = re.compile(SOURCE_ENCODING_PATTERN, re.VERBOSE)
 
 
-def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, str]:
+def parse_module_header(
+    module_source: typ.Union[bytes, str], target_version: str
+) -> typ.Tuple[str, str]:
     shebang = False
     coding  = None
     line: str
@@ -66,12 +67,13 @@ def parse_module_header(module_source: typ.Union[bytes, str]) -> typ.Tuple[str, 
             break
 
     if coding is None:
-        coding      = DEFAULT_SOURCE_ENCODING
-        coding_decl = DEFAULT_SOURCE_ENCODING_DECLARATION.format(coding)
-        if shebang:
-            header_lines.insert(1, coding_decl)
-        else:
-            header_lines.insert(0, coding_decl)
+        coding = DEFAULT_SOURCE_ENCODING
+        if target_version < "3.0":
+            coding_decl = DEFAULT_SOURCE_ENCODING_DECLARATION.format(coding)
+            if shebang:
+                header_lines.insert(1, coding_decl)
+            else:
+                header_lines.insert(0, coding_decl)
 
     header = "\n".join(header_lines) + "\n"
     return coding, header
@@ -318,16 +320,16 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     required_imports   : typ.Set[common.ImportDecl] = set()
     module_declarations: typ.Set[str              ] = set()
 
-    ver         = sys.version_info
-    src_version = f"{ver.major}.{ver.minor}"
-    tgt_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
+    ver            = sys.version_info
+    source_version = f"{ver.major}.{ver.minor}"
+    target_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
 
     for checker in iter_fuzzy_selected_checkers(checker_names):
-        if checker.is_prohibited_for(tgt_version):
+        if checker.is_prohibited_for(target_version):
             checker(cfg, module_tree)
 
     for fixer in iter_fuzzy_selected_fixers(fixer_names):
-        if fixer.is_applicable_to(src_version, tgt_version):
+        if fixer.is_applicable_to(source_version, target_version):
             maybe_fixed_module = fixer(cfg, module_tree)
             if maybe_fixed_module is None:
                 raise Exception(f"Error running fixer {type(fixer).__name__}")
@@ -339,12 +341,13 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
         add_required_imports(module_tree, required_imports)
     if any(module_declarations):
         add_module_declarations(module_tree, module_declarations)
-    coding, header = parse_module_header(module_source)
+    coding, header = parse_module_header(module_source, target_version)
     return header + "".join(astor.to_source(module_tree))
 
 
 def transpile_module_data(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
-    coding, header = parse_module_header(module_source_data)
+    target_version = cfg.get('target_version', DEFAULT_TARGET_VERSION)
+    coding, header = parse_module_header(module_source_data, target_version)
     module_source       = module_source_data.decode(coding)
     fixed_module_source = transpile_module(cfg, module_source)
     return fixed_module_source.encode(coding)

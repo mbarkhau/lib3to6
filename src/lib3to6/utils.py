@@ -114,8 +114,9 @@ def transpile_and_dump(
     if cfg is None:
         cfg = {}
 
-    module_str = clean_whitespace(module_str)
-    coding, header = transpile.parse_module_header(module_str)
+    target_version = cfg.get('target_version', transpile.DEFAULT_TARGET_VERSION)
+    module_str     = clean_whitespace(module_str)
+    coding, header = transpile.parse_module_header(module_str, target_version)
     result_str = transpile.transpile_module(cfg, module_str)
     return coding, header, result_str
 
