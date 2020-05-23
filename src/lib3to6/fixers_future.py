@@ -80,3 +80,38 @@ class NestedScopesFutureFixer(FutureImportFixerBase):
     version_info = fb.VersionInfo(apply_since="2.1", apply_until="2.1")
 
     future_name = "nested_scopes"
+
+
+class RemoveUnsupportedFuturesFixer(fb.FixerBase):
+
+    version_info = fb.VersionInfo(apply_since="2.0", apply_until="3.99")
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        target_version    = cfg.get('target_version', "2.7")
+        supported_futures = set()
+        for cls in FutureImportFixerBase.__subclasses__():
+            if cls.is_compatible_with(target_version):
+                supported_futures.add(cls.future_name)
+
+        nodes_to_del = []
+        for i, node in enumerate(tree.body):
+            if not isinstance(node, ast.ImportFrom):
+                break
+
+            is_future_import = node.module == '__future__' and node.level == 0
+            if not is_future_import:
+                break
+
+            new_names = [alias for alias in node.names if alias.name in supported_futures]
+            if new_names == node.names:
+                continue
+
+            if not any(new_names):
+                nodes_to_del.append(i)
+            else:
+                node.names = new_names
+
+        for i in reversed(nodes_to_del):
+            del tree.body[i : i + 1]
+
+        return tree

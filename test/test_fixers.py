@@ -1015,7 +1015,22 @@ FIXTURES = [
                 if match2:
                     result = match2.group(1)
         """,
-    )
+    ),
+    FixerFixture(
+        "remove_unsupported_futures",
+        "3.4",
+        """
+        from __future__ import print_function, generator_stop
+        from __future__ import annotations
+
+        foo = 123
+        """,
+        """
+        from __future__ import print_function
+
+        foo = 123
+        """,
+    ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",

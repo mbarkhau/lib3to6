@@ -5,6 +5,7 @@
 
  - Add: diff colouring
  - Fix #3: --target-version argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
+ - Fix #4: Make `fixers_future.*FutureFixer` fixers also remove imports when the target version doesn't support them.
 
 
 ## v202002.0031

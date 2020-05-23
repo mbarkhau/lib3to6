@@ -20,6 +20,7 @@ from .fixers_future import PrintFunctionFutureFixer
 from .fixers_future import WithStatementFutureFixer
 from .fixers_future import AbsoluteImportFutureFixer
 from .fixers_future import UnicodeLiteralsFutureFixer
+from .fixers_future import RemoveUnsupportedFuturesFixer
 from .fixers_builtin_rename import UnichrToChrFixer
 from .fixers_builtin_rename import UnicodeToStrFixer
 from .fixers_builtin_rename import XrangeToRangeFixer
@@ -704,6 +705,7 @@ __all__ = [
     "AnnotationsFutureFixer",
     "GeneratorStopFutureFixer",
     "UnicodeLiteralsFutureFixer",
+    "RemoveUnsupportedFuturesFixer",
     "PrintFunctionFutureFixer",
     "WithStatementFutureFixer",
     "AbsoluteImportFutureFixer",

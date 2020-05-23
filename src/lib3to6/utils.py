@@ -114,7 +114,10 @@ def transpile_and_dump(
     if cfg is None:
         cfg = {}
 
-    target_version = cfg.get('target_version', transpile.DEFAULT_TARGET_VERSION)
+    if 'target_version' not in cfg:
+        cfg['target_version'] = transpile.DEFAULT_TARGET_VERSION
+
+    target_version = cfg['target_version']
     module_str     = clean_whitespace(module_str)
     coding, header = transpile.parse_module_header(module_str, target_version)
     result_str = transpile.transpile_module(cfg, module_str)
