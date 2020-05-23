@@ -1019,17 +1019,19 @@ FIXTURES = [
     FixerFixture(
         "remove_unsupported_futures",
         "3.4",
-        """
+        '''
+        """This is a doc string"""
         from __future__ import print_function, generator_stop
         from __future__ import annotations
 
         foo = 123
-        """,
-        """
+        ''',
+        '''
+        """This is a doc string"""
         from __future__ import print_function
 
         foo = 123
-        """,
+        ''',
     ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",

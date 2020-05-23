@@ -95,6 +95,10 @@ class RemoveUnsupportedFuturesFixer(fb.FixerBase):
 
         nodes_to_del = []
         for i, node in enumerate(tree.body):
+            is_doc_string = isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
+            if is_doc_string:
+                continue
+
             if not isinstance(node, ast.ImportFrom):
                 break
 
