@@ -1049,14 +1049,14 @@ FIXTURES = [
 
             @staticmethod
             def doer(foo: Foo, *foos: Foo, **kwfoos: Foo) -> Foo:
-                def nested_doer(foo: "Foo") -> Tuple[Tuple[Foo, Bar], Bar]:
+                def nested_doer(foo: 'Foo') -> Tuple[Tuple[Foo, Bar], Bar]:
                     return ...
                 return ...
 
         class Bar:
             pass
 
-        def bar(b: Bar) -> Bar:
+        def bar(s: str, b: Bar) -> Bar:
             ...
         """,
         """
@@ -1064,20 +1064,20 @@ FIXTURES = [
 
         class Foo:
 
-            foo: "Foo"
-            foos: List["Foo"]
-            foo_item: Tuple["Foo", Tuple[Tuple["Foo", "Bar"], "Foo"]]
+            foo: 'Foo'
+            foos: List['Foo']
+            foo_item: Tuple['Foo', Tuple[Tuple['Foo', 'Bar'], 'Foo']]
 
             @staticmethod
-            def doer(foo: "Foo", *foos: "Foo", **kwfoos: "Foo") -> "Foo":
-                def nested_doer(foo: "Foo") -> Tuple[Tuple["Foo", "Bar"], "Bar"]:
+            def doer(foo: 'Foo', *foos: 'Foo', **kwfoos: 'Foo') -> 'Foo':
+                def nested_doer(foo: 'Foo') -> Tuple[Tuple['Foo', 'Bar'], 'Bar']:
                     return ...
                 return ...
 
         class Bar:
             pass
 
-        def bar(b: Bar) -> Bar:
+        def bar(s: str, b: Bar) -> Bar:
             ...
         """,
     ),
