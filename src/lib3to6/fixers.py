@@ -132,32 +132,38 @@ def _update_annotation_refs_refs(node: AnnoNode, attrname: str, known_ids: typ.S
         raise NotImplementedError(msg)
 
 
+def _remove_forward_references(node: ast.AST, known_ids: typ.Set[str] = set()) -> None:
+    for sub_node in ast.iter_child_nodes(node):
+        if isinstance(sub_node, ast.FunctionDef):
+            _update_annotation_refs_refs(sub_node, 'returns', known_ids)
+
+            for arg in sub_node.args.args:
+                _update_annotation_refs_refs(arg, 'annotation', known_ids)
+            for arg in sub_node.args.kwonlyargs:
+                _update_annotation_refs_refs(arg, 'annotation', known_ids)
+
+            kwarg = sub_node.args.kwarg
+            if kwarg:
+                _update_annotation_refs_refs(kwarg, 'annotation', known_ids)
+            vararg = sub_node.args.vararg
+            if vararg:
+                _update_annotation_refs_refs(vararg, 'annotation', known_ids)
+        elif isinstance(sub_node, ast.AnnAssign):
+            _update_annotation_refs_refs(sub_node, 'annotation', known_ids)
+
+        if hasattr(sub_node, 'body'):
+            _remove_forward_references(sub_node, known_ids)
+
+        if isinstance(sub_node, ast.ClassDef):
+            known_ids.add(sub_node.name)
+
+
 class ForwardReferenceAnnotationsFixer(fb.FixerBase):
 
     version_info = fb.VersionInfo(apply_since="3.0", apply_until="3.6")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        known_ids: typ.Set[str] = set()
-
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                _update_annotation_refs_refs(node, 'returns', known_ids)
-
-                for arg in node.args.args:
-                    _update_annotation_refs_refs(arg, 'annotation', known_ids)
-                for arg in node.args.kwonlyargs:
-                    _update_annotation_refs_refs(arg, 'annotation', known_ids)
-
-                kwarg = node.args.kwarg
-                if kwarg:
-                    _update_annotation_refs_refs(kwarg, 'annotation', known_ids)
-                vararg = node.args.vararg
-                if vararg:
-                    _update_annotation_refs_refs(vararg, 'annotation', known_ids)
-
-            if isinstance(node, ast.AnnAssign):
-                _update_annotation_refs_refs(node, 'annotation', known_ids)
-
+        _remove_forward_references(tree, known_ids=set())
         return tree
 
 
@@ -173,10 +179,11 @@ class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
                     arg.annotation = None
                 for arg in node.args.kwonlyargs:
                     arg.annotation = None
-                if node.args.vararg:
-                    node.args.vararg.annotation = None
+
                 if node.args.kwarg:
                     node.args.kwarg.annotation = None
+                if node.args.vararg:
+                    node.args.vararg.annotation = None
 
         return tree
 

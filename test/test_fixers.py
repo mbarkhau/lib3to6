@@ -1055,6 +1055,9 @@ FIXTURES = [
 
         class Bar:
             pass
+
+        def bar(b: Bar) -> Bar:
+            ...
         """,
         """
         from typing import List, Tuple
@@ -1073,6 +1076,9 @@ FIXTURES = [
 
         class Bar:
             pass
+
+        def bar(b: Bar) -> Bar:
+            ...
         """,
     ),
     # FixerFixture(
