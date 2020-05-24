@@ -1033,6 +1033,48 @@ FIXTURES = [
         foo = 123
         ''',
     ),
+    FixerFixture(
+        ["forward_reference_annotations", "remove_unsupported_futures"],
+        "3.6",
+        """
+        from __future__ import annotations
+
+        from typing import List, Tuple
+
+        class Foo:
+
+            foo: Foo
+            foos: List[Foo]
+            foo_item: Tuple[Foo, Tuple[Tuple[Foo, Bar], Foo]]
+
+            @staticmethod
+            def doer(foo: Foo, *foos: Foo, **kwfoos: Foo) -> Foo:
+                def nested_doer(foo: "Foo") -> Tuple[Tuple[Foo, Bar], Bar]:
+                    return ...
+                return ...
+
+        class Bar:
+            pass
+        """,
+        """
+        from typing import List, Tuple
+
+        class Foo:
+
+            foo: "Foo"
+            foos: List["Foo"]
+            foo_item: Tuple["Foo", Tuple[Tuple["Foo", "Bar"], "Foo"]]
+
+            @staticmethod
+            def doer(foo: "Foo", *foos: "Foo", **kwfoos: "Foo") -> "Foo":
+                def nested_doer(foo: "Foo") -> Tuple[Tuple["Foo", "Bar"], "Bar"]:
+                    return ...
+                return ...
+
+        class Bar:
+            pass
+        """,
+    ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",
@@ -1057,7 +1099,7 @@ def test_fixers(fixture):
     if "--capture=no" in sys.argv:
         print()
 
-    # DEBUG_VERBOSITY = 0
+    DEBUG_VERBOSITY = 0
 
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
@@ -1066,34 +1108,38 @@ def test_fixers(fixture):
     )
 
     test_source = utils.clean_whitespace(fixture.test_source)
-    # print("TESTCASE " * 9)
-    # if DEBUG_VERBOSITY > 0:
-    #     test_ast = utils.parsedump_ast(test_source)
-    #     print(test_ast)
-    #     print("-------- " * 9)
-    # if DEBUG_VERBOSITY > 1:
-    #     print(repr(test_source))
-    # print(test_source)
 
-    # print("EXPECTED " * 9)
-    # if DEBUG_VERBOSITY > 0:
-    #     print(expected_ast)
-    #     print("-------- " * 9)
-    # if DEBUG_VERBOSITY > 1:
-    #     print(repr(expected_source))
-    # print(expected_source)
+    if DEBUG_VERBOSITY > 0:
+        print("TESTCASE " * 9)
+        if DEBUG_VERBOSITY > 1:
+            test_ast = utils.parsedump_ast(test_source)
+            print(test_ast)
+            print("-------- " * 9)
+        if DEBUG_VERBOSITY > 2:
+            print(repr(test_source))
+        print(test_source)
+
+    if DEBUG_VERBOSITY > 0:
+        print("EXPECTED " * 9)
+        if DEBUG_VERBOSITY > 1:
+            print(expected_ast)
+            print("-------- " * 9)
+        if DEBUG_VERBOSITY > 2:
+            print(repr(expected_source))
+        print(expected_source)
 
     cfg = {'fixers': fixture.names, 'target_version': fixture.target_version}
     result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
     result_ast = utils.parsedump_ast(result_source)
 
-    # print("RESULT " * 9)
-    # if DEBUG_VERBOSITY > 0:
-    #     print(result_ast)
-    #     print("-------- " * 9)
-    # if DEBUG_VERBOSITY > 1:
-    #     print(repr(result_source))
-    # print(result_source)
+    if DEBUG_VERBOSITY > 0:
+        print("RESULT " * 9)
+        if DEBUG_VERBOSITY > 0:
+            print(result_ast)
+            print("-------- " * 9)
+        if DEBUG_VERBOSITY > 1:
+            print(repr(result_source))
+        print(result_source)
 
     assert result_coding == expected_coding
     assert result_header == expected_header

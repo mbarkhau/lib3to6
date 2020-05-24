@@ -81,6 +81,86 @@ ArgUnpackNodes   = (ast.Call, ast.List, ast.Tuple, ast.Set)
 KwArgUnpackNodes = (ast.Call, ast.Dict)
 
 
+Elt  = typ.Union[ast.Name, ast.Constant, ast.Subscript]
+Elts = typ.List[Elt]
+
+
+def _update_index_elts(elts: Elts, known_ids: typ.Set[str]) -> None:
+    for i, elt in enumerate(elts):
+        if isinstance(elt, ast.Subscript):
+            idx = elt.slice
+            assert isinstance(idx, ast.Index)
+            _update_index(idx, known_ids)
+        elif isinstance(elt, ast.Name):
+            new_elt = ast.Str(elt.id)
+            elts[i] = new_elt
+    # if isinstance(anno, ast.Name):
+    #     if anno.id not in known_ids:
+    #         node.annotation = ast.Str(anno.id)
+
+
+def _update_index(idx: ast.Index, known_ids: typ.Set[str]) -> None:
+    val = idx.value
+    if isinstance(val, ast.Name):
+        if val.id not in known_ids:
+            idx.value = ast.Str(val.id)
+    elif hasattr(val, 'elts'):
+        elts = val.elts
+        assert isinstance(elts, list)
+        _update_index_elts(elts, known_ids)
+
+
+AnnoNode = typ.Union[ast.AnnAssign, ast.FunctionDef]
+
+
+def _update_annotation_refs_refs(node: AnnoNode, attrname: str, known_ids: typ.Set[str]) -> None:
+    anno = getattr(node, attrname)
+    if anno is None or isinstance(anno, ast.Constant):
+        return
+
+    if isinstance(anno, ast.Name):
+        if anno.id not in known_ids:
+            setattr(node, attrname, ast.Str(anno.id))
+        return
+
+    if isinstance(anno, ast.Subscript):
+        idx = anno.slice
+        assert isinstance(idx, ast.Index)
+        _update_index(idx, known_ids)
+    else:
+        msg = f"Fixer not implemented for {type(anno)}"
+        raise NotImplementedError(msg)
+
+
+class ForwardReferenceAnnotationsFixer(fb.FixerBase):
+
+    version_info = fb.VersionInfo(apply_since="3.0", apply_until="3.6")
+
+    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+        known_ids: typ.Set[str] = set()
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                _update_annotation_refs_refs(node, 'returns', known_ids)
+
+                for arg in node.args.args:
+                    _update_annotation_refs_refs(arg, 'annotation', known_ids)
+                for arg in node.args.kwonlyargs:
+                    _update_annotation_refs_refs(arg, 'annotation', known_ids)
+
+                kwarg = node.args.kwarg
+                if kwarg:
+                    _update_annotation_refs_refs(kwarg, 'annotation', known_ids)
+                vararg = node.args.vararg
+                if vararg:
+                    _update_annotation_refs_refs(vararg, 'annotation', known_ids)
+
+            if isinstance(node, ast.AnnAssign):
+                _update_annotation_refs_refs(node, 'annotation', known_ids)
+
+        return tree
+
+
 class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
     version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7")
@@ -754,6 +834,7 @@ __all__ = [
     "UnichrToChrFixer",
     "RawInputToInputFixer",
     "RemoveFunctionDefAnnotationsFixer",
+    "ForwardReferenceAnnotationsFixer",
     "RemoveAnnAssignFixer",
     "ShortToLongFormSuperFixer",
     "InlineKWOnlyArgsFixer",
