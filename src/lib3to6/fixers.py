@@ -81,22 +81,22 @@ ArgUnpackNodes   = (ast.Call, ast.List, ast.Tuple, ast.Set)
 KwArgUnpackNodes = (ast.Call, ast.Dict)
 
 
-Elt  = typ.Union[ast.Name, ast.Constant, ast.Subscript]
+Elt  = typ.Union[ast.Name, ast.Str, ast.Subscript]
 Elts = typ.List[Elt]
 
 
 def _update_index_elts(elts: Elts, known_ids: typ.Set[str]) -> None:
-    for i, elt in enumerate(elts):
+    for i in range(len(elts)):
+        elt = elts[i]
         if isinstance(elt, ast.Subscript):
             idx = elt.slice
             assert isinstance(idx, ast.Index)
             _update_index(idx, known_ids)
         elif isinstance(elt, ast.Name):
-            new_elt = ast.Str(elt.id)
-            elts[i] = new_elt
-    # if isinstance(anno, ast.Name):
-    #     if anno.id not in known_ids:
-    #         node.annotation = ast.Str(anno.id)
+            elts[i] = ast.Str(elt.id)
+        else:
+            msg = f"Error fixing forward ref with type {type(elt)}"
+            raise NotImplementedError(msg)
 
 
 def _update_index(idx: ast.Index, known_ids: typ.Set[str]) -> None:
@@ -104,16 +104,18 @@ def _update_index(idx: ast.Index, known_ids: typ.Set[str]) -> None:
     if isinstance(val, ast.Name):
         if val.id not in known_ids:
             idx.value = ast.Str(val.id)
-    elif hasattr(val, 'elts'):
-        elts = val.elts
-        assert isinstance(elts, list)
+    elif isinstance(val, ast.Tuple):
+        elts = typ.cast(Elts, val.elts)
         _update_index_elts(elts, known_ids)
+    else:
+        msg = f"Error fixing forward ref with type {type(val)}"
+        raise NotImplementedError(msg)
 
 
-AnnoNode = typ.Union[ast.AnnAssign, ast.FunctionDef]
+AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
 
 
-def _update_annotation_refs_refs(node: AnnoNode, attrname: str, known_ids: typ.Set[str]) -> None:
+def _update_annotation_refs(node: AnnoNode, attrname: str, known_ids: typ.Set[str]) -> None:
     anno = getattr(node, attrname)
     if anno is None or isinstance(anno, ast.Constant):
         return
@@ -121,41 +123,39 @@ def _update_annotation_refs_refs(node: AnnoNode, attrname: str, known_ids: typ.S
     if isinstance(anno, ast.Name):
         if anno.id not in known_ids:
             setattr(node, attrname, ast.Str(anno.id))
-        return
-
-    if isinstance(anno, ast.Subscript):
+    elif isinstance(anno, ast.Subscript):
         idx = anno.slice
         assert isinstance(idx, ast.Index)
         _update_index(idx, known_ids)
     else:
-        msg = f"Fixer not implemented for {type(anno)}"
+        msg = f"Error fixing forward ref with type {type(anno)}"
         raise NotImplementedError(msg)
 
 
-def _remove_forward_references(node: ast.AST, known_ids: typ.Set[str] = set()) -> None:
+def _remove_forward_references(node: ast.AST, known_ref_names: typ.Set[str]) -> None:
     for sub_node in ast.iter_child_nodes(node):
         if isinstance(sub_node, ast.FunctionDef):
-            _update_annotation_refs_refs(sub_node, 'returns', known_ids)
+            _update_annotation_refs(sub_node, 'returns', known_ref_names)
 
             for arg in sub_node.args.args:
-                _update_annotation_refs_refs(arg, 'annotation', known_ids)
+                _update_annotation_refs(arg, 'annotation', known_ref_names)
             for arg in sub_node.args.kwonlyargs:
-                _update_annotation_refs_refs(arg, 'annotation', known_ids)
+                _update_annotation_refs(arg, 'annotation', known_ref_names)
 
             kwarg = sub_node.args.kwarg
             if kwarg:
-                _update_annotation_refs_refs(kwarg, 'annotation', known_ids)
+                _update_annotation_refs(kwarg, 'annotation', known_ref_names)
             vararg = sub_node.args.vararg
             if vararg:
-                _update_annotation_refs_refs(vararg, 'annotation', known_ids)
+                _update_annotation_refs(vararg, 'annotation', known_ref_names)
         elif isinstance(sub_node, ast.AnnAssign):
-            _update_annotation_refs_refs(sub_node, 'annotation', known_ids)
+            _update_annotation_refs(sub_node, 'annotation', known_ref_names)
 
         if hasattr(sub_node, 'body'):
-            _remove_forward_references(sub_node, known_ids)
+            _remove_forward_references(sub_node, known_ref_names)
 
         if isinstance(sub_node, ast.ClassDef):
-            known_ids.add(sub_node.name)
+            known_ref_names.add(sub_node.name)
 
 
 class ForwardReferenceAnnotationsFixer(fb.FixerBase):
@@ -163,7 +163,7 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
     version_info = fb.VersionInfo(apply_since="3.0", apply_until="3.6")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        _remove_forward_references(tree, known_ids=set())
+        _remove_forward_references(tree, known_ref_names=set())
         return tree
 
 
