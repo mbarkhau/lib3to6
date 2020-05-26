@@ -63,13 +63,20 @@ from .fixers_import_fallback import TkinterCommonDialogImportFallbackFixer
 from .fixers_import_fallback import TkinterScrolledTextImportFallbackFixer
 from .fixers_import_fallback import EmailMimeNonmultipartImportFallbackFixer
 
-ContainerNodes      = (ast.List, ast.Set, ast.Tuple)
-ImmutableValueNodes = (ast.Num , ast.Str, ast.Bytes, ast.NameConstant)
-LeafNodes           = (
-    ast.Num,
-    ast.Str,
-    ast.Bytes,
-    ast.NameConstant,
+ContainerNodes = (ast.List, ast.Set, ast.Tuple)
+
+ConstantNodeTypes: typ.Tuple[typ.Type[ast.Constant], ...] = (ast.Constant,)
+
+# Deprecated since version 3.8: Class ast.Constant is now used for all
+# constants. Old classes ast.Num, ast.Str, ast.Bytes, ast.NameConstant and
+# ast.Ellipsis are still available, but they will be removed in future Python
+# releases.
+
+if hasattr(ast, 'Num'):
+    ConstantNodeTypes += (ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis)
+
+
+LeafNodeTypes = ConstantNodeTypes + (
     ast.Name,
     ast.cmpop,
     ast.boolop,
@@ -77,97 +84,107 @@ LeafNodes           = (
     ast.unaryop,
     ast.expr_context,
 )
+
+
+def is_const_node(node: ast.AST) -> bool:
+    return node is None or any(isinstance(node, cntype) for cntype in ConstantNodeTypes)
+
+
 ArgUnpackNodes   = (ast.Call, ast.List, ast.Tuple, ast.Set)
 KwArgUnpackNodes = (ast.Call, ast.Dict)
 
 
-Elt  = typ.Union[ast.Name, ast.Str, ast.Subscript]
+Elt  = typ.Union[ast.Name, ast.Constant, ast.Subscript]
 Elts = typ.List[Elt]
-
-
-def _update_index_elts(
-    elts: Elts, local_ref_names: typ.Set[str], known_ref_names: typ.Set[str]
-) -> None:
-    for i in range(len(elts)):
-        elt = elts[i]
-        if isinstance(elt, ast.Subscript):
-            idx = elt.slice
-            assert isinstance(idx, ast.Index)
-            _update_index(idx, local_ref_names, known_ref_names)
-        elif isinstance(elt, ast.Name):
-            elts[i] = ast.Str(elt.id)
-        else:
-            msg = f"Error fixing forward ref with type {type(elt)}"
-            raise NotImplementedError(msg)
-
-
-def _update_index(
-    idx: ast.Index, local_ref_names: typ.Set[str], known_ref_names: typ.Set[str]
-) -> None:
-    val = idx.value
-    if isinstance(val, ast.Name):
-        if val.id not in known_ref_names:
-            idx.value = ast.Str(val.id)
-    elif isinstance(val, ast.Tuple):
-        elts = typ.cast(Elts, val.elts)
-        _update_index_elts(elts, local_ref_names, known_ref_names)
-    else:
-        msg = f"Error fixing forward ref with type {type(val)}"
-        raise NotImplementedError(msg)
 
 
 AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
 
 
-def _update_annotation_refs(
-    node: AnnoNode, attrname: str, local_ref_names: typ.Set[str], known_ref_names: typ.Set[str]
-) -> None:
-    anno            = getattr(node, attrname)
-    is_non_ref_anno = (
-        anno is None or isinstance(anno, ast.Constant) or isinstance(anno, ast.NameConstant)
-    )
-    if is_non_ref_anno:
-        return
+class _FRAFContext(typ.NamedTuple):
 
-    if isinstance(anno, ast.Name):
-        is_forward_ref = anno.id in local_ref_names and anno.id not in known_ref_names
-        if is_forward_ref:
-            setattr(node, attrname, ast.Str(anno.id))
-    elif isinstance(anno, ast.Subscript):
-        idx = anno.slice
-        assert isinstance(idx, ast.Index)
-        _update_index(idx, local_ref_names, known_ref_names)
-    else:
-        msg = f"Error fixing forward ref with type {type(anno)}"
-        raise NotImplementedError(msg)
+    local_classes: typ.Set[str]
+    known_classes: typ.Set[str]
 
+    def is_forward_ref(self, name: str) -> bool:
+        return name in self.local_classes and name not in self.known_classes
 
-def _remove_forward_references(
-    node: ast.AST, local_ref_names: typ.Set[str], known_ref_names: typ.Set[str]
-) -> None:
-    for sub_node in ast.iter_child_nodes(node):
-        if isinstance(sub_node, ast.FunctionDef):
-            _update_annotation_refs(sub_node, 'returns', local_ref_names, known_ref_names)
+    def update_index_elts(self, elts: Elts) -> None:
+        for i in range(len(elts)):
+            elt = elts[i]
+            if is_const_node(elt) or isinstance(elt, ast.Attribute):
+                continue
 
-            for arg in sub_node.args.args:
-                _update_annotation_refs(arg, 'annotation', local_ref_names, known_ref_names)
-            for arg in sub_node.args.kwonlyargs:
-                _update_annotation_refs(arg, 'annotation', local_ref_names, known_ref_names)
+            if isinstance(elt, ast.Name):
+                if self.is_forward_ref(elt.id):
+                    elts[i] = ast.Constant(elt.id)
+            elif isinstance(elt, ast.Subscript):
+                idx = elt.slice
+                assert isinstance(idx, ast.Index)
+                self.update_index(idx)
+            else:
+                msg = f"Error fixing index element with forward ref of type {type(elt)}"
+                raise NotImplementedError(msg)
 
-            kwarg = sub_node.args.kwarg
-            if kwarg:
-                _update_annotation_refs(kwarg, 'annotation', local_ref_names, known_ref_names)
-            vararg = sub_node.args.vararg
-            if vararg:
-                _update_annotation_refs(vararg, 'annotation', local_ref_names, known_ref_names)
-        elif isinstance(sub_node, ast.AnnAssign):
-            _update_annotation_refs(sub_node, 'annotation', local_ref_names, known_ref_names)
+    def update_index(self, idx: ast.Index) -> None:
+        val = idx.value
+        if is_const_node(val) or isinstance(val, ast.Attribute):
+            return
 
-        if hasattr(sub_node, 'body'):
-            _remove_forward_references(sub_node, local_ref_names, known_ref_names)
+        if isinstance(val, ast.Name):
+            if self.is_forward_ref(val.id):
+                idx.value = ast.Constant(val.id)
+        elif isinstance(val, ast.Subscript):
+            sub_idx = val.slice
+            assert isinstance(sub_idx, ast.Index)
+            self.update_index(sub_idx)
+        elif isinstance(val, ast.Tuple):
+            elts = typ.cast(Elts, val.elts)
+            self.update_index_elts(elts)
+        else:
+            msg = f"Error fixing index with forward ref of type {type(val)}"
+            raise NotImplementedError(msg)
 
-        if isinstance(sub_node, ast.ClassDef):
-            known_ref_names.add(sub_node.name)
+    def update_annotation_refs(self, node: AnnoNode, attrname: str) -> None:
+        anno = getattr(node, attrname)
+        if is_const_node(anno) or isinstance(anno, ast.Attribute):
+            return
+
+        if isinstance(anno, ast.Name):
+            if self.is_forward_ref(anno.id):
+                setattr(node, attrname, ast.Constant(anno.id))
+        elif isinstance(anno, ast.Subscript):
+            idx = anno.slice
+            assert isinstance(idx, ast.Index)
+            self.update_index(idx)
+        else:
+            msg = f"Error fixing annotation of forward ref with type {type(anno)}"
+            raise NotImplementedError(msg)
+
+    def remove_forward_references(self, node: ast.AST) -> None:
+        for sub_node in ast.iter_child_nodes(node):
+            if isinstance(sub_node, ast.FunctionDef):
+                self.update_annotation_refs(sub_node, 'returns')
+
+                for arg in sub_node.args.args:
+                    self.update_annotation_refs(arg, 'annotation')
+                for arg in sub_node.args.kwonlyargs:
+                    self.update_annotation_refs(arg, 'annotation')
+
+                kwarg = sub_node.args.kwarg
+                if kwarg:
+                    self.update_annotation_refs(kwarg, 'annotation')
+                vararg = sub_node.args.vararg
+                if vararg:
+                    self.update_annotation_refs(vararg, 'annotation')
+            elif isinstance(sub_node, ast.AnnAssign):
+                self.update_annotation_refs(sub_node, 'annotation')
+
+            if hasattr(sub_node, 'body'):
+                self.remove_forward_references(sub_node)
+
+            if isinstance(sub_node, ast.ClassDef):
+                self.known_classes.add(sub_node.name)
 
 
 class ForwardReferenceAnnotationsFixer(fb.FixerBase):
@@ -175,12 +192,13 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
     version_info = fb.VersionInfo(apply_since="3.0", apply_until="3.6")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        local_ref_names: typ.Set[str] = set()
+        local_classes: typ.Set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                local_ref_names.add(node.name)
+                local_classes.add(node.name)
 
-        _remove_forward_references(tree, local_ref_names, known_ref_names=set())
+        ctx = _FRAFContext(local_classes, known_classes=set())
+        ctx.remove_forward_references(tree)
         return tree
 
 
@@ -284,10 +302,10 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
             if default is None:
                 node_value = ast.Subscript(
                     value=ast.Name(id=kw_name, ctx=ast.Load()),
-                    slice=ast.Index(value=ast.Str(s=arg_name)),
+                    slice=ast.Index(value=ast.Constant(s=arg_name)),
                     ctx=ast.Load(),
                 )
-            elif not isinstance(default, ImmutableValueNodes):
+            elif not isinstance(default, ConstantNodeTypes):
                 msg = (
                     f"Keyword only arguments must be immutable. " f"Found: {default} for {arg_name}"
                 )
@@ -297,7 +315,7 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
                     func=ast.Attribute(
                         value=ast.Name(id=kw_name, ctx=ast.Load()), attr="get", ctx=ast.Load()
                     ),
-                    args=[ast.Str(s=arg_name), default],
+                    args=[ast.Constant(s=arg_name), default],
                     keywords=[],
                 )
 
@@ -507,7 +525,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
                 if kw.arg is None:
                     chain_val = kw.value
                 else:
-                    chain_val = ast.Dict(keys=[ast.Str(s=kw.arg)], values=[kw.value])
+                    chain_val = ast.Dict(keys=[ast.Constant(s=kw.arg)], values=[kw.value])
                 chain_values.append(chain_val)
         else:
             raise TypeError(f"Unexpected node type {node}")
@@ -628,13 +646,13 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
                 continue
             if isinstance(field_node, ast.expr_context):
                 continue
-            if isinstance(field_node, LeafNodes):
+            if isinstance(field_node, LeafNodeTypes):
                 continue
 
             yield field_name, field_node
 
     def walk_node(self, node: ast.AST, parent: ast.AST, parent_field_name: str) -> ast.AST:
-        if isinstance(node, LeafNodes):
+        if isinstance(node, LeafNodeTypes):
             return node
 
         # print("-->", parent_field_name.ljust(15), node)
@@ -647,7 +665,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
                 new_field_node = []
                 new_sub_node: ast.AST
                 for sub_node in field_node:
-                    if isinstance(sub_node, LeafNodes):
+                    if isinstance(sub_node, LeafNodeTypes):
                         new_sub_node = sub_node
                     elif isinstance(sub_node, ast.AST):
                         new_sub_node = self.walk_node(sub_node, node, field_name)
@@ -697,7 +715,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
                 new_field_node = []
                 new_sub_node: ast.AST
                 for sub_node in field_node:
-                    if isinstance(sub_node, LeafNodes):
+                    if isinstance(sub_node, LeafNodeTypes):
                         new_sub_node = sub_node
                     elif isinstance(sub_node, ast.AST):
                         new_sub_node = self.walk_node(sub_node, node, field_name)
@@ -785,13 +803,13 @@ class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
             if not isinstance(tgt, ast.Name):
                 continue
 
-            elts.append(ast.Tuple(elts=[ast.Str(s=tgt.id), assign.annotation], ctx=ast.Load()))
+            elts.append(ast.Tuple(elts=[ast.Constant(s=tgt.id), assign.annotation], ctx=ast.Load()))
 
         return ast.Assign(
             targets=[ast.Name(id=node.name, ctx=ast.Store())],
             value=ast.Call(
                 func=func,
-                args=[ast.Str(s=node.name), ast.List(elts=elts, ctx=ast.Load())],
+                args=[ast.Constant(s=node.name), ast.List(elts=elts, ctx=ast.Load())],
                 keywords=[],
             ),
         )

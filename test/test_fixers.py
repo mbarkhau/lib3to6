@@ -1037,15 +1037,16 @@ FIXTURES = [
         ["forward_reference_annotations", "remove_unsupported_futures"],
         "3.6",
         """
+        '''This is a doc string'''
         from __future__ import annotations
-
         from typing import List, Tuple
 
         class Foo:
 
             foo: Foo
             foos: List[Foo]
-            foo_item: Tuple[Foo, Tuple[Tuple[Foo, Bar], Foo]]
+
+            foo_item: Tuple[Foo, Tuple[Tuple[Foo, Bar], 'Foo']]
 
             @staticmethod
             def doer(foo: Foo, *foos: Foo, **kwfoos: Foo) -> Foo:
@@ -1060,6 +1061,7 @@ FIXTURES = [
             ...
         """,
         """
+        '''This is a doc string'''
         from typing import List, Tuple
 
         class Foo:
@@ -1078,6 +1080,40 @@ FIXTURES = [
             pass
 
         def bar(s: str, b: Bar) -> Bar:
+            ...
+        """,
+    ),
+    FixerFixture(
+        ['forward_reference_annotations'],
+        "3.6",
+        """
+        import typing
+
+        def bar(foos: typing.Optional[typing.Sequence[Foo, str, Foo, str], Foo, m.Bar]):
+            ...
+
+        def before_foo(foo: Optional[Sequence[Sequence[Foo]]]):
+            ...
+
+        class Foo:
+            foo: Foo
+
+        def after_foo(foo: Optional[Sequence[Sequence[Foo]]]):
+            ...
+        """,
+        """
+        import typing
+
+        def bar(foos: typing.Optional[typing.Sequence['Foo', str, 'Foo', str], 'Foo', m.Bar]):
+            ...
+
+        def before_foo(foo: Optional[Sequence[Sequence['Foo']]]):
+            ...
+
+        class Foo:
+            foo: 'Foo'
+
+        def after_foo(foo: Optional[Sequence[Sequence[Foo]]]):
             ...
         """,
     ),
@@ -1140,10 +1176,10 @@ def test_fixers(fixture):
 
     if DEBUG_VERBOSITY > 0:
         print("RESULT " * 9)
-        if DEBUG_VERBOSITY > 0:
+        if DEBUG_VERBOSITY > 1:
             print(result_ast)
             print("-------- " * 9)
-        if DEBUG_VERBOSITY > 1:
+        if DEBUG_VERBOSITY > 2:
             print(repr(result_source))
         print(result_source)
 
