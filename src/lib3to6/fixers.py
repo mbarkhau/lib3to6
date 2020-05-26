@@ -101,10 +101,14 @@ Elts = typ.List[Elt]
 AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
 
 
-class _FRAFContext(typ.NamedTuple):
+class _FRAFContext:
 
     local_classes: typ.Set[str]
     known_classes: typ.Set[str]
+
+    def __init__(self, local_classes: typ.Set[str]) -> None:
+        self.local_classes = local_classes
+        self.known_classes = set()
 
     def is_forward_ref(self, name: str) -> bool:
         return name in self.local_classes and name not in self.known_classes
@@ -197,7 +201,7 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
             if isinstance(node, ast.ClassDef):
                 local_classes.add(node.name)
 
-        ctx = _FRAFContext(local_classes, known_classes=set())
+        ctx = _FRAFContext(local_classes)
         ctx.remove_forward_references(tree)
         return tree
 
