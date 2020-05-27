@@ -68,6 +68,50 @@ these will only be written if they are common enough, otherwise
 it's just too much work (patches are welcome though).
 
 
+## Feature Support
+
+Not all new language features have a semantic equivalent in older
+versions. To the extent these can be detected, an error will be
+reported when these features are used.
+
+Features which **are supported**:
+
+ - PEP 498: formatted string literals.
+ - Eliding of annotations
+ - Unpacking generalizations
+ - Keyword only arguments
+ - PEP 515: underscores in numeric literals
+ - map/zip/filter to itertools equivalents
+ - Convert class based typing.NamedTuple usage to assignments
+ - PEP 563: Postponed Evaluation of Annotations by converting to strings
+
+An (obviously non exhaustive) list of features which are **not
+supported**:
+
+ - async/await
+ - yield from
+ - @/__matmul__ operator
+
+Some new libraries have backports, which warnings will point to:
+
+ - typing
+ - pathlib
+ - secrets
+ - ipaddress
+ - csv -> backports.csv
+ - lzma -> backports.lzma
+ - enum -> flufl.enum
+
+
+## Projects that use lib3to6
+
+ - [pycalver](https://gitlab.com/mbarkhau/pycalver)
+ - [markdown-katex](https://gitlab.com/mbarkhau/markdown-katex)
+ - [markdown-svgbob](https://gitlab.com/mbarkhau/markdown-svgbob)
+ - [markdown-aafigure](https://gitlab.com/mbarkhau/markdown_aafigure)
+ - [backports.pampy](https://pypi.org/project/backports.pampy/)
+
+
 ## Alternatives
 
 Since starting this project, I've learned of the
@@ -211,40 +255,6 @@ Hello 世界 from 3.6.5!
 /home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
 Hello 世界 from 2.7.15!
 ```
-
-
-## Feature Support
-
-Not all new language features have a semantic equivalent in older
-versions. To the extent these can be detected, an error will be
-reported when these features are used.
-
-An (obviously non exhaustive) list of features which are **not
-supported**:
-
- - async/await
- - yield from
- - @/__matmul__ operator
-
-Features which **are supported**:
-
- - PEP 498: formatted string literals.
- - Eliding of annotations
- - Unpacking generalizations
- - Keyword only arguments
- - PEP 515: underscores in numeric literals
- - map/zip/filter to itertools equivalents
- - Convert class based typing.NamedTuple usage to assignments
-
-Some new libraries have backports, which warnings will point to:
-
- - typing
- - pathlib
- - secrets
- - ipaddress
- - csv -> backports.csv
- - lzma -> backports.lzma
- - enum -> flufl.enum
 
 
 ## How it works
