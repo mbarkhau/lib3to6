@@ -13,31 +13,9 @@ from . import common
 # https://docs.python.org/3/library/__future__.html
 
 
-class VersionInfo:
-
-    apply_since: typ.List[int]
-    apply_until: typ.List[int]
-    works_since: typ.List[int]
-    works_until: typ.Optional[typ.List[int]]
-
-    def __init__(
-        self, apply_since: str, apply_until: str, works_since: str = None, works_until: str = None
-    ) -> None:
-
-        self.apply_since = [int(part) for part in apply_since.split(".")]
-        self.apply_until = [int(part) for part in apply_until.split(".")]
-        if works_since is None:
-            # Implicitly, if it's applied since a version, it
-            # also works since then.
-            self.works_since = self.apply_since
-        else:
-            self.works_since = [int(part) for part in works_since.split(".")]
-        self.works_until = [int(part) for part in works_until.split(".")] if works_until else None
-
-
 class FixerBase:
 
-    version_info       : VersionInfo
+    version_info       : common.VersionInfo
     required_imports   : typ.Set[common.ImportDecl]
     module_declarations: typ.Set[str]
 

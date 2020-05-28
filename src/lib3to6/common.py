@@ -39,6 +39,28 @@ class FixerError(Exception):
         self.module = module
 
 
+class VersionInfo:
+
+    apply_since: typ.List[int]
+    apply_until: typ.List[int]
+    works_since: typ.List[int]
+    works_until: typ.Optional[typ.List[int]]
+
+    def __init__(
+        self, apply_since: str, apply_until: str, works_since: str = None, works_until: str = None
+    ) -> None:
+
+        self.apply_since = [int(part) for part in apply_since.split(".")]
+        self.apply_until = [int(part) for part in apply_until.split(".")]
+        if works_since is None:
+            # Implicitly, if it's applied since a version, it
+            # also works since then.
+            self.works_since = self.apply_since
+        else:
+            self.works_since = [int(part) for part in works_since.split(".")]
+        self.works_until = [int(part) for part in works_until.split(".")] if works_until else None
+
+
 # NOTE (mb 2018-06-29): None of the fixers use asname. If a
 #   module already has an import using asname, it won't be
 #   detected as already imported, and another import (without the

@@ -193,7 +193,7 @@ class _FRAFContext:
 
 class ForwardReferenceAnnotationsFixer(fb.FixerBase):
 
-    version_info = fb.VersionInfo(apply_since="3.0", apply_until="3.6")
+    version_info = common.VersionInfo(apply_since="3.0", apply_until="3.6")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         local_classes: typ.Set[str] = set()
@@ -208,7 +208,7 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
 
 class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="1.0", apply_until="2.7")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
@@ -229,7 +229,7 @@ class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
 class RemoveAnnAssignFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="3.5")
+    version_info = common.VersionInfo(apply_since="1.0", apply_until="3.5")
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign:
         tgt_node = node.target
@@ -246,7 +246,7 @@ class RemoveAnnAssignFixer(fb.TransformerFixerBase):
 
 class ShortToLongFormSuperFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.2", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.2", apply_until="2.7")
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         for maybe_method in ast.walk(node):
@@ -281,7 +281,7 @@ class ShortToLongFormSuperFixer(fb.TransformerFixerBase):
 
 class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="3.5")
+    version_info = common.VersionInfo(apply_since="1.0", apply_until="3.5")
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         if not node.args.kwonlyargs:
@@ -336,7 +336,7 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
 
 class NewStyleClassesFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.0", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.0", apply_until="2.7")
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
         self.generic_visit(node)
@@ -347,7 +347,7 @@ class NewStyleClassesFixer(fb.TransformerFixerBase):
 
 class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(
+    version_info = common.VersionInfo(
         apply_since="2.3",  # introduction of the itertools module
         apply_until="2.7",
         works_until="3.99",
@@ -375,7 +375,7 @@ def is_dict_call(node: ast.expr) -> bool:
 
 class UnpackingGeneralizationsFixer(fb.FixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.0", apply_until="3.4")
+    version_info = common.VersionInfo(apply_since="2.0", apply_until="3.4")
 
     def _has_stararg_g12n(self, node: ast.expr) -> bool:
         if isinstance(node, ast.Call):
@@ -740,7 +740,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
 
 class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.6", apply_until="3.4")
+    version_info = common.VersionInfo(apply_since="2.6", apply_until="3.4")
 
     _typing_module_name   : typ.Optional[str]
     _namedtuple_class_name: typ.Optional[str]
@@ -894,7 +894,7 @@ __all__ = [
 
 # class GeneratorReturnToStopIterationExceptionFixer(fb.FixerBase):
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="3.3",
 #     )
@@ -966,7 +966,7 @@ __all__ = [
 
 # class MetaclassFixer(fb.TransformerFixerBase):
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.7",
 #     )
@@ -977,7 +977,7 @@ __all__ = [
 
 # class MatMulFixer(fb.TransformerFixerBase):
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="3.5",
 #     )
@@ -1002,7 +1002,7 @@ __all__ = [
 #     < myfn = mydec1()(myfn)
 #     """
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.4",
 #     )
@@ -1030,7 +1030,7 @@ __all__ = [
 #     <         __manager.__exit__(None, None, None)
 #     """
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.0",
 #         apply_until="2.4",
 #     )
@@ -1046,7 +1046,7 @@ __all__ = [
 #     < "first: {0} second: {1:>9}".format(0, 1)
 #     """
 #
-#     version_info = fb.VersionInfo(
+#     version_info = common.VersionInfo(
 #         apply_since="2.6",
 #         apply_until="2.6",
 #     )
