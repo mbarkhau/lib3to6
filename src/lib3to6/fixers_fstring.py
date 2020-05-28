@@ -13,7 +13,7 @@ from . import fixer_base as fb
 
 class FStringToStrFormatFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.6", apply_until="3.5")
+    version_info = common.VersionInfo(apply_since="2.6", apply_until="3.5")
 
     def _formatted_value_str(
         self, fmt_val_node: ast.FormattedValue, arg_nodes: typ.List[ast.expr]

@@ -325,11 +325,11 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     target_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
 
     for checker in iter_fuzzy_selected_checkers(checker_names):
-        if checker.is_prohibited_for(target_version):
+        if checker.version_info.is_applicable_to(source_version, target_version):
             checker(cfg, module_tree)
 
     for fixer in iter_fuzzy_selected_fixers(fixer_names):
-        if fixer.is_applicable_to(source_version, target_version):
+        if fixer.version_info.is_applicable_to(source_version, target_version):
             maybe_fixed_module = fixer(cfg, module_tree)
             if maybe_fixed_module is None:
                 raise Exception(f"Error running fixer {type(fixer).__name__}")

@@ -21,76 +21,76 @@ class FutureImportFixerBase(fb.FixerBase):
 
 class AnnotationsFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="3.7", apply_until="3.99")
+    version_info = common.VersionInfo(apply_since="3.7", apply_until="3.99")
 
     future_name = "annotations"
 
 
 class GeneratorStopFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="3.5", apply_until="3.6")
+    version_info = common.VersionInfo(apply_since="3.5", apply_until="3.6")
 
     future_name = "generator_stop"
 
 
 class UnicodeLiteralsFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.6", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.6", apply_until="2.7")
 
     future_name = "unicode_literals"
 
 
 class PrintFunctionFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.6", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.6", apply_until="2.7")
 
     future_name = "print_function"
 
 
 class WithStatementFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.5", apply_until="2.5")
+    version_info = common.VersionInfo(apply_since="2.5", apply_until="2.5")
 
     future_name = "with_statement"
 
 
 class AbsoluteImportFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.5", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.5", apply_until="2.7")
 
     future_name = "absolute_import"
 
 
 class DivisionFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.2", apply_until="2.7")
+    version_info = common.VersionInfo(apply_since="2.2", apply_until="2.7")
 
     future_name = "division"
 
 
 class GeneratorsFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.2", apply_until="2.2")
+    version_info = common.VersionInfo(apply_since="2.2", apply_until="2.2")
 
     future_name = "generators"
 
 
 class NestedScopesFutureFixer(FutureImportFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.1", apply_until="2.1")
+    version_info = common.VersionInfo(apply_since="2.1", apply_until="2.1")
 
     future_name = "nested_scopes"
 
 
 class RemoveUnsupportedFuturesFixer(fb.FixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.0", apply_until="3.99")
+    version_info = common.VersionInfo(apply_since="2.0", apply_until="3.99")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         target_version    = cfg.get('target_version', "2.7")
         supported_futures = set()
         for cls in FutureImportFixerBase.__subclasses__():
-            if cls.is_compatible_with(target_version):
+            if cls.version_info.is_compatible_with(target_version):
                 supported_futures.add(cls.future_name)
 
         nodes_to_del = []

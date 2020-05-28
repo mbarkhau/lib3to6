@@ -26,24 +26,6 @@ class FixerBase:
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
 
-    @classmethod
-    def is_required_for(cls, version: str) -> bool:
-        version_num = [int(part) for part in version.split(".")]
-        nfo         = cls.version_info
-        return nfo.apply_since <= version_num <= nfo.apply_until
-
-    @classmethod
-    def is_compatible_with(cls, version: str) -> bool:
-        version_num = [int(part) for part in version.split(".")]
-        nfo         = cls.version_info
-        return nfo.works_since <= version_num and (
-            nfo.works_until is None or version_num <= nfo.works_until
-        )
-
-    @classmethod
-    def is_applicable_to(cls, src_version: str, tgt_version: str) -> bool:
-        return cls.is_compatible_with(src_version) and cls.is_required_for(tgt_version)
-
 
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:

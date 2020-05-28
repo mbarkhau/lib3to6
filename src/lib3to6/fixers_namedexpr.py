@@ -13,7 +13,7 @@ from . import fixer_base as fb
 
 class NamedExprFixer(fb.TransformerFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="2.7", apply_until="3.7")
+    version_info = common.VersionInfo(apply_since="2.7", apply_until="3.7")
 
     def _extract_and_replace_named_exprs(
         self, expr: ast.expr

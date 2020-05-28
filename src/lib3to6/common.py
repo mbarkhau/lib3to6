@@ -40,25 +40,65 @@ class FixerError(Exception):
 
 
 class VersionInfo:
+    """Compatibility info for Fixer and Checker classes.
 
+    Used as a class attribute (not an instance attribute) of a fixer or checker.
+    The compatability info relates to the fixer/checker rather than the feature
+    it deals with. The question that is being ansered is: "should this
+    fixer/checker be exectued for this (src_version, tgt_version) pair"
+    """
+
+    # since/until is inclusive
     apply_since: typ.List[int]
-    apply_until: typ.List[int]
+    apply_until: typ.Optional[typ.List[int]]
     works_since: typ.List[int]
     works_until: typ.Optional[typ.List[int]]
 
     def __init__(
-        self, apply_since: str, apply_until: str, works_since: str = None, works_until: str = None
+        self,
+        apply_since: str = "1.0",
+        apply_until: typ.Optional[str] = None,
+        works_since: typ.Optional[str] = None,
+        works_until: typ.Optional[str] = None,
     ) -> None:
 
         self.apply_since = [int(part) for part in apply_since.split(".")]
-        self.apply_until = [int(part) for part in apply_until.split(".")]
+        if apply_until is None:
+            self.apply_until = None
+        else:
+            self.apply_until = [int(part) for part in apply_until.split(".")]
+
         if works_since is None:
             # Implicitly, if it's applied since a version, it
             # also works since then.
             self.works_since = self.apply_since
         else:
             self.works_since = [int(part) for part in works_since.split(".")]
-        self.works_until = [int(part) for part in works_until.split(".")] if works_until else None
+
+        if works_until is None:
+            self.works_until = None
+        else:
+            self.works_until = [int(part) for part in works_until.split(".")]
+
+    def is_required_for(self, version: str) -> bool:
+        version_num = [int(part) for part in version.split(".")]
+        apply_until = self.apply_until
+        if apply_until and apply_until < version_num:
+            return False
+        return self.apply_since <= version_num
+
+    def is_compatible_with(self, version: str) -> bool:
+        version_num = [int(part) for part in version.split(".")]
+        works_since = self.works_since
+        works_until = self.works_until
+        if works_since and version_num < works_since:
+            return False
+        if works_until and works_until < version_num:
+            return False
+        return True
+
+    def is_applicable_to(self, source_version: str, target_version: str) -> bool:
+        return self.is_required_for(target_version) and self.is_compatible_with(source_version)
 
 
 # NOTE (mb 2018-06-29): None of the fixers use asname. If a

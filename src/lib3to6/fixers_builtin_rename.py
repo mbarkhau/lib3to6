@@ -35,7 +35,7 @@ class BuiltinsRenameFixerBase(fb.FixerBase):
 
 class XrangeToRangeFixer(BuiltinsRenameFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
+    version_info = common.VersionInfo(apply_until="2.7")
 
     new_name = "range"
     old_name = "xrange"
@@ -43,7 +43,7 @@ class XrangeToRangeFixer(BuiltinsRenameFixerBase):
 
 class UnicodeToStrFixer(BuiltinsRenameFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
+    version_info = common.VersionInfo(apply_until="2.7")
 
     new_name = "str"
     old_name = "unicode"
@@ -51,7 +51,7 @@ class UnicodeToStrFixer(BuiltinsRenameFixerBase):
 
 class UnichrToChrFixer(BuiltinsRenameFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
+    version_info = common.VersionInfo(apply_until="2.7")
 
     new_name = "chr"
     old_name = "unichr"
@@ -59,7 +59,7 @@ class UnichrToChrFixer(BuiltinsRenameFixerBase):
 
 class RawInputToInputFixer(BuiltinsRenameFixerBase):
 
-    version_info = fb.VersionInfo(apply_since="1.0", apply_until="2.7", works_until="3.99")
+    version_info = common.VersionInfo(apply_until="2.7")
 
     new_name = "input"
     old_name = "raw_input"

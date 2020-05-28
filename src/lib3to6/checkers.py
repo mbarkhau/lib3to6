@@ -11,32 +11,16 @@ from . import utils
 from . import common
 
 
-class VersionInfo:
-
-    prohibited_until: typ.Optional[str]
-
-    def __init__(self, prohibited_until: str = None) -> None:
-        self.prohibited_until = prohibited_until
-
-
 class CheckerBase:
 
-    version_info: VersionInfo
-
-    def is_prohibited_for(self, version: str) -> bool:
-        return (
-            self.version_info.prohibited_until is None
-            or self.version_info.prohibited_until >= version
-        )
+    # no info -> always apply
+    version_info: common.VersionInfo = common.VersionInfo()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         raise NotImplementedError()
 
 
 class NoStarImports(CheckerBase):
-
-    version_info = VersionInfo()
-
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
@@ -64,7 +48,6 @@ def _iter_scope_names(tree: ast.Module) -> typ.Iterable[typ.Tuple[str, ast.AST]]
 class NoOverriddenFixerImportsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
 
-    version_info                = VersionInfo()
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
@@ -85,8 +68,6 @@ class NoOverriddenFixerImportsChecker(CheckerBase):
 
 class NoOverriddenBuiltinsChecker(CheckerBase):
     """Don't override names that fixers may reference."""
-
-    version_info = VersionInfo()
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for name_in_scope, node in _iter_scope_names(tree):
@@ -124,7 +105,7 @@ PROHIBITED_OPEN_ARGUMENTS = {"encoding", "errors", "newline", "closefd", "opener
 
 class NoOpenWithEncodingChecker(CheckerBase):
 
-    version_info = VersionInfo(prohibited_until="2.7")
+    version_info = common.VersionInfo(apply_until="2.7")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         for node in ast.walk(tree):
@@ -179,7 +160,7 @@ class NoOpenWithEncodingChecker(CheckerBase):
 
 class NoAsyncAwait(CheckerBase):
 
-    version_info = VersionInfo(prohibited_until="3.4")
+    version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         async_await_node_types = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
@@ -190,7 +171,7 @@ class NoAsyncAwait(CheckerBase):
 
 class NoComplexNamedTuple(CheckerBase):
 
-    version_info = VersionInfo(prohibited_until="3.4")
+    version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
         _typing_module_name   : typ.Optional[str] = None
