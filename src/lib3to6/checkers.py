@@ -177,16 +177,14 @@ class NoOpenWithEncodingChecker(CheckerBase):
                 raise common.CheckError(msg, node)
 
 
-ASYNC_AWAIT_NODE_TYPES = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
-
-
 class NoAsyncAwait(CheckerBase):
 
     version_info = VersionInfo(prohibited_until="3.4")
 
     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+        async_await_node_types = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
         for node in ast.walk(tree):
-            if isinstance(node, ASYNC_AWAIT_NODE_TYPES):
+            if isinstance(node, async_await_node_types):
                 raise common.CheckError("Prohibited use of async/await", node)
 
 
