@@ -34,73 +34,329 @@ Code Quality/CI:
 
 [](TOC)
 
-  - [Project Status (as of 2020-02-21): Beta](#project-status-as-of-2020-02-21-beta)
-  - [Getting started with Development](#getting-started-with-development)
-  - [Motivation](#motivation)
-  - [Feature Support](#feature-support)
-  - [How it works](#how-it-works)
-  - [FAQ](#faq)
+- [Project Status (as of 2020-05-29): Beta](#project-status-as-of-2020-05-29-beta)
+- [Automatic Conversions](#automatic-conversions)
+- [Projects that use lib3to6](#projects-that-use-lib3to6)
+- [Contributing](#contributing)
+- [Motivation](#motivation)
+- [How it works](#how-it-works)
+- [Future Work](#future-work)
+- [Alternatives](#alternatives)
+- [FAQ](#faq)
 
 [](TOC)
 
 
-## Project Status (as of 2020-02-21): Beta
+## Project Status (as of 2020-05-29): Beta
 
-I've been using this library for a year on a few projects without much incident.
-An example of such a project is [PyCalVer](https://pypi.org/project/pycalver/). I
-have tested with Python 3.8 and made some fixes and updates. The library serves
-my purposes and I don't anticipate major updates, but I will refrain from calling
-it stable until there has been more adoption by projects other than my own.
+I've been using this library for over a year on a few projects without
+much incident. An example of such a project is
+[PyCalVer](https://pypi.org/project/pycalver/). I have tested with
+Python 3.8 and made some fixes and updates.
+
+The library serves my purposes and I don't anticipate major updates,
+but I will refrain from calling it stable until there has been more
+adoption by projects other than my own.
 
 Please give it a try and send your feedback.
 
-In an ideal world, the project would cover all cases documented on
-http://python-future.org and either:
 
- 1. Transpile to code that will work on any version
- 2. Raise an error, ideally pointing to a page and section on
-    python-future.org or other documentation describing
-    alternative methods of writing backwards compatible code.
+## Python Versions and Compatability
 
-https://docs.python.org/3.X/whatsnew/ also contains much info on
-API changes that might be checked for, but checks and fixers for
-these will only be written if they are common enough, otherwise
-it's just too much work (patches are welcome though).
+The library itself is tested with Python 3.6 and 3.8. The output
+of the library is tested with Python 2.7, 3.5, 3.6, 3.7 and 3.8. No
+testing has been done with Python 2.6 or earlier or with Python 3.0 to
+Python 3.4.
+
+Lib3to6 does not add any runtime dependencies. It may inject code, such as imports or temporary variables, but any such changes will only add an `O(1)` overhead.
+
+Since lib3to6 only works at the ast level at the time you build a
+package, it is very easy violate some assumtions that lib3to6 makes
+about your code. You could for example have your own `itertools` module (which is one of the imports that lib3to6 may add to your code) and the output of lib3to6 may not work as expected, because it was assuming the import would be for the `itertools` module from the standard library.
 
 
-## Feature Support
+## Automatic Conversions
 
 Not all new language features have a semantic equivalent in older
 versions. To the extent these can be detected, an error will be
 reported when these features are used.
 
-Features which **are supported**:
+Note that a fix is not applied if the lowest version of python that
+you are targeting already supports the newer syntax. The conversions
+are ordered by when the feature was introduced.
 
- - PEP 498: formatted string literals.
- - Eliding of annotations
- - Unpacking generalizations
- - Keyword only arguments
- - PEP 515: underscores in numeric literals
- - map/zip/filter to itertools equivalents
- - Convert class based typing.NamedTuple usage to assignments
- - PEP 563: Postponed Evaluation of Annotations by converting to strings
 
-An (obviously non exhaustive) list of features which are **not
-supported**:
+### PEP 572: Assignment Expressions (aka. the walrus operator)
 
- - async/await
- - yield from
- - @/__matmul__ operator
+```python
+# Since 3.8
+if match1 := pattern1.match(data):
+    result = match1.group(1)
+
+# From 2.7 to 3.7
+match1 = pattern1.match(data)
+if match1:
+    result = match1.group(1)
+```
+
+Some expressions nested expressions in a condition are not so easy, in
+which case lib3to6 will bend over backwards.
+
+```python
+# Since 3.8
+while (block := f.read(4096)) != '':
+    process(block)
+
+# From 2.7 to 3.7
+__loop_condition = True
+while __loop_condition:
+    block = f.read(4096)
+    __loop_condition = block != ''
+    if __loop_condition:
+        process(block)
+```
+
+
+### PEP 563: Postponed Evaluation of Annotations
+
+```python
+# Since 3.7
+class SelfRef:
+    def method(self) -> SelfRef:
+        pass
+
+# From 3.0 to 3.6
+class SelfRef:
+    def method(self) -> 'SelfRef':
+        pass
+```
+
+Note that this is not a stupid conversion that is applied to all
+annotations, it is only applied to annotations that are forward
+references. Backward references are left as is.
+
+
+```python
+# Since 3.7
+class BackRef:
+    def method(self) -> ForwardRef:
+        pass
+
+class ForwardRef:
+    def method(self) -> BackRef:
+        pass
+
+
+# From 3.0 to 3.6
+class BackRef:
+    def method(self) -> 'ForwardRef':
+        pass
+
+class ForwardRef:
+    def method(self) -> BackRef:
+        pass
+```
+
+If you're supporting python 2.7, the annotation will of course be elided.
+
+
+### PEP 498: formatted string literals.
+
+```python
+# Since 3.6
+who = "World"
+print(f"Hello {who}!")
+
+# From 2.7 to 3.5
+who = "World"
+print("Hello {0}!".format(who))
+```
+
+The fixer also converts the newer `{var=}` syntax, even if you use
+lib3to6 on a Python version older than 3.8.
+
+```python
+# Since 3.6
+who = "World"
+print(f"Hello {who=}!")
+
+# From 2.7 to 3.5
+print("Hello who={0}!".format(who))
+```
+
+
+### Eliding of Annotations
+
+```python
+# Since 3.0
+def foo(bar: int) -> str:
+    pass
+
+# In 2.7
+def foo(bar):
+    pass
+```
+
+
+### PEP 515: underscores in numeric literals
+
+```python
+# Since 3.6
+num = 1_234_567
+
+# From 2.7 to 3.5
+num = 1234567
+```
+
+
+### Unpacking generalizations
+
+For literals...
+
+```python
+# Since 3.4
+x = [*[1, 2], 3]
+
+# From 2.7 to 3.3
+x = [1, 2, 3]
+```
+
+For varargs...
+
+```python
+# Since 3.4
+foo(0, *a, *b)
+
+# From 2.7 to 3.3
+foo(*([0] + list(a) + list(b))
+```
+
+For kwargs...
+
+```python
+# Since 3.4
+foo(**x, y=22, **z)
+
+# From 2.7 to 3.3
+import itertools
+foo(**dict(itertools.chain(x.items(), {'y': 22}.items(), z.items())))
+```
+
+Note that the import will only be added to your module once.
+
+
+### Keyword only arguments
+
+
+```python
+# Since 3.6
+def kwonly_func(*, kwonly_arg=1):
+    ...
+
+# From 2.7 to 3.5
+def kwonly_func(**kwargs):
+    kwonly_arg = kwargs.get('kwonly_arg', 1)
+    ...
+```
+
+
+### Convert class based typing.NamedTuple usage to assignments
+
+
+```python
+import typing
+
+# Since 3.5
+class Bar(typing.NamedTuple):
+    x: int
+    y: str
+
+# From 2.7 to 3.4
+Bar = typing.NamedTuple('Bar', [('x', int), ('y', str)])
+```
+
+
+### New Style Classes
+
+```python
+# Since 3.0
+class Bar:
+  pass
+
+# Before 3.0
+class Bar(object):
+  pass
+```
+
+
+### Future Imports
+
+All `__future__` imports applicable to your target version are
+prepended to every file.
+
+```python
+# -*- coding: utf-8 -*-
+# This file is part of the <X> project
+# ...
+"""A docstring."""
+
+x = True
+```
+
+With `target-version=27` (the default).
+
+```python
+# -*- coding: utf-8 -*-
+# This file is part of the <X> project
+# ...
+"""A docstring."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+x = True
+```
+
+With `target-version=3.7`
+
+```python
+# -*- coding: utf-8 -*-
+# This file is part of the <X> project
+# ...
+"""A docstring."""
+from __future__ import annotations
+
+x = True
+```
+
+Note that lib3to6 works mostly at the ast level, but an exception is
+made for any comments that appear at the top of the file. These are
+preserved as is, so your shebang, file encoding and licensing headers
+will be preserved.
+
+
+### Not Supported Features
+
+An (obviously non-exhaustive) list of features which are **not supported**,
+either because they involve a semantic change, or because there is no simple
+ast transformation to make them work across different python versions:
+
+ - PEP 492 - `async`/`await`
+ - PEP 465 - `@`/`__matmul__` operator
+ - PEP 380 - `yield from` syntax
+ - PEP 584 - union operators for `dict`
+ - ordered dictionary (since python 3.6)
 
 Some new libraries have backports, which warnings will point to:
 
  - typing
- - pathlib
- - secrets
- - ipaddress
+ - pathlib -> pathlib2
+ - secrets -> python2-secrets
+ - ipaddress -> py2-ipaddress
  - csv -> backports.csv
  - lzma -> backports.lzma
- - enum -> flufl.enum
+ - enum -> enum34
 
 
 ## Projects that use lib3to6
@@ -112,30 +368,63 @@ Some new libraries have backports, which warnings will point to:
  - [backports.pampy](https://pypi.org/project/backports.pampy/)
 
 
-## Alternatives
+## Contributing
 
-Since starting this project, I've learned of the
-[py-backwards](https://github.com/nvbn/py-backwards) project, which is
-very, very similar in its approach. I have not evaluated it yet, to
-determine for what projects it might be a better choice.
+The most basic contribution you can make is to provide minimal,
+reproducable examples of code that should either be converted or which
+should raise an error.
 
+The project is hosted at
+[gitlab.com/mbarkhau/lib3to6](https://gitlab.com/mbarkhau/lib3to6),
+mainly because that's where the CI/CD is configured. Github is only
+used as a copy/backup (and because that seems to be where many people
+look for things).
 
-## Getting started with Development
+You can get started with local development in just a few commands.
+
+```shell
+user@host:~/ $ git clone https://gitlab.com/mbarkhau/lib3to6.git
+user@host:~/ $ cd lib3to6/
+user@host:~/lib3to6/ ⎇master $ make help
+user@host:~/lib3to6/ ⎇master $ make install     # creates conda environments
+...
+user@host:~/lib3to6/ ⎇master $ ls ~/miniconda3/envs/
+user@host:~/lib3to6_pypy35 lib3to6_py27 lib3to6_py36 lib3to6_py37 lib3to6_py38
+```
+
+The targets in the makefile are set up to use the virtual enironements.
+
+```shell
+user@host:~/lib3to6/ ⎇master $ make fmt
+All done! ✨ 🍰 ✨
+21 files left unchanged.
+
+user@host:~/lib3to6/ ⎇master $ make lint mypy devtest
+isort ... ok
+sjfmt ... ok
+flake8 .. ok
+mypy .... ok
+...
+```
+
+For debugging you may wish to activate a virtual environment anyway.
 
 
 ```shell
-$ git clone https://gitlab.com/mbarkhau/lib3to6.git
-$ cd lib3to6/
-lib3to6 $ make install
-...
-lib3to6 $ make test
-...
-lib3to6 $ make help
+user@host:~/lib3to6/ ⎇master $ source activate
+user@host:~/lib3to6/ ⎇master (lib3to6_py38) $ ipython
+Python 3.8.2 | packaged by conda-forge | (default, Apr 24 2020, 08:20:52)
+Type 'copyright', 'credits' or 'license' for more information
+IPython 7.14.0 -- An enhanced Interactive Python. Type '?' for help.
+
+In [1]: import lib3to6
+
+In [2]: lib3to6.__file__
+Out[2]: '/home/user/lib3to6/src/lib3to6/__init__.py'
 ```
 
 
 ## Motivation
-
 
 The main motivation for this project is to be able to use `mypy`
 without sacrificing compatibility to older versions of python.
@@ -179,7 +468,7 @@ hello('世界')
 Fixes are applied to match the semantics of python3 code as
 close as possible, even when running on a python2.7 interpreter.
 
-Some fixes that have been applied:
+Some fixes that have been applied in the above:
 
     - PEP263 magic comment to declare the coding of the python
       source file. This allows the string literal `"世界"` to
@@ -187,8 +476,10 @@ Some fixes that have been applied:
     - `__future__` imports have been added. This includes the well
       known print statement -> function change. The unicode_literals
     - Type annotations have been removed
-    - f string -> "".format  conversion
+    - `f""` string -> `"".format()` conversion
 
+
+### Usage in your `setup.py`
 
 The cli command `lib3to6` is nice for demo purposes,
 but for your project it is better to use it in your
@@ -216,6 +507,9 @@ setuptools.setup(
 )
 ```
 
+When you build you package, the contends of the resulting distribution
+will be the code that was converted by lib3to6.
+
 
 ```bash
 ~/my-module $ python setup.py bdist_wheel --python-tag=py2.py3
@@ -235,11 +529,9 @@ Installing collected packages: my-module
 Successfully installed my-module-201808.1
 ```
 
-
-To make sure we're importing my_module from the installation, as
-opposed to from the local directory, we have to switch
-directories.
-
+When testing, make sure you're not importing `my_module` from your local
+directory, which is probably the original source code. Instead you can
+either manipulate your `PYTHONPATH`, or simply switch directories...
 
 ```bash
 ~/$ python3 -c "import my_module"
@@ -255,6 +547,22 @@ Hello 世界 from 3.6.5!
 /home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
 Hello 世界 from 2.7.15!
 ```
+
+### On Testing your Project
+
+Projects that use lib3to6 should have a test suite that is exectued
+with the oldest python version that you want to support, using the
+converted output generated by lib3to6. While you can develop using a
+newer version of python, you should not blindly trust lib3to6 as it is
+very easy to introduce backward incompatible changes if you only test
+on the most recent interpreter. The most obvious example is that
+lib3to6 cannot do much to help you if a library produces `bytes` on
+Python 2 but `str` on Python 3.
+
+The easiest way I have found to test a project, is to create a
+distribution using `python setup.py bdist_wheel` with the above
+modifications to the `setup.py`, install it and run the test suite
+against the installed modules.
 
 
 ## How it works
@@ -279,16 +587,19 @@ f"Hello {1 + 1}!"
 >>> print(py2_source)
 # -*- coding: utf-8 -*-
 "Hello {0}!".format(1 + 1)
+```
 
+At a lower level, this translation is based on detection of the
+`ast.JoinedStr` node, which is translated into and AST that can be
+serialized back into python syntax that will also work on older
+versions.
+
+```python
 >>> print(lib3to6.parsedump_ast(py3_source))
 Module(body=[Expr(value=JoinedStr(values=[
     Str(s='Hello '),
     FormattedValue(
-        value=BinOp(
-            left=Num(n=1),
-            op=Add(),
-            right=Num(n=1),
-        ),
+        value=BinOp(left=Num(n=1), op=Add(), right=Num(n=1)),
         conversion=-1,
         format_spec=None,
     ),
@@ -301,15 +612,13 @@ Module(body=[Expr(value=Call(
         attr='format',
         ctx=Load(),
     ),
-    args=[BinOp(
-        left=Num(n=1),
-        op=Add(),
-        right=Num(n=1),
-    )],
+    args=[BinOp(left=Num(n=1), op=Add(), right=Num(n=1))],
     keywords=[]
 ))])
 ```
 
+
+### Checker Errors
 
 Of course this does not cover every aspect of compatibility.
 Changes in APIs cannot be translated automatically in this way.
@@ -366,6 +675,38 @@ modern python to legacy python interpreter. You cannot transpile
 features which your interpreter cannot parse. The intended use is
 for developers of libraries who use the most modern python
 version, but want their libraries to work on older versions.
+
+### Checker Warnings
+
+## Future Work
+
+In an ideal world, the project would cover all cases documented on
+http://python-future.org and either:
+
+ 1. Transpile to code that will work on any version
+ 2. Raise an error, ideally pointing to a page and section on
+    python-future.org or other documentation describing
+    alternative methods of writing backwards compatible code.
+
+https://docs.python.org/3.X/whatsnew/ also contains much info on
+API changes that might be checked for, but checks and fixers for
+these will only be written if they are common enough, otherwise
+it's just too much work (patches are welcome though).
+## Alternatives
+
+Since starting this project, I've learned of the
+[py-backwards](https://github.com/nvbn/py-backwards) project, which is
+very, very similar in its approach. I have not evaluated it yet, to
+determine for what projects it might be a better choice.
+
+Some features that might be implemented
+
+- PEP 380 - `yield from gen` syntax might be supported in a basic form
+  by expanding to a `for x in gen: yield x`. That is not semanically
+  equivalent though and I don't know if it's worth
+  [implementing it propperly](https://www.python.org/dev/peps/pep-0380/#formal-semantics)
+- PEP 465 - `@` operator could be done by replacing all cases
+  where the operator is used with a `__matmul__` method call.
 
 
 ## FAQ

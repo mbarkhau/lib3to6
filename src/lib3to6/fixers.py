@@ -292,16 +292,16 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
             kw_name         = "kwargs"
             node.args.kwarg = ast.arg(arg=kw_name, annotation=None)
 
-        # NOTE (mb 2018-06-03): Only use defaults for kwargs
-        #   if they are literals. Everything else would
-        #   change the semantics too much and so we should
-        #   raise an error.
         kwonlyargs  = reversed(node.args.kwonlyargs)
         kw_defaults = reversed(node.args.kw_defaults)
         for arg, default in zip(kwonlyargs, kw_defaults):
             arg_name = arg.arg
             node_value: ast.expr
 
+            # NOTE (mb 2018-06-03): Only use defaults for kwargs
+            #   if they are literals. Everything else would
+            #   change the semantics too much and so we should
+            #   raise an error.
             if default is None:
                 node_value = ast.Subscript(
                     value=ast.Name(id=kw_name, ctx=ast.Load()),

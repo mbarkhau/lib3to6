@@ -3,11 +3,16 @@
 #
 # (C) 2018 Manuel Barkhau (@mbarkhau)
 # SPDX-License-Identifier: MIT
-"""A docstring."""
+"""A docstring.
+
+This is a grab bag of test cases that should run on all supported
+versions of python. As such, some fixers that are only applied for
+newer versions of python are not covered.
+"""
 
 import typing
 
-assert __doc__ == "A docstring."
+assert __doc__.startswith("A docstring.")
 
 x = [*[1, 2], 3]
 (
@@ -15,12 +20,16 @@ x = [*[1, 2], 3]
 )(x)
 assert x == [1, 2, 3, 1, 2, 1, 2, 3, 4, 5]
 
-
 class Foo:
 
     @classmethod
     def foo(f: 'Foo') -> 'Foo':
         pass
+
+
+class Bar(typing.NamedTuple):
+    x: int
+    y: str
 
 
 res = ""
@@ -34,6 +43,26 @@ assert res == "987654321"
 
 def test_unpacking_generalization(*args, **kwargs):
     return args, kwargs
+
+
+def kwonly_func(*, kwonly_arg=1):
+    return kwonly_arg * 2
+
+
+assert kwonly_func() == 2
+assert kwonly_func(kwonly_arg=3) == 6
+
+valid_error_messages = [
+    "kwonly_func() takes 0 positional arguments but 1 was given",
+    "kwonly_func() takes exactly 0 arguments (1 given)",
+]
+
+try:
+    kwonly_func(3)
+    assert False
+except TypeError as err:
+    assert any(msg in str(err) for msg in valid_error_messages)
+
 
 
 a: typing.List[int] = [1, 2, 3]
