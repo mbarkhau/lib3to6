@@ -249,6 +249,28 @@ FIXTURES = [
         """,
         "Prohibited use of default value for field 'baz' of class 'Foo'",
     ),
+    make_fixture(
+        "no_unusable_imports",
+        """
+        import lzma
+        """,
+        "Prohibited import 'lzma' (only available since python 3.3). Use 'https://pypi.org/project/backports.lzma' instead.",
+    ),
+    make_fixture(
+        "no_unusable_imports",
+        """
+        from pathlib import Path
+        """,
+        "Prohibited import 'pathlib' (only available since python 3.4). Use 'https://pypi.org/project/pathlib2' instead.",
+    ),
+    make_fixture(
+        "no_unusable_imports",
+        """
+        import asyncio
+        """,
+        "Prohibited import 'asyncio' (only available since python 3.4). No backport",
+    ),
+    make_fixture("no_mat_mult_op", "foo = bar @ baz", "Prohibited use of matrix multiplication",),
 ]
 
 

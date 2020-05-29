@@ -54,11 +54,17 @@ class InvalidPackage(Exception):
     pass
 
 
+def get_node_lineno(node: ast.AST = None, parent: ast.AST = None) -> int:
+    if isinstance(node, (ast.stmt, ast.expr)):
+        return node.lineno
+    if isinstance(parent, (ast.stmt, ast.expr)):
+        return parent.lineno
+    return -1
+
+
 class CheckError(Exception):
     def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
-        node_lineno   = node.lineno if isinstance(node, (ast.stmt, ast.expr)) else 0
-        parent_lineno = parent.lineno if isinstance(parent, (ast.stmt, ast.expr)) else 0
-        lineno        = node_lineno or parent_lineno
+        lineno = get_node_lineno(node)
 
         if lineno:
             msg += f" on line {lineno}"

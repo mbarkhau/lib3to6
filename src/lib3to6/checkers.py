@@ -156,6 +156,40 @@ class NoAsyncAwait(cb.CheckerBase):
             raise common.CheckError(msg, node)
 
 
+class NoYieldFromChecker(cb.CheckerBase):
+
+    version_info = common.VersionInfo(apply_until="3.2", works_since="3.3")
+
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.YieldFrom):
+                msg = (
+                    "Prohibited use of 'yield from', which is not supported "
+                    f"for your target_version={ctx.cfg.target_version}"
+                )
+                raise common.CheckError(msg, node)
+
+
+class NoMatMultOpChecker(cb.CheckerBase):
+
+    version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
+
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
+        if not hasattr(ast, 'MatMult'):
+            return
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.BinOp):
+                continue
+
+            if not isinstance(node.op, ast.MatMult):
+                continue
+
+            msg = "Prohibited use of matrix multiplication '@' operator."
+            raise common.CheckError(msg, node)
+
+
 class NoComplexNamedTuple(cb.CheckerBase):
 
     version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
@@ -225,3 +259,15 @@ class NoComplexNamedTuple(cb.CheckerBase):
 #
 #     def __call__(self, ctx: common.BuildContext, tree: ast.Module):
 #         pass
+
+__all__ = [
+    'NoStarImports',
+    'NoOverriddenFixerImportsChecker',
+    'NoOverriddenBuiltinsChecker',
+    'NoOpenWithEncodingChecker',
+    'NoAsyncAwait',
+    'NoComplexNamedTuple',
+    'NoUnusableImportsChecker',
+    'NoYieldFromChecker',
+    'NoMatMultOpChecker',
+]
