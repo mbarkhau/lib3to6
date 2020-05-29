@@ -280,7 +280,7 @@ class ShortToLongFormSuperFixer(fb.TransformerFixerBase):
 
 class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
 
-    version_info = common.VersionInfo(apply_since="1.0", apply_until="3.5")
+    version_info = common.VersionInfo(apply_since="1.0", apply_until="2.99")
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         if not node.args.kwonlyargs:

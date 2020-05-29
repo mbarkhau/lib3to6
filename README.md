@@ -348,7 +348,10 @@ ast transformation to make them work across different python versions:
  - PEP 584 - union operators for `dict`
  - ordered dictionary (since python 3.6)
 
-Some new libraries have backports, which warnings will point to:
+
+### Modules with Backports
+
+Some new modules have backports, which lib3to6 will point to:
 
  - typing
  - pathlib -> pathlib2
@@ -357,6 +360,26 @@ Some new libraries have backports, which warnings will point to:
  - csv -> backports.csv
  - lzma -> backports.lzma
  - enum -> enum34
+
+For a full list of modules for which these warnings and errors apply,
+please review [`MAYBE_UNUSABLE_MODULES` in
+src/lib3to6/checkers_backports.py](https://gitlab.com/mbarkhau/lib3to6/blob/master/src/lib3to6/checkers_backports.py)
+
+For some modules, the backport uses the same module name as the original module in the standard library. By default, lib3to6 will only warn about usage of such modules, since it cannot detect if you're using the module from the backported package (good) or from the standard library (bad if not available in your target version). If you would like to opt-in to hard error messages, you can whitelist modules for which you have
+
+A good approach to adding such backports as dependencies is to qualify the requirement with an [envrionment marker](https://www.python.org/dev/peps/pep-0496/), so that users with a newer interpreter use the builtin module and don't install the backport package that they don't need.
+
+These work as arguments for `install_requires` and also in `requirements.txt` files.
+
+```python
+import setuptools
+
+setuptools.setup(
+    name="my-package",
+    install_requires=['typing;python_version<"3.5"'],
+    ...
+)
+```
 
 
 ## Projects that use lib3to6
@@ -616,7 +639,6 @@ Module(body=[Expr(value=Call(
     keywords=[]
 ))])
 ```
-
 
 ### Checker Errors
 

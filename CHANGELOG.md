@@ -11,6 +11,7 @@
  - Fix #3: --target-version argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
  - Fix #4: Remove `from __future__ import X` when the target version doesn't support it.
  - Fix #4: Convert Forward Reference Annotations to strings [gitlab../issues/4](https://gitlab.com/mbarkhau/lib3to6/-/issues/4) Thank you [Faidon Liambotis](https://gitlab.com/paravoid) for your help with testing and helping to debug ❤️.
+ - Fix: Unly apply keyword only args fixer for python<=2.7
 
 
 ## v202002.0031

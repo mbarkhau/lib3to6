@@ -9,5 +9,5 @@
 
 pathlib2
 astor
-typing
+typing;python_version<"3.5"
 click
