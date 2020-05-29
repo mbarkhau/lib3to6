@@ -1,4 +1,5 @@
 import sys
+import logging
 from collections import namedtuple
 
 import pytest
@@ -271,7 +272,7 @@ FIXTURES = [
         """
         import asyncio
         """,
-        ["Prohibited import 'asyncio'. This module is available since Python 3.4", "No backport",],
+        ["Prohibited import 'asyncio'. This module is available since Python 3.4", "No backport"],
     ),
     make_fixture("no_mat_mult_op", "foo = bar @ baz", "Prohibited use of matrix multiplication",),
 ]
@@ -296,3 +297,75 @@ def test_checkers(fixture):
 
         for expected_error_msg in expected_error_messages:
             assert expected_error_msg in str(result_error)
+
+
+def _test_unusable_imports(source, ver="2.7", req=None):
+    ctx = common.init_build_context(
+        checkers="no_unusable_imports",
+        target_version=ver,
+        install_requires=set(req.split(" ")) if req else None,
+    )
+    utils.transpile_and_dump(ctx, source)
+
+
+def test_backport_checker_warning(caplog):
+    assert len(caplog.records) == 0
+    _test_unusable_imports("import typing", "2.7")
+    assert len(caplog.records) == 1
+    for record in caplog.records:
+        assert record.levelname == 'WARNING'
+        assert "Use of import 'typing'" in record.message
+
+
+def test_backport_checker_nowarning(caplog):
+    assert len(caplog.records) == 0
+    _test_unusable_imports("import typing", "2.7", req="typing")
+    assert len(caplog.records) == 0
+
+
+def test_backport_checker_errors():
+    # no error expected, target is new enough
+    _test_unusable_imports("import asyncio", "3.4")
+
+    try:
+        _test_unusable_imports("import asyncio", "3.3")
+        assert False, "expected CheckError"
+    except common.CheckError as err:
+        assert "Prohibited import 'asyncio'" in str(err)
+
+    # no error expected, target new enough
+    _test_unusable_imports("import pathlib", "3.4")
+    # no error expected, backport used
+    _test_unusable_imports("import pathlib2 as pathlib", "2.7", req="pathlib2")
+
+    try:
+        _test_unusable_imports("import pathlib", "2.7")
+        assert False, "expected CheckError"
+    except common.CheckError as err:
+        assert "Prohibited import 'pathlib'" in str(err)
+
+    try:
+        _test_unusable_imports("import pathlib", "2.7", req="pathlib")
+        assert False, "expected CheckError"
+    except common.CheckError as err:
+        # invalid backport
+        assert "Prohibited import 'pathlib'" in str(err)
+
+    try:
+        _test_unusable_imports("import pathlib", "2.7", req="pathlib2")
+        assert False, "expected CheckError"
+    except common.CheckError as err:
+        # use of stdlib instead of backported module
+        assert "Prohibited import 'pathlib'" in str(err)
+
+    # no error expected, target new enough
+    _test_unusable_imports("import lzma", "3.3")
+    # no error expected, backport used
+    _test_unusable_imports("import lzma", "2.7", req="backports.lzma")
+
+    try:
+        _test_unusable_imports("import lzma", "2.7", req="lzma")
+        assert False, "expected CheckError"
+    except common.CheckError as err:
+        # invalid backport requirement/package
+        assert "Prohibited import 'lzma'" in str(err)

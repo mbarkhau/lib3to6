@@ -26,17 +26,17 @@ class ModuleVersionInfo(typ.NamedTuple):
 
 
 MAYBE_UNUSABLE_MODULES = {
-    # simple case 1. Always error because no backport available
+    # case 1 (simple). Always error because no backport available
     'asyncio': ModuleVersionInfo("3.4", None, None),
     'zipapp' : ModuleVersionInfo("3.5", None, None),
-    # simple case 2. Always error because modules have different names and only
+    # case 2 (simple). Always error because modules have different names and only
     #   backport should be used
     'csv'                : ModuleVersionInfo("3.0", "backports.csv"      , "backports.csv"),
     'selectors'          : ModuleVersionInfo("3.4", "selectors2"         , "selectors2"),
     'pathlib'            : ModuleVersionInfo("3.4", "pathlib2"           , "pathlib2"),
     "importlib.resources": ModuleVersionInfo("3.7", "importlib_resources", "importlib_resources"),
     'inspect'            : ModuleVersionInfo("3.6", "inspect2"           , "inspect2"),
-    # complex case. Modules have the same name.
+    # case 3 (hard). Modules have the same name.
     # - By default, only log.warning if these are modules are imported.
     # - If opt-in via '--install-requires' option or
     #   'install_requires' argument of 'lib3to6.fix', check that they
@@ -75,14 +75,7 @@ class NoUnusableImportsChecker(cb.CheckerBase):
         #   their config for this check to work and we don't want to
         #   break them.
 
-        _install_requires = ctx.cfg.install_requires
-
-        if _install_requires is None:
-            is_strict_mode = False
-            install_requires: typ.Set[str] = set()
-        else:
-            is_strict_mode   = True
-            install_requires = _install_requires
+        install_requires = ctx.cfg.install_requires
 
         target_version = ctx.cfg.target_version
         for node in ast.iter_child_nodes(tree):
@@ -107,25 +100,42 @@ class NoUnusableImportsChecker(cb.CheckerBase):
                     # target supports the newer name
                     continue
 
-                if vnfo.backport_package in install_requires:
-                    # explicitly whitelisted
+                bppkg = vnfo.backport_package
+                # if there is no backport, then the import can obviously only
+                # be using the stdlib module -> hard error
+                is_backported = vnfo.backport_package is not None
+
+                # if the backport has a different name, then there is no
+                # excuse not to use it -> hard error
+                is_backport_name_same = mname == vnfo.backport_module
+
+                is_strict_mode = install_requires is not None
+                is_whitelisted = (
+                    is_backport_name_same
+                    and install_requires is not None
+                    and bppkg in install_requires
+                )
+                if is_whitelisted:
                     continue
+
+                # From here, we either error or at least show a warning.
+
+                is_hard_error = not is_backported or is_strict_mode or not is_backport_name_same
 
                 vnfo_msg = (
                     f"This module is available since Python {vnfo.available_since}, "
                     f"but you configured target_version='{target_version}'."
                 )
-                if mname == vnfo.backport_module and not is_strict_mode:
-                    lineno = common.get_node_lineno(node)
-                    msg    = f"{ctx.filepath}@{lineno}: Use of import '{mname}'. {vnfo_msg}"
-                    log.warning(msg)
-                    continue
 
-                errmsg = f"Prohibited import '{mname}'. {vnfo_msg}"
+                if is_hard_error:
+                    errmsg = f"Prohibited import '{mname}'. {vnfo_msg}"
+                    if bppkg:
+                        errmsg += f" Use 'https://pypi.org/project/{bppkg}' instead."
+                    else:
+                        errmsg += " No backported for this package is known."
 
-                if vnfo.backport_package:
-                    errmsg += f" Use 'https://pypi.org/project/{vnfo.backport_package}' instead."
+                    raise common.CheckError(errmsg, node)
                 else:
-                    errmsg += " No backported for this package is known."
-
-                raise common.CheckError(errmsg, node)
+                    lineno = common.get_node_lineno(node)
+                    loc    = f"{ctx.filepath}@{lineno}"
+                    log.warning(f"{loc}: Use of import '{mname}'. {vnfo_msg}")
