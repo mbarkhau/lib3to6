@@ -23,12 +23,12 @@ class FixerBase:
         self.required_imports    = set()
         self.module_declarations = set()
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
 
 
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         try:
             return self.visit(tree)
         except common.FixerError as ex:

@@ -314,7 +314,7 @@ def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str])
         imports_end_offset += 1
 
 
-def transpile_module(ctx: common.BuildConfig, module_source: str) -> str:
+def transpile_module(ctx: common.BuildContext, module_source: str) -> str:
     checker_names: FuzzyNames = ctx.cfg.checkers
     fixer_names  : FuzzyNames = ctx.cfg.fixers
     module_tree = ast.parse(module_source)

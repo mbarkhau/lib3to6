@@ -41,7 +41,7 @@ def init_build_context(
         cache_enabled=cache_enabled,
         fixers=fixers,
         checkers=checkers,
-        backports=None,
+        backports=backports,
     )
     return BuildContext(cfg=cfg, filepath="<testfile>")
 

@@ -10,6 +10,7 @@ import typing as typ
 from . import utils
 from . import common
 from . import checker_base as cb
+from .checkers_backports import NoUnusableImportsChecker
 
 
 class NoStarImports(cb.CheckerBase):
@@ -66,30 +67,6 @@ class NoOverriddenBuiltinsChecker(cb.CheckerBase):
             if name_in_scope in common.BUILTIN_NAMES:
                 msg = f"Prohibited override of builtin '{name_in_scope}'"
                 raise common.CheckError(msg, node)
-
-
-MODULE_BACKPORTS = {
-    'lzma'               : ((3, 3), "backports.lzma"),
-    'pathlib'            : ((3, 4), "pathlib2"),
-    'statistics'         : ((3, 4), "statistics"),
-    'ipaddress'          : ((3, 4), "py2-ipaddress"),
-    'asyncio'            : ((3, 4), None),
-    'selectors'          : ((3, 4), None),
-    'enum'               : ((3, 4), "enum34"),
-    'zipapp'             : ((3, 5), None),
-    'typing'             : ((3, 5), "typing"),
-    'contextvars'        : ((3, 7), "contextvars"),
-    'dataclasses'        : ((3, 7), "dataclasses"),
-    "importlib.resources": ((3, 7), "importlib_resources"),
-}
-
-
-class NoThreeOnlyImports(CheckerBase):
-
-    version_info = VersionInfo(prohibited_until="2.7")
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
-        pass
 
 
 PROHIBITED_OPEN_ARGUMENTS = {"encoding", "errors", "newline", "closefd", "opener"}

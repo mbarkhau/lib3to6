@@ -84,9 +84,10 @@ def main(
 
     cfg = packaging.eval_build_config(target_version=target_version)
     for src_file in source_files:
+        ctx         = common.BuildContext(cfg, src_file.name)
         source_text = src_file.read()
         try:
-            fixed_source_text = transpile.transpile_module(cfg, source_text)
+            fixed_source_text = transpile.transpile_module(ctx, source_text)
         except common.CheckError as err:
             err.args = (err.args[0] + f" of file {src_file.name} ",) + err.args[1:]
             raise

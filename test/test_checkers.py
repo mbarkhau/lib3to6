@@ -248,10 +248,7 @@ def test_checkers(fixture):
     else:
         expected_error_messages = [fixture.expected_error_msg]
 
-    ctx = common.init_build_context(
-        target_version="2.7", checkers=fixture.names, filepath="<testfile>"
-    )
-
+    ctx = common.init_build_context(checkers=fixture.names, backports=set())
     test_source = utils.clean_whitespace(fixture.test_source)
     try:
         utils.transpile_and_dump(ctx, test_source)
