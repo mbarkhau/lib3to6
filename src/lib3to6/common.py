@@ -8,8 +8,46 @@ import ast
 import typing as typ
 import builtins
 
-PackageDir  = typ.Dict[str, str]
-BuildConfig = typ.Dict[str, str]
+PackageName      = str
+PackageDirectory = str
+PackageDir       = typ.Dict[PackageName, PackageDirectory]
+
+
+class BuildConfig(typ.NamedTuple):
+
+    target_version: str  # e.g. "2.7"
+    cache_enabled : bool
+    fixers        : str
+    checkers      : str
+    backports     : typ.Optional[typ.Set[str]]
+
+
+class BuildContext(typ.NamedTuple):
+
+    cfg     : BuildConfig
+    filepath: str
+
+
+def init_build_context(
+    target_version: str  = "2.7",
+    cache_enabled : bool = True,
+    fixers        : str  = "",
+    checkers      : str  = "",
+    backports     : typ.Optional[typ.Set[str]] = None,
+    filepath      : str = "<filepath>",
+) -> BuildContext:
+    cfg = BuildConfig(
+        target_version=target_version,
+        cache_enabled=cache_enabled,
+        fixers=fixers,
+        checkers=checkers,
+        backports=None,
+    )
+    return BuildContext(cfg=cfg, filepath="<testfile>")
+
+
+# Additional items:
+#   'filepath': "/path/to/inputfile.py"
 
 
 class InvalidPackage(Exception):

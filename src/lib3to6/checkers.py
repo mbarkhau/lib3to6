@@ -9,19 +9,11 @@ import typing as typ
 
 from . import utils
 from . import common
+from . import checker_base as cb
 
 
-class CheckerBase:
-
-    # no info -> always apply
-    version_info: common.VersionInfo = common.VersionInfo()
-
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
-        raise NotImplementedError()
-
-
-class NoStarImports(CheckerBase):
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+class NoStarImports(cb.CheckerBase):
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
                 continue
@@ -45,12 +37,12 @@ def _iter_scope_names(tree: ast.Module) -> typ.Iterable[typ.Tuple[str, ast.AST]]
             yield node.arg, node
 
 
-class NoOverriddenFixerImportsChecker(CheckerBase):
+class NoOverriddenFixerImportsChecker(cb.CheckerBase):
     """Don't override names that fixers may reference."""
 
     prohibited_import_overrides = {"itertools", "six", "builtins"}
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         for name_in_scope, node in _iter_scope_names(tree):
             is_fixer_import = (
                 isinstance(node, ast.Import)
@@ -66,10 +58,10 @@ class NoOverriddenFixerImportsChecker(CheckerBase):
                 raise common.CheckError(msg, node)
 
 
-class NoOverriddenBuiltinsChecker(CheckerBase):
+class NoOverriddenBuiltinsChecker(cb.CheckerBase):
     """Don't override names that fixers may reference."""
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         for name_in_scope, node in _iter_scope_names(tree):
             if name_in_scope in common.BUILTIN_NAMES:
                 msg = f"Prohibited override of builtin '{name_in_scope}'"
@@ -103,11 +95,11 @@ class NoThreeOnlyImports(CheckerBase):
 PROHIBITED_OPEN_ARGUMENTS = {"encoding", "errors", "newline", "closefd", "opener"}
 
 
-class NoOpenWithEncodingChecker(CheckerBase):
+class NoOpenWithEncodingChecker(cb.CheckerBase):
 
     version_info = common.VersionInfo(apply_until="2.7")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
@@ -158,22 +150,22 @@ class NoOpenWithEncodingChecker(CheckerBase):
                 raise common.CheckError(msg, node)
 
 
-class NoAsyncAwait(CheckerBase):
+class NoAsyncAwait(cb.CheckerBase):
 
     version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         async_await_node_types = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
         for node in ast.walk(tree):
             if isinstance(node, async_await_node_types):
                 raise common.CheckError("Prohibited use of async/await", node)
 
 
-class NoComplexNamedTuple(CheckerBase):
+class NoComplexNamedTuple(cb.CheckerBase):
 
     version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> None:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         _typing_module_name   : typ.Optional[str] = None
         _namedtuple_class_name: str = "NamedTuple"
 
@@ -232,9 +224,9 @@ class NoComplexNamedTuple(CheckerBase):
 #   The main issue is that there are objects other than dict, which
 #   have methods named items,keys,values which this check wouldn't
 #   apply to.
-# class NoAssignedDictViews(CheckerBase):
+# class NoAssignedDictViews(cb.CheckerBase):
 #
 #     check_before = "3.0"
 #
-#     def __call__(self, cfg: common.BuildConfig, tree: ast.Module):
+#     def __call__(self, ctx: common.BuildContext, tree: ast.Module):
 #         pass

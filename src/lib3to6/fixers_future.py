@@ -14,7 +14,7 @@ class FutureImportFixerBase(fb.FixerBase):
 
     future_name: str
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         self.required_imports.add(common.ImportDecl("__future__", self.future_name, None))
         return tree
 
@@ -86,8 +86,8 @@ class RemoveUnsupportedFuturesFixer(fb.FixerBase):
 
     version_info = common.VersionInfo(apply_since="2.0", apply_until="3.99")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
-        target_version    = cfg.get('target_version', "2.7")
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+        target_version    = ctx.cfg.target_version
         supported_futures = set()
         for cls in FutureImportFixerBase.__subclasses__():
             if cls.version_info.is_compatible_with(target_version):

@@ -42,12 +42,15 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
     #             python_tags = sys.argv[argi + 1]
 
     target_version = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
-    return {
-        'target_version' : target_version,
-        'force_transpile': "1",
-        'fixers'         : "",
-        'checkers'       : "",
-    }
+    backports      = kwargs.get('backports', None)
+    cache_enabled  = kwargs.get('cache_enabled', True)
+    return common.BuildConfig(
+        target_version=target_version,
+        cache_enabled=cache_enabled,
+        fixers="",
+        checkers="",
+        backports=backports,
+    )
 
 
 def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
@@ -114,10 +117,11 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
             filehash   = hl.sha1(module_source_data).hexdigest()
             cache_path = CACHE_DIR / (filehash + ".py")
 
-            if int(cfg['force_transpile']) or not cache_path.exists():
+            if not cfg.cache_enabled or not cache_path.exists():
+                ctx = common.BuildContext(cfg, str(filepath))
                 try:
                     fixed_module_source_data = transpile.transpile_module_data(
-                        cfg, module_source_data
+                        ctx, module_source_data
                     )
                 except common.CheckError as err:
                     err.args = (err.args[0] + f" of file {filepath} ",) + err.args[1:]

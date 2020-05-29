@@ -108,19 +108,10 @@ def parsedump_source(code: str, mode: str = "exec") -> str:
     return astor.to_source(node)
 
 
-def transpile_and_dump(
-    module_str: str, cfg: typ.Optional[common.BuildConfig] = None
-) -> typ.Tuple[str, str, str]:
-    if cfg is None:
-        cfg = {}
-
-    if 'target_version' not in cfg:
-        cfg['target_version'] = transpile.DEFAULT_TARGET_VERSION
-
-    target_version = cfg['target_version']
-    module_str     = clean_whitespace(module_str)
-    coding, header = transpile.parse_module_header(module_str, target_version)
-    result_str = transpile.transpile_module(cfg, module_str)
+def transpile_and_dump(ctx: common.BuildContext, module_str: str) -> typ.Tuple[str, str, str]:
+    module_str = clean_whitespace(module_str)
+    coding, header = transpile.parse_module_header(module_str, ctx.cfg.target_version)
+    result_str = transpile.transpile_module(ctx, module_str)
     return coding, header, result_str
 
 

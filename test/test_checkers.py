@@ -4,10 +4,9 @@ from collections import namedtuple
 import pytest
 
 from lib3to6 import utils
-from lib3to6.common import CheckError
+from lib3to6 import common
 
 CheckFixture = namedtuple("CheckFixture", ["names", "test_source", 'expected_error_msg'])
-
 
 FIXTURES = [
     CheckFixture(
@@ -248,12 +247,16 @@ def test_checkers(fixture):
         expected_error_messages = fixture.expected_error_msg
     else:
         expected_error_messages = [fixture.expected_error_msg]
-    cfg         = {'checkers': fixture.names, 'target_version': "2.7"}
+
+    ctx = common.init_build_context(
+        target_version="2.7", checkers=fixture.names, filepath="<testfile>"
+    )
+
     test_source = utils.clean_whitespace(fixture.test_source)
     try:
-        utils.transpile_and_dump(test_source, cfg)
+        utils.transpile_and_dump(ctx, test_source)
         assert fixture.expected_error_msg is None
-    except CheckError as result_error:
+    except common.CheckError as result_error:
         # result_error_msg = str(result_error)
         # print("!!!", repr(result_error_msg))
 

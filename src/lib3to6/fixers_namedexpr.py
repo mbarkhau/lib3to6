@@ -94,6 +94,6 @@ class NamedExprFixer(fb.TransformerFixerBase):
                 if sub_nodelist:
                     self._update(sub_nodelist, indent + 1)
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         self._update(tree.body)
         return tree

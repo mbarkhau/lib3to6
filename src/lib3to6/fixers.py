@@ -195,14 +195,13 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
 
     version_info = common.VersionInfo(apply_since="3.0", apply_until="3.6")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         local_classes: typ.Set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 local_classes.add(node.name)
 
-        ctx = _FRAFContext(local_classes)
-        ctx.remove_forward_references(tree)
+        _FRAFContext(local_classes).remove_forward_references(tree)
         return tree
 
 
@@ -210,7 +209,7 @@ class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
     version_info = common.VersionInfo(apply_since="1.0", apply_until="2.7")
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 node.returns = None
@@ -357,7 +356,7 @@ class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
     #   only be used in combination with a sanity check that the
     #   builtin names are not being overridden.
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         return self.visit(tree)
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
@@ -733,7 +732,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
 
         return node
 
-    def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         tree.body = self.walk_stmtlist(tree.body, tree, "body")
         return tree
 
@@ -899,7 +898,7 @@ __all__ = [
 #         apply_until="3.3",
 #     )
 #
-#     def __call__(self, cfg: common.BuildConfig, tree: ast.Module) -> ast.Module:
+#     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
 #         return tree
 #
 #     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:

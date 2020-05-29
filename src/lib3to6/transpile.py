@@ -15,7 +15,8 @@ from . import utils
 from . import common
 from . import fixers
 from . import checkers
-from . import fixer_base
+from . import fixer_base as fb
+from . import checker_base as cb
 
 DEFAULT_SOURCE_ENCODING_DECLARATION = "# -*- coding: {} -*-"
 
@@ -79,9 +80,9 @@ def parse_module_header(
     return coding, header
 
 
-CheckerType = typ.Type[checkers.CheckerBase]
+CheckerType = typ.Type[cb.CheckerBase]
 
-FixerType = typ.Type[fixer_base.FixerBase]
+FixerType = typ.Type[fb.FixerBase]
 
 CheckerOrFixer = typ.Union[CheckerType, FixerType]
 
@@ -135,16 +136,16 @@ def get_selected_names(names: FuzzyNames, available_names: typ.Set[str]) -> typ.
     return selected_names
 
 
-def iter_fuzzy_selected_checkers(names: FuzzyNames) -> typ.Iterable[checkers.CheckerBase]:
-    available_classes = get_available_classes(checkers, checkers.CheckerBase)
+def iter_fuzzy_selected_checkers(names: FuzzyNames) -> typ.Iterable[cb.CheckerBase]:
+    available_classes = get_available_classes(checkers, cb.CheckerBase)
     selected_names    = get_selected_names(names, set(available_classes))
     for name in selected_names:
         checker_type = typ.cast(CheckerType, available_classes[name])
         yield checker_type()
 
 
-def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fixer_base.FixerBase]:
-    available_classes = get_available_classes(fixers, fixer_base.FixerBase)
+def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fb.FixerBase]:
+    available_classes = get_available_classes(fixers, fb.FixerBase)
     selected_names    = get_selected_names(names, set(available_classes))
     for name in selected_names:
         fixer_type = typ.cast(FixerType, available_classes[name])
@@ -313,24 +314,24 @@ def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str])
         imports_end_offset += 1
 
 
-def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
-    checker_names: FuzzyNames = cfg.get("checkers", "")
-    fixer_names  : FuzzyNames = cfg.get("fixers"  , "")
+def transpile_module(ctx: common.BuildConfig, module_source: str) -> str:
+    checker_names: FuzzyNames = ctx.cfg.checkers
+    fixer_names  : FuzzyNames = ctx.cfg.fixers
     module_tree = ast.parse(module_source)
     required_imports   : typ.Set[common.ImportDecl] = set()
     module_declarations: typ.Set[str              ] = set()
 
     ver            = sys.version_info
     source_version = f"{ver.major}.{ver.minor}"
-    target_version = cfg.get("target_version", DEFAULT_TARGET_VERSION)
+    target_version = ctx.cfg.target_version
 
     for checker in iter_fuzzy_selected_checkers(checker_names):
         if checker.version_info.is_applicable_to(source_version, target_version):
-            checker(cfg, module_tree)
+            checker(ctx, module_tree)
 
     for fixer in iter_fuzzy_selected_fixers(fixer_names):
         if fixer.version_info.is_applicable_to(source_version, target_version):
-            maybe_fixed_module = fixer(cfg, module_tree)
+            maybe_fixed_module = fixer(ctx, module_tree)
             if maybe_fixed_module is None:
                 raise Exception(f"Error running fixer {type(fixer).__name__}")
             required_imports.update(fixer.required_imports)
@@ -345,9 +346,9 @@ def transpile_module(cfg: common.BuildConfig, module_source: str) -> str:
     return header + "".join(astor.to_source(module_tree))
 
 
-def transpile_module_data(cfg: common.BuildConfig, module_source_data: bytes) -> bytes:
-    target_version = cfg.get('target_version', DEFAULT_TARGET_VERSION)
+def transpile_module_data(ctx: common.BuildContext, module_source_data: bytes) -> bytes:
+    target_version = ctx.cfg.target_version
     coding, header = parse_module_header(module_source_data, target_version)
     module_source       = module_source_data.decode(coding)
-    fixed_module_source = transpile_module(cfg, module_source)
+    fixed_module_source = transpile_module(ctx, module_source)
     return fixed_module_source.encode(coding)

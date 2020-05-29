@@ -4,6 +4,7 @@ import collections
 import pytest
 
 from lib3to6 import utils
+from lib3to6 import common
 from lib3to6 import transpile
 
 FixerFixture = collections.namedtuple(
@@ -48,7 +49,8 @@ def test_header_preserved():
     test_source     = utils.clean_whitespace(test_source)
     expected_source = utils.clean_whitespace(expected_source)
 
-    result_coding, result_header, result_source = utils.transpile_and_dump(test_source)
+    ctx = common.init_build_context(filepath="<testfile>")
+    result_coding, result_header, result_source = utils.transpile_and_dump(ctx, test_source)
     assert result_coding   == "utf-8"
     assert expected_source == result_source
 
@@ -1170,8 +1172,10 @@ def test_fixers(fixture):
             print(repr(expected_source))
         print(expected_source)
 
-    cfg = {'fixers': fixture.names, 'target_version': fixture.target_version}
-    result_coding, result_header, result_source = utils.transpile_and_dump(test_source, cfg)
+    ctx = common.init_build_context(
+        target_version=fixture.target_version, fixers=fixture.names, filepath="<testfile>"
+    )
+    result_coding, result_header, result_source = utils.transpile_and_dump(ctx, test_source)
     result_ast = utils.parsedump_ast(result_source)
 
     if DEBUG_VERBOSITY > 0:
