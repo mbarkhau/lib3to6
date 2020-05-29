@@ -58,6 +58,9 @@ coverage.xml
 *.mo
 *.pot
 
+# Aspell
+*.bak
+
 # Django stuff:
 *.log
 

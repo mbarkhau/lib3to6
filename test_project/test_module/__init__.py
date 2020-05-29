@@ -8,6 +8,9 @@
 This is a grab bag of test cases that should run on all supported
 versions of python. As such, some fixers that are only applied for
 newer versions of python are not covered.
+
+If you're feeling adventerous, you could try to generate this file
+based on the fixtures in test/test_checkers.py
 """
 
 import typing
