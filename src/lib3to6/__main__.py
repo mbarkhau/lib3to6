@@ -11,6 +11,7 @@ import re
 import sys
 import typing as typ
 import difflib
+import logging
 
 import click
 
@@ -24,6 +25,23 @@ if os.environ.get('ENABLE_BACKTRACE') == '1':
     import backtrace
 
     backtrace.hook(align=True, strip_path=True, enable_on_envvar_only=True)
+
+log = logging.getLogger("lib3to6")
+
+
+def _configure_logging(verbose: int = 0) -> None:
+    if verbose >= 2:
+        log_format = "%(asctime)s.%(msecs)03d %(levelname)-7s %(name)-17s - %(message)s"
+        log_level  = logging.DEBUG
+    elif verbose == 1:
+        log_format = "%(levelname)-7s - %(message)s"
+        log_level  = logging.INFO
+    else:
+        log_format = "%(levelname)-7s - %(message)s"
+        log_level  = logging.INFO
+
+    logging.basicConfig(level=log_level, format=log_format, datefmt="%Y-%m-%dT%H:%M:%S")
+    log.debug("Logging configured.")
 
 
 click.disable_unicode_literals_warning = True
@@ -51,7 +69,13 @@ def _print_diff(source_text: str, fixed_source_text: str) -> None:
     print()
 
 
+__install_requires_help = """
+install_requires package dependencies (space separated). Functions as a whitelist for backported modules.
+"""
+
+
 @click.command()
+@click.option('-v', '--verbose', count=True, help="Control log level. -vv for debug level.")
 @click.option(
     "--target-version", default="2.7", metavar="<version>", help="Target version of python."
 )
@@ -59,21 +83,19 @@ def _print_diff(source_text: str, fixed_source_text: str) -> None:
     "--diff", default=False, is_flag=True, help="Output diff instead of transpiled source."
 )
 @click.option("--in-place", default=False, is_flag=True, help="Write result back to input file.")
-# @click.option(
-#     "--config",
-#     default="lib3to6.toml",
-#     required=False,
-#     metavar="<path>",
-#     help="Path to config file.",
-# )
+@click.option(
+    "--install-requires", default=None, metavar="<packages>", help=__install_requires_help.strip()
+)
 @click.argument("source_files", metavar="<source_file>", nargs=-1, type=click.File(mode="r"))
 def main(
-    target_version: str,
-    diff          : bool,
-    in_place      : bool,
-    # config        : str,
-    source_files: typ.Sequence[io.TextIOWrapper],
+    target_version  : str,
+    diff            : bool,
+    in_place        : bool,
+    install_requires: typ.Optional[str],
+    source_files    : typ.Sequence[io.TextIOWrapper],
+    verbose         : int = 0,
 ) -> None:
+    _configure_logging(verbose)
     if not any(source_files):
         print("No files.")
         sys.exit(1)
@@ -82,14 +104,20 @@ def main(
         print(f"Invalid argument --target-version={target_version}")
         sys.exit(1)
 
-    cfg = packaging.eval_build_config(target_version=target_version)
+    cfg = packaging.eval_build_config(
+        target_version=target_version, install_requires=install_requires
+    )
     for src_file in source_files:
         ctx         = common.BuildContext(cfg, src_file.name)
         source_text = src_file.read()
         try:
             fixed_source_text = transpile.transpile_module(ctx, source_text)
         except common.CheckError as err:
-            err.args = (err.args[0] + f" of file {src_file.name} ",) + err.args[1:]
+            loc = src_file.name
+            if err.lineno >= 0:
+                loc += "@" + str(err.lineno)
+
+            err.args = (loc + " - " + err.args[0],) + err.args[1:]
             raise
 
         if diff:

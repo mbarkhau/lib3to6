@@ -28,21 +28,23 @@ Code Quality/CI:
 <!--
   To update the TOC:
   $ pip install md-toc
-  $ md_toc -i gitlab README.md
+  $ md_toc -i gitlab README.md -l 2
 -->
 
 
 [](TOC)
 
 - [Project Status (as of 2020-05-29): Beta](#project-status-as-of-2020-05-29-beta)
+- [Python Versions and Compatibility](#python-versions-and-compatibility)
 - [Automatic Conversions](#automatic-conversions)
 - [Projects that use lib3to6](#projects-that-use-lib3to6)
-- [Contributing](#contributing)
 - [Motivation](#motivation)
 - [How it works](#how-it-works)
+- [Contributing](#contributing)
 - [Future Work](#future-work)
 - [Alternatives](#alternatives)
 - [FAQ](#faq)
+
 
 [](TOC)
 
@@ -338,9 +340,10 @@ will be preserved.
 
 ### Not Supported Features
 
-An (obviously non-exhaustive) list of features which are **not supported**,
-either because they involve a semantic change, or because there is no simple
-ast transformation to make them work across different python versions:
+An (obviously non-exhaustive) list of features which are **not
+supported**, either because they involve a semantic change, or
+because there is no simple ast transformation to make them work
+across different python versions:
 
  - PEP 492 - `async`/`await`
  - PEP 465 - `@`/`__matmul__` operator
@@ -365,9 +368,19 @@ For a full list of modules for which these warnings and errors apply,
 please review [`MAYBE_UNUSABLE_MODULES` in
 src/lib3to6/checkers_backports.py](https://gitlab.com/mbarkhau/lib3to6/blob/master/src/lib3to6/checkers_backports.py)
 
-For some modules, the backport uses the same module name as the original module in the standard library. By default, lib3to6 will only warn about usage of such modules, since it cannot detect if you're using the module from the backported package (good) or from the standard library (bad if not available in your target version). If you would like to opt-in to hard error messages, you can whitelist modules for which you have
+For some modules, the backport uses the same module name as the
+original module in the standard library. By default, lib3to6 will
+only warn about usage of such modules, since it cannot detect if
+you're using the module from the backported package (good) or from
+the standard library (bad if not available in your target version).
+If you would like to opt-in to hard error messages, you can whitelist
+modules for which you have the backported package as a dependency.
 
-A good approach to adding such backports as dependencies is to qualify the requirement with a [dependency specification](https://www.python.org/dev/peps/pep-0508/), so that users with a newer interpreter use the builtin module and don't install the backport package that they don't need.
+A good approach to adding such backports as dependencies is to
+qualify the requirement with a [dependency
+specification](https://www.python.org/dev/peps/pep-0508/), so that
+users with a newer interpreter use the builtin module and don't
+install the backport package that they don't need.
 
 These work as arguments for `install_requires` and also in `requirements.txt` files.
 
@@ -381,6 +394,23 @@ setuptools.setup(
 )
 ```
 
+For testing, you can also pass these as a space separated parameter to the `lib3to6` cli command:
+
+```shell
+$ python --version
+$ lib3to6 my_script.py > /dev/null
+WARNING - my_script.py@1: Use of import 'enum' . This module is only available since Python 3.5, but you configured target_version=2.7.
+WARNING - my_script.py@2: Use of import 'typing' . This module is only available since Python 3.5, but you configured target_version=2.7.
+$ lib3to6 `--install-requires='typing'` my_script.py
+Traceback (most recent call last):
+  ...
+  File "/home/user/.../lib3to6/src/lib3to6/checkers_backports.py", line 134, in __call__
+    raise common.CheckError(errmsg, node)
+lib3to6.common.CheckError: my_script.py@1 - Prohibited import 'enum'. This module is available since Python 3.4, but you configured target_version='2.7'. Use 'https://pypi.org/project/enum34' instead.
+$ lib3to6 `--install-requires='typing enum34'` my_script.py
+
+```
+
 
 ## Projects that use lib3to6
 
@@ -389,62 +419,6 @@ setuptools.setup(
  - [markdown-svgbob](https://gitlab.com/mbarkhau/markdown-svgbob)
  - [markdown-aafigure](https://gitlab.com/mbarkhau/markdown_aafigure)
  - [backports.pampy](https://pypi.org/project/backports.pampy/)
-
-
-## Contributing
-
-The most basic contribution you can make is to provide minimal,
-reproducible examples of code that should either be converted or which
-should raise an error.
-
-The project is hosted at
-[gitlab.com/mbarkhau/lib3to6](https://gitlab.com/mbarkhau/lib3to6),
-mainly because that's where the CI/CD is configured. GitHub is only
-used as a copy/backup (and because that seems to be where many people
-look for things).
-
-You can get started with local development in just a few commands.
-
-```shell
-user@host:~/ $ git clone https://gitlab.com/mbarkhau/lib3to6.git
-user@host:~/ $ cd lib3to6/
-user@host:~/lib3to6/ ⎇master $ make help
-user@host:~/lib3to6/ ⎇master $ make install     # creates conda environments
-...
-user@host:~/lib3to6/ ⎇master $ ls ~/miniconda3/envs/
-user@host:~/lib3to6_pypy35 lib3to6_py27 lib3to6_py36 lib3to6_py37 lib3to6_py38
-```
-
-The targets in the makefile are set up to use the virtual environments.
-
-```shell
-user@host:~/lib3to6/ ⎇master $ make fmt
-All done! ✨ 🍰 ✨
-21 files left unchanged.
-
-user@host:~/lib3to6/ ⎇master $ make lint mypy devtest
-isort ... ok
-sjfmt ... ok
-flake8 .. ok
-mypy .... ok
-...
-```
-
-For debugging you may wish to activate a virtual environment anyway.
-
-
-```shell
-user@host:~/lib3to6/ ⎇master $ source activate
-user@host:~/lib3to6/ ⎇master (lib3to6_py38) $ ipython
-Python 3.8.2 | packaged by conda-forge | (default, Apr 24 2020, 08:20:52)
-Type 'copyright', 'credits' or 'license' for more information
-IPython 7.14.0 -- An enhanced Interactive Python. Type '?' for help.
-
-In [1]: import lib3to6
-
-In [2]: lib3to6.__file__
-Out[2]: '/home/user/lib3to6/src/lib3to6/__init__.py'
-```
 
 
 ## Motivation
@@ -518,15 +492,28 @@ import setuptools
 packages = setuptools.find_packages(".")
 package_dir = {"": "."}
 
+install_requires = ['typing;python_version<"3.5"']
+
 if any(arg.startswith("bdist") for arg in sys.argv):
     import lib3to6
-    package_dir = lib3to6.fix(package_dir)
+    package_dir = lib3to6.fix(
+        package_dir,
+        target_version="2.7",
+        install_requires=install_requires,
+    )
 
 setuptools.setup(
     name="my-module",
-    version="201808.1",
+    version="2020.1001",
     packages=packages,
     package_dir=package_dir,
+    install_requires=install_requires,
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.5",
+        ...
+    ],
 )
 ```
 
@@ -698,7 +685,62 @@ features which your interpreter cannot parse. The intended use is
 for developers of libraries who use the most modern python
 version, but want their libraries to work on older versions.
 
-### Checker Warnings
+
+## Contributing
+
+The most basic contribution you can make is to provide minimal,
+reproducible examples of code that should either be converted or
+which should raise an error.
+
+The project is hosted at
+[gitlab.com/mbarkhau/lib3to6](https://gitlab.com/mbarkhau/lib3to6),
+mainly because that's where the CI/CD is configured. GitHub is only
+used as a copy/backup (and because that seems to be where many people
+look for things).
+
+You can get started with local development in just a few commands.
+
+```shell
+user@host:~/ $ git clone https://gitlab.com/mbarkhau/lib3to6.git
+user@host:~/ $ cd lib3to6/
+user@host:~/lib3to6/ ⎇master $ make help
+user@host:~/lib3to6/ ⎇master $ make install     # creates conda environments
+...
+user@host:~/lib3to6/ ⎇master $ ls ~/miniconda3/envs/
+user@host:~/lib3to6_pypy35 lib3to6_py27 lib3to6_py36 lib3to6_py37 lib3to6_py38
+```
+
+The targets in the makefile are set up to use the virtual environments.
+
+```shell
+user@host:~/lib3to6/ ⎇master $ make fmt
+All done! ✨ 🍰 ✨
+21 files left unchanged.
+
+user@host:~/lib3to6/ ⎇master $ make lint mypy devtest
+isort ... ok
+sjfmt ... ok
+flake8 .. ok
+mypy .... ok
+...
+```
+
+For debugging you may wish to activate a virtual environment anyway.
+
+
+```shell
+user@host:~/lib3to6/ ⎇master $ source activate
+user@host:~/lib3to6/ ⎇master (lib3to6_py38) $ ipython
+Python 3.8.2 | packaged by conda-forge | (default, Apr 24 2020, 08:20:52)
+Type 'copyright', 'credits' or 'license' for more information
+IPython 7.14.0 -- An enhanced Interactive Python. Type '?' for help.
+
+In [1]: import lib3to6
+
+In [2]: lib3to6.__file__
+Out[2]: '/home/user/lib3to6/src/lib3to6/__init__.py'
+```
+
 
 ## Future Work
 

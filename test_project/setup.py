@@ -12,12 +12,17 @@ import pkg_resources
 packages = ["test_module"]
 package_dir = {"": "."}
 
+install_requires = ['typing;python_version<"3.5"']
 
 if any(arg.startswith("bdist") for arg in sys.argv):
     import lib3to6
-    package_dir = lib3to6.fix(package_dir)
+    package_dir = lib3to6.fix(
+        package_dir,
+        target_version="2.7",
+        install_requires=install_requires,
+    )
 
-__version__ = "v201808.0001"
+__version__ = "v201808.1001"
 __normalized_python_version__ = str(pkg_resources.parse_version(__version__))
 
 setuptools.setup(
@@ -28,6 +33,7 @@ setuptools.setup(
     author_email="mbarkhau@gmail.com",
     packages=packages,
     package_dir=package_dir,
+    install_requires=install_requires,
     license="MIT",
     classifiers=[
         "Development Status :: 5 - Production",

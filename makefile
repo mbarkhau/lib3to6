@@ -29,16 +29,17 @@ integration_test:
 	@rm -rf integration_test_dist/;
 	@rm -rf test_project/dist/;
 
-	# self test with python 3.6
+	@# self test with python 3.6
 	@$(MIN_DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
 	@$(MIN_DEV_ENV_PY) -m pip install -U integration_test_dist/lib3to6*.whl;
-	@$(MIN_DEV_ENV_PY) -c "from lib3to6 import checkers, fixers, transpile"
+	@$(MIN_DEV_ENV_PY) -c "from lib3to6 import packaging"
 
 	@rm -rf integration_test_dist/;
 
-	# test project with python 3.8+
+	@# test project with python 3.8+
 	@$(DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
 	@$(DEV_ENV_PY) -m pip install -U integration_test_dist/lib3to6*.whl;
+	@$(DEV_ENV_PY) -c "from lib3to6 import packaging"
 	@bash -c "cd test_project && $(DEV_ENV_PY) setup.py bdist_wheel --python-tag=py2.py3" \
 
 	@IFS=' ' read -r -a env_py_paths <<< "$(CONDA_ENV_BIN_PYTHON_PATHS)"; \

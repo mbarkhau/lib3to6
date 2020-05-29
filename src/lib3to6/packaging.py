@@ -41,15 +41,28 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
     #         else:
     #             python_tags = sys.argv[argi + 1]
 
-    target_version = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
-    backports      = kwargs.get('backports', None)
-    cache_enabled  = kwargs.get('cache_enabled', True)
+    target_version    = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
+    _install_requires = kwargs.get('install_requires', None)
+    cache_enabled     = kwargs.get('cache_enabled', True)
+    install_requires: common.InstallRequires
+    if _install_requires is None:
+        install_requires = None
+    elif isinstance(_install_requires, str):
+        install_requires = set(_install_requires.split())
+    elif isinstance(_install_requires, list):
+        install_requires = set(_install_requires)
+    else:
+        raise TypeError(f"Invalid argument for install_requires: {type(_install_requires)}")
+
+    if install_requires:
+        install_requires = {req.split(";")[0] for req in install_requires}
+
     return common.BuildConfig(
         target_version=target_version,
         cache_enabled=cache_enabled,
         fixers="",
         checkers="",
-        backports=backports,
+        install_requires=install_requires,
     )
 
 
@@ -124,7 +137,11 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
                         ctx, module_source_data
                     )
                 except common.CheckError as err:
-                    err.args = (err.args[0] + f" of file {filepath} ",) + err.args[1:]
+                    loc = str(filepath)
+                    if err.lineno >= 0:
+                        loc += "@" + str(err.lineno)
+
+                    err.args = (loc + " - " + err.args[0],) + err.args[1:]
                     raise
 
                 with open(cache_path, mode="wb") as fh:
@@ -140,11 +157,15 @@ def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir
         build_package(cfg, package, build_dir)
 
 
-def fix(package_dir: common.PackageDir = None) -> common.PackageDir:
+def fix(
+    package_dir     : common.PackageDir = None,
+    target_version  : str = transpile.DEFAULT_TARGET_VERSION,
+    install_requires: typ.List[str] = None,
+) -> common.PackageDir:
     if package_dir is None:
         package_dir = {"": "."}
 
     build_package_dir = init_build_package_dir(package_dir)
-    build_cfg         = eval_build_config()
+    build_cfg         = eval_build_config(target_version=target_version, install_requires=install_requires)
     build_packages(build_cfg, build_package_dir)
     return build_package_dir

@@ -33,7 +33,7 @@ package_dir = {"": "src"}
 if any(arg.startswith("bdist") for arg in sys.argv):
     try:
         import lib3to6
-        package_dir = lib3to6.fix(package_dir)
+        package_dir = lib3to6.fix(package_dir, install_requires=install_requires)
     except ImportError as ex:
         if "lib3to6" in str(ex):
             print("WARNING: 'lib3to6' missing, package will not be universal")

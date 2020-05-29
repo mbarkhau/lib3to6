@@ -12,14 +12,16 @@ PackageName      = str
 PackageDirectory = str
 PackageDir       = typ.Dict[PackageName, PackageDirectory]
 
+InstallRequires = typ.Optional[typ.Set[str]]
+
 
 class BuildConfig(typ.NamedTuple):
 
-    target_version: str  # e.g. "2.7"
-    cache_enabled : bool
-    fixers        : str
-    checkers      : str
-    backports     : typ.Optional[typ.Set[str]]
+    target_version  : str  # e.g. "2.7"
+    cache_enabled   : bool
+    fixers          : str
+    checkers        : str
+    install_requires: InstallRequires
 
 
 class BuildContext(typ.NamedTuple):
@@ -29,19 +31,19 @@ class BuildContext(typ.NamedTuple):
 
 
 def init_build_context(
-    target_version: str  = "2.7",
-    cache_enabled : bool = True,
-    fixers        : str  = "",
-    checkers      : str  = "",
-    backports     : typ.Optional[typ.Set[str]] = None,
-    filepath      : str = "<filepath>",
+    target_version  : str             = "2.7",
+    cache_enabled   : bool            = True,
+    fixers          : str             = "",
+    checkers        : str             = "",
+    install_requires: InstallRequires = None,
+    filepath        : str             = "<filepath>",
 ) -> BuildContext:
     cfg = BuildConfig(
         target_version=target_version,
         cache_enabled=cache_enabled,
         fixers=fixers,
         checkers=checkers,
-        backports=backports,
+        install_requires=install_requires,
     )
     return BuildContext(cfg=cfg, filepath="<testfile>")
 
@@ -63,11 +65,11 @@ def get_node_lineno(node: ast.AST = None, parent: ast.AST = None) -> int:
 
 
 class CheckError(Exception):
-    def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
-        lineno = get_node_lineno(node)
 
-        if lineno:
-            msg += f" on line {lineno}"
+    lineno: int
+
+    def __init__(self, msg: str, node: ast.AST = None, parent: ast.AST = None) -> None:
+        self.lineno = get_node_lineno(node, parent)
         super().__init__(msg)
 
 

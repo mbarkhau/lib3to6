@@ -75,6 +75,8 @@ ConstantNodeTypes: typ.Tuple[typ.Type[ast.Constant], ...] = (ast.Constant,)
 if hasattr(ast, 'Num'):
     ConstantNodeTypes += (ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis)
 
+AstStr = getattr(ast, 'Str', ast.Constant)
+
 
 LeafNodeTypes = ConstantNodeTypes + (
     ast.Name,
@@ -137,7 +139,7 @@ class _FRAFContext:
 
         if isinstance(val, ast.Name):
             if self.is_forward_ref(val.id):
-                idx.value = ast.Constant(val.id)
+                idx.value = AstStr(val.id)
         elif isinstance(val, ast.Subscript):
             sub_idx = val.slice
             assert isinstance(sub_idx, ast.Index)
@@ -156,7 +158,7 @@ class _FRAFContext:
 
         if isinstance(anno, ast.Name):
             if self.is_forward_ref(anno.id):
-                setattr(node, attrname, ast.Constant(anno.id))
+                setattr(node, attrname, AstStr(anno.id))
         elif isinstance(anno, ast.Subscript):
             idx = anno.slice
             assert isinstance(idx, ast.Index)
@@ -305,7 +307,7 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
             if default is None:
                 node_value = ast.Subscript(
                     value=ast.Name(id=kw_name, ctx=ast.Load()),
-                    slice=ast.Index(value=ast.Constant(s=arg_name)),
+                    slice=ast.Index(value=AstStr(s=arg_name)),
                     ctx=ast.Load(),
                 )
             elif not isinstance(default, ConstantNodeTypes):
@@ -318,7 +320,7 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
                     func=ast.Attribute(
                         value=ast.Name(id=kw_name, ctx=ast.Load()), attr="get", ctx=ast.Load()
                     ),
-                    args=[ast.Constant(s=arg_name), default],
+                    args=[AstStr(s=arg_name), default],
                     keywords=[],
                 )
 
@@ -528,7 +530,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
                 if kw.arg is None:
                     chain_val = kw.value
                 else:
-                    chain_val = ast.Dict(keys=[ast.Constant(s=kw.arg)], values=[kw.value])
+                    chain_val = ast.Dict(keys=[AstStr(s=kw.arg)], values=[kw.value])
                 chain_values.append(chain_val)
         else:
             raise TypeError(f"Unexpected node type {node}")
@@ -779,7 +781,7 @@ class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
             return node
 
         has_namedtuple_base = utils.has_base_class(
-            node, self._typing_module_name, self._namedtuple_class_name or "NamedTuple"
+            node, self._typing_module_name, self._namedtuple_class_name or 'NamedTuple'
         )
         if not has_namedtuple_base:
             return node
@@ -806,13 +808,13 @@ class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
             if not isinstance(tgt, ast.Name):
                 continue
 
-            elts.append(ast.Tuple(elts=[ast.Constant(s=tgt.id), assign.annotation], ctx=ast.Load()))
+            elts.append(ast.Tuple(elts=[AstStr(s=tgt.id), assign.annotation], ctx=ast.Load()))
 
         return ast.Assign(
             targets=[ast.Name(id=node.name, ctx=ast.Store())],
             value=ast.Call(
                 func=func,
-                args=[ast.Constant(s=node.name), ast.List(elts=elts, ctx=ast.Load())],
+                args=[AstStr(s=node.name), ast.List(elts=elts, ctx=ast.Load())],
                 keywords=[],
             ),
         )
@@ -820,10 +822,14 @@ class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
 
 if sys.version_info >= (3, 6):
     from .fixers_fstring import FStringToStrFormatFixer
+else:
+    FStringToStrFormatFixer = None
 
 
 if sys.version_info >= (3, 8):
     from .fixers_namedexpr import NamedExprFixer
+else:
+    NamedExprFixer = None
 
 
 __all__ = [

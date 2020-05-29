@@ -38,8 +38,9 @@ MAYBE_UNUSABLE_MODULES = {
     'inspect'            : ModuleVersionInfo("3.6", "inspect2"           , "inspect2"),
     # complex case. Modules have the same name.
     # - By default, only log.warning if these are modules are imported.
-    # - If opt-in via 'backports' option, check that they have been
-    #   explicitly whitelisted.
+    # - If opt-in via '--install-requires' option or
+    #   'install_requires' argument of 'lib3to6.fix', check that they
+    #   have been explicitly whitelisted.
     'lzma'       : ModuleVersionInfo("3.3", "lzma"       , "backports.lzma"),
     'ipaddress'  : ModuleVersionInfo("3.4", "ipaddress"  , "py2-ipaddress"),
     'enum'       : ModuleVersionInfo("3.4", "enum"       , "enum34"),
@@ -74,14 +75,14 @@ class NoUnusableImportsChecker(cb.CheckerBase):
         #   their config for this check to work and we don't want to
         #   break them.
 
-        _backports = ctx.cfg.backports
+        _install_requires = ctx.cfg.install_requires
 
-        if _backports is None:
+        if _install_requires is None:
             is_strict_mode = False
-            installed_backports: typ.Set[str] = set()
+            install_requires: typ.Set[str] = set()
         else:
-            is_strict_mode      = True
-            installed_backports = _backports
+            is_strict_mode   = True
+            install_requires = _install_requires
 
         target_version = ctx.cfg.target_version
         for node in ast.iter_child_nodes(tree):
@@ -106,21 +107,21 @@ class NoUnusableImportsChecker(cb.CheckerBase):
                     # target supports the newer name
                     continue
 
-                if mname in installed_backports:
+                if vnfo.backport_package in install_requires:
                     # explicitly whitelisted
                     continue
 
+                vnfo_msg = (
+                    f"This module is available since Python {vnfo.available_since}, "
+                    f"but you configured target_version='{target_version}'."
+                )
                 if mname == vnfo.backport_module and not is_strict_mode:
                     lineno = common.get_node_lineno(node)
-                    loc    = f"{ctx.filepath}@{lineno}"
-                    msg    = f"{loc}: Use of import '{mname}' may be incompatible with {target_version}. "
+                    msg    = f"{ctx.filepath}@{lineno}: Use of import '{mname}'. {vnfo_msg}"
                     log.warning(msg)
                     continue
 
-                errmsg = (
-                    f"Prohibited import '{mname}' "
-                    f"(only available since python {vnfo.available_since})."
-                )
+                errmsg = f"Prohibited import '{mname}'. {vnfo_msg}"
 
                 if vnfo.backport_package:
                     errmsg += f" Use 'https://pypi.org/project/{vnfo.backport_package}' instead."

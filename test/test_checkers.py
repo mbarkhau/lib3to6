@@ -254,21 +254,24 @@ FIXTURES = [
         """
         import lzma
         """,
-        "Prohibited import 'lzma' (only available since python 3.3). Use 'https://pypi.org/project/backports.lzma' instead.",
+        "Prohibited import 'lzma'. This module is available since Python 3.3",
     ),
     make_fixture(
         "no_unusable_imports",
         """
         from pathlib import Path
         """,
-        "Prohibited import 'pathlib' (only available since python 3.4). Use 'https://pypi.org/project/pathlib2' instead.",
+        [
+            "Prohibited import 'pathlib'. This module is available since Python 3.4",
+            "Use 'https://pypi.org/project/pathlib2' instead.",
+        ],
     ),
     make_fixture(
         "no_unusable_imports",
         """
         import asyncio
         """,
-        "Prohibited import 'asyncio' (only available since python 3.4). No backport",
+        ["Prohibited import 'asyncio'. This module is available since Python 3.4", "No backport",],
     ),
     make_fixture("no_mat_mult_op", "foo = bar @ baz", "Prohibited use of matrix multiplication",),
 ]
@@ -284,7 +287,7 @@ def test_checkers(fixture):
     else:
         expected_error_messages = [fixture.expected_error_msg]
 
-    ctx = common.init_build_context(checkers=fixture.names, backports=set())
+    ctx = common.init_build_context(checkers=fixture.names, install_requires=set())
     try:
         utils.transpile_and_dump(ctx, fixture.test_source)
         assert fixture.expected_error_msg is None, f"Missing CheckError for '{fixture.names}'"
