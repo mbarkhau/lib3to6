@@ -3,15 +3,16 @@
 
 ## v202006.xxxx
 
- - New: Colouring of diffs when using `lib3to6` cli command
+ - New: Lots more documentation.
+ - New #5: Add detection of invalid imports and point to available backports. Use `install_requires` option to whitelist installed backports.
+ - New: Checkers produce better error messages.
+ - New: Colouring of diffs when using `lib3to6` cli command.
  - New: Checker for `yield from` syntax on target version doesn't support it
  - New: Checker for `@` operator when target version doesn't support it
- - New: Checkers produce better error messages.
- - New #5: Add detection of invalid imports and point to available backports. Use `install_requires` option to whitelist installed backports.
- - Fix #3: --target-version argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
+ - Fix #3: `--target-version` argument is ignored [gitlab../issues/3](https://gitlab.com/mbarkhau/lib3to6/-/issues/3)
  - Fix #4: Remove `from __future__ import X` when the target version doesn't support it.
  - Fix #4: Convert Forward Reference Annotations to strings [gitlab../issues/4](https://gitlab.com/mbarkhau/lib3to6/-/issues/4) Thank you [Faidon Liambotis](https://gitlab.com/paravoid) for your help with testing and helping to debug ❤️.
- - Fix: Unly apply keyword only args fixer for python<=2.7
+ - Fix: Don't apply keyword only args fixer for `--target-version=3.0` or above.
 
 
 ## v202002.0031
