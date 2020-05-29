@@ -134,8 +134,26 @@ class NoAsyncAwait(cb.CheckerBase):
     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
         async_await_node_types = (ast.AsyncFor, ast.AsyncWith, ast.AsyncFunctionDef, ast.Await)
         for node in ast.walk(tree):
-            if isinstance(node, async_await_node_types):
-                raise common.CheckError("Prohibited use of async/await", node)
+            if not isinstance(node, async_await_node_types):
+                continue
+
+            if isinstance(node, ast.AsyncFor):
+                keywords = "async for"
+            elif isinstance(node, ast.AsyncWith):
+                keywords = "async with"
+            elif isinstance(node, ast.AsyncFunctionDef):
+                keywords = "async def"
+            elif isinstance(node, ast.Await):
+                keywords = "await"
+            else:
+                # probably dead codepath
+                keywords = "async/await"
+
+            msg = (
+                f"Prohibited use of '{keywords}', which is not supported "
+                f"for target_version='{ctx.cfg.target_version}'."
+            )
+            raise common.CheckError(msg, node)
 
 
 class NoComplexNamedTuple(cb.CheckerBase):

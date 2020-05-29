@@ -12,6 +12,12 @@ FixerFixture = collections.namedtuple(
 )
 
 
+def make_fixture(names, target_version, test_source, expected_source):
+    test_source     = utils.clean_whitespace(test_source)
+    expected_source = utils.clean_whitespace(expected_source)
+    return FixerFixture(names, target_version, test_source, expected_source)
+
+
 def test_numeric_literals_with_underscore():
     # NOTE (mb 2018-06-14): We don't need to transpile here
     #   this case is taken care off by the fact that there
@@ -60,7 +66,7 @@ def test_header_preserved():
 
 
 FIXTURES = [
-    FixerFixture(
+    make_fixture(
         [
             "absolute_import_future",
             "division_future",
@@ -82,7 +88,7 @@ FIXTURES = [
         from __future__ import unicode_literals
         """,
     ),
-    FixerFixture(
+    make_fixture(
         [
             "absolute_import_future",
             "division_future",
@@ -103,7 +109,7 @@ FIXTURES = [
         from __future__ import division, absolute_import, print_function
         """,
     ),
-    FixerFixture(
+    make_fixture(
         [
             "annotations_future",  # not applied to old versions
             "absolute_import_future",
@@ -128,7 +134,7 @@ FIXTURES = [
         import itertools
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "remove_ann_assign",
         "2.7",
         """
@@ -154,7 +160,7 @@ FIXTURES = [
                 self.instance_attr = arg
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "remove_function_def_annotations",
         "2.7",
         """
@@ -178,13 +184,13 @@ FIXTURES = [
                     pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "f_string_to_str_format",
         "2.7",
         "val = 33; f\"prefix {val / 2:>{3 * 3}} suffix\"",
         "val = 33; \"prefix {0:>{1}} suffix\".format(val / 2, 3 * 3)",
     ),
-    FixerFixture(
+    make_fixture(
         "f_string_to_str_format",
         "2.7",
         """
@@ -196,7 +202,7 @@ FIXTURES = [
         print("Hello {0}!".format(who))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "f_string_to_str_format",
         "2.7",
         """
@@ -208,7 +214,7 @@ FIXTURES = [
         print("Hello who={0}!".format(who))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "new_style_classes",
         "2.7",
         """
@@ -220,7 +226,7 @@ FIXTURES = [
             pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "new_style_classes",
         "2.7",
         """
@@ -236,7 +242,7 @@ FIXTURES = [
                     pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "new_style_classes",
         "3.4",
         """
@@ -248,7 +254,7 @@ FIXTURES = [
             pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "itertools_builtins,print_function_future",
         "2.7",
         """
@@ -273,7 +279,7 @@ FIXTURES = [
         dict(zip("abcd", [1, 2, 3, 4]))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "itertools_builtins",
         "2.7",
         """
@@ -294,7 +300,7 @@ FIXTURES = [
             return elem * 2
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "itertools_builtins",
         "2.7",
         """
@@ -313,7 +319,7 @@ FIXTURES = [
                 list(map(moep, zip("abcd", [1, 2, 3, 4])))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "short_to_long_form_super",
         "2.7",
         """
@@ -327,7 +333,7 @@ FIXTURES = [
                 return super(FooClass, self).foo_method(arg, *args, **kwargs)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "short_to_long_form_super",
         "3.4",
         """
@@ -341,7 +347,7 @@ FIXTURES = [
                 return super().foo_method(arg, *args, **kwargs)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "remove_function_def_annotations,inline_kw_only_args",
         "2.7",
         """
@@ -371,7 +377,7 @@ FIXTURES = [
             pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -381,7 +387,7 @@ FIXTURES = [
         a = [0, 1, 2, 3, 4, 5]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -391,7 +397,7 @@ FIXTURES = [
         b = {1, 2, 3, 4, 5}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -401,7 +407,7 @@ FIXTURES = [
         c = (1, 2, 3, 4, 5)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -411,7 +417,7 @@ FIXTURES = [
         a = [1, 2, x] + list(x) + [4, 5]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -421,7 +427,7 @@ FIXTURES = [
         b = set([1, 2, x] + list(x) + [4, 5, 6, 7])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -431,7 +437,7 @@ FIXTURES = [
         c = tuple([1, 2, x, 4, 5, 6, 7] + list(y))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -441,7 +447,7 @@ FIXTURES = [
         a = list(x) + [0]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -451,7 +457,7 @@ FIXTURES = [
         lambda x: (list(x) + [0])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -467,7 +473,7 @@ FIXTURES = [
         print(*[1] + list(x) + [3])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -479,7 +485,7 @@ FIXTURES = [
             print(1, 2, 3)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -494,7 +500,7 @@ FIXTURES = [
         )))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -504,7 +510,7 @@ FIXTURES = [
         {"x": 1, "y": 2, "z": 3}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -514,7 +520,7 @@ FIXTURES = [
         {'x': 1, 'y': 2}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -530,7 +536,7 @@ FIXTURES = [
         assert d == {"x": 1, "y": 2}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -540,7 +546,7 @@ FIXTURES = [
         foo(**{"x": 1, "y": 2, "z": 3})
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -556,7 +562,7 @@ FIXTURES = [
         ))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -570,7 +576,7 @@ FIXTURES = [
         {"a": 1, "b": 2, "c": 3, "d": 4}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -593,7 +599,7 @@ FIXTURES = [
         )
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -605,7 +611,7 @@ FIXTURES = [
             pass
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -619,7 +625,7 @@ FIXTURES = [
                 bar(x, y)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -649,7 +655,7 @@ FIXTURES = [
         # and these examples are corner cases anyway,
         # I'm not putting in any more effort.
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -673,7 +679,7 @@ FIXTURES = [
                 b = {'x': 2, 'x': 1}
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -683,7 +689,7 @@ FIXTURES = [
         x = [1, 2, 3] if True else [4, 5, 6]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -693,7 +699,7 @@ FIXTURES = [
         x = [a, b, c][ [1, 2][0] ]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unpacking_generalizations",
         "2.7",
         """
@@ -703,7 +709,7 @@ FIXTURES = [
         x = [n for n in [1, 2, 3, 4] if n % 2 == 0]
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "xrange_to_range",
         "2.7",
         """
@@ -719,7 +725,7 @@ FIXTURES = [
         myrange = range
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "unicode_literals_future, unicode_to_str",
         "2.7",
         """
@@ -735,7 +741,7 @@ FIXTURES = [
         assert isinstance("foobar", str)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "xrange_to_range,unicode_to_str",
         "2.7",
         """
@@ -759,7 +765,7 @@ FIXTURES = [
                     print(str(x))
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_tuple_class_to_assign",
         "2.7",
         """
@@ -779,7 +785,7 @@ FIXTURES = [
         ])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_tuple_class_to_assign",
         "2.7",
         """
@@ -803,7 +809,7 @@ FIXTURES = [
                 ])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_tuple_class_to_assign",
         "2.7",
         """
@@ -822,7 +828,7 @@ FIXTURES = [
         ])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_tuple_class_to_assign",
         "2.7",
         """
@@ -841,7 +847,7 @@ FIXTURES = [
         ])
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "config_parser_import_fallback",
         "2.7",
         """
@@ -858,7 +864,7 @@ FIXTURES = [
         configparser.ConfigParser()
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "config_parser_import_fallback",
         "2.7",
         """
@@ -875,7 +881,7 @@ FIXTURES = [
         cp.ConfigParser()
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "config_parser_import_fallback",
         "2.7",
         """
@@ -892,7 +898,7 @@ FIXTURES = [
         RawConfigParser("")
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "http_cookiejar_import_fallback",
         "2.7",
         """
@@ -909,7 +915,7 @@ FIXTURES = [
         jar = CookieJar
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_expr",
         "2.7",
         """
@@ -926,7 +932,7 @@ FIXTURES = [
             result = None
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_expr",
         "2.7",
         """
@@ -944,7 +950,7 @@ FIXTURES = [
             print(n)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_expr",
         "2.7",
         """
@@ -959,7 +965,7 @@ FIXTURES = [
             discount = float(mo.group(1)) / 100.0
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_expr",
         "2.7",
         """
@@ -979,7 +985,7 @@ FIXTURES = [
                     process(block)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "named_expr",
         "2.7",
         """
@@ -1018,7 +1024,7 @@ FIXTURES = [
                     result = match2.group(1)
         """,
     ),
-    FixerFixture(
+    make_fixture(
         "remove_unsupported_futures",
         "3.4",
         '''
@@ -1035,7 +1041,7 @@ FIXTURES = [
         foo = 123
         ''',
     ),
-    FixerFixture(
+    make_fixture(
         ["forward_reference_annotations", "remove_unsupported_futures"],
         "3.6",
         """
@@ -1085,7 +1091,7 @@ FIXTURES = [
             ...
         """,
     ),
-    FixerFixture(
+    make_fixture(
         ['forward_reference_annotations'],
         "3.6",
         """

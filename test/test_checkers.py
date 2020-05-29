@@ -8,22 +8,28 @@ from lib3to6 import common
 
 CheckFixture = namedtuple("CheckFixture", ["names", "test_source", 'expected_error_msg'])
 
+
+def make_fixture(names, test_source, expected_error_msg):
+    test_source = utils.clean_whitespace(test_source)
+    return CheckFixture(names, test_source, expected_error_msg)
+
+
 FIXTURES = [
-    CheckFixture(
+    make_fixture(
         "no_overridden_fixer_imports",
         """
         import itertools
         """,
         None,
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_fixer_imports",
         """
         itertools = "foo"
         """,
         "Prohibited override of import 'itertools'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_fixer_imports",
         """
         def itertools():
@@ -31,14 +37,14 @@ FIXTURES = [
         """,
         "Prohibited override of import 'itertools'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_fixer_imports",
         """
         import x as itertools
         """,
         "Prohibited override of import 'itertools'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         def map(x):
@@ -46,7 +52,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'map'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         class filter(x):
@@ -54,35 +60,35 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'filter'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         zip = "foobar"
         """,
         "Prohibited override of builtin 'zip'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         repr: str = "foobar"
         """,
         "Prohibited override of builtin 'repr'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         import foobar as iter
         """,
         "Prohibited override of builtin 'iter'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         import reversed
         """,
         "Prohibited override of builtin 'reversed'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         def foo(input):
@@ -90,7 +96,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'input'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         def foo(min=None):
@@ -98,7 +104,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'min'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         def foo(*, max=None):
@@ -106,7 +112,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'max'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         class foo:
@@ -114,7 +120,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'dict'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         class foo:
@@ -122,7 +128,7 @@ FIXTURES = [
         """,
         "Prohibited override of builtin 'list'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_overridden_builtins",
         """
         def foo(x: int = None):
@@ -130,23 +136,31 @@ FIXTURES = [
         """,
         None,
     ),
-    CheckFixture(
+    make_fixture(
         "no_async_await",
         """
         async def foo():
             bar()
         """,
-        "Prohibited use of async/await",
+        "Prohibited use of 'async def'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_async_await",
         """
-        async def foo():
+        def foo():
             await bar()
         """,
-        "Prohibited use of async/await",
+        "Prohibited use of 'await'",
     ),
-    CheckFixture(
+    make_fixture(
+        "no_yield_from",
+        """
+        def foo():
+            yield from bar()
+        """,
+        "Prohibited use of 'yield from'",
+    ),
+    make_fixture(
         "no_open_with_encoding",
         """
         data = open(filepath, mode="rb").read()
@@ -154,7 +168,7 @@ FIXTURES = [
         """,
         None,
     ),
-    CheckFixture(
+    make_fixture(
         "no_open_with_encoding",
         """
         with open(filepath, mode="wb") as fh:
@@ -162,7 +176,7 @@ FIXTURES = [
         """,
         None,
     ),
-    CheckFixture(
+    make_fixture(
         "no_open_with_encoding",
         """
         with open(filepath, x) as fh:
@@ -170,7 +184,7 @@ FIXTURES = [
         """,
         "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
-    CheckFixture(
+    make_fixture(
         "no_open_with_encoding",
         """
         with open(filepath, mode=x) as fh:
@@ -178,7 +192,7 @@ FIXTURES = [
         """,
         "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
-    CheckFixture(
+    make_fixture(
         "no_open_with_encoding",
         """
         with open(filepath, mode="w") as fh:
@@ -189,7 +203,7 @@ FIXTURES = [
             "Only binary modes are allowed, use io.open as an alternative.",
         ],
     ),
-    CheckFixture(
+    make_fixture(
         "no_open_with_encoding",
         """
         with open(filepath, mode="w", encoding="utf-8") as fh:
@@ -197,14 +211,14 @@ FIXTURES = [
         """,
         "Prohibited keyword argument 'encoding' to builtin.open.",
     ),
-    CheckFixture(
+    make_fixture(
         "no_star_imports",
         """
         from math import *
         """,
         "Prohibited from math import *.",
     ),
-    CheckFixture(
+    make_fixture(
         "no_complex_named_tuple",
         """
         import typing
@@ -214,7 +228,7 @@ FIXTURES = [
         """,
         "Prohibited use of default value for field 'baz' of class 'Foo'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_complex_named_tuple",
         """
         import typing
@@ -225,7 +239,7 @@ FIXTURES = [
         """,
         "Prohibited definition of method 'baz' for class 'Foo'",
     ),
-    CheckFixture(
+    make_fixture(
         "no_complex_named_tuple",
         """
         import typing as typ
@@ -249,16 +263,11 @@ def test_checkers(fixture):
         expected_error_messages = [fixture.expected_error_msg]
 
     ctx = common.init_build_context(checkers=fixture.names, backports=set())
-    test_source = utils.clean_whitespace(fixture.test_source)
     try:
-        utils.transpile_and_dump(ctx, test_source)
-        assert fixture.expected_error_msg is None
+        utils.transpile_and_dump(ctx, fixture.test_source)
+        assert fixture.expected_error_msg is None, f"Missing CheckError for '{fixture.names}'"
     except common.CheckError as result_error:
-        # result_error_msg = str(result_error)
-        # print("!!!", repr(result_error_msg))
-
         assert fixture.expected_error_msg is not None
 
         for expected_error_msg in expected_error_messages:
-            # print("???", repr(expected_error_msg))
             assert expected_error_msg in str(result_error)
