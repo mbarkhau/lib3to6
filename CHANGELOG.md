@@ -1,7 +1,7 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
 
-## v202006.xxxx
+## v202006.1041
 
  - New: Lots more documentation.
  - New #5: Add detection of invalid imports and point to available backports. Use `install_requires` option to whitelist installed backports.

@@ -1,8 +1,9 @@
 # [lib3to6][repo_ref]
 
-Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is quite
-similar to Babel https://babeljs.io/. Develop using the newest interpreter and
-use (most) new language features without sacrificing backward compatibility.
+Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is
+quite similar to Babel https://babeljs.io/. Develop using the newest
+interpreter and use (most) new language features without sacrificing
+backward compatibility.
 
 Project/Repo:
 
@@ -51,8 +52,8 @@ Code Quality/CI:
 
 ## Project Status (as of 2020-05-29): Beta
 
-I've been using this library for over a year on a few projects without
-much incident. An example of such a project is
+I've been using this library for over a year on a few projects
+without much incident. An example of such a project is
 [PyCalVer](https://pypi.org/project/pycalver/). I have tested with
 Python 3.8 and made some fixes and updates.
 
@@ -65,16 +66,22 @@ Please give it a try and send your feedback.
 
 ## Python Versions and Compatibility
 
-The library itself is tested with Python 3.6 and 3.8. The output
-of the library is tested with Python 2.7, 3.5, 3.6, 3.7 and 3.8. No
-testing has been done with Python 2.6 or earlier or with Python 3.0 to
-Python 3.4.
+The library itself is tested with Python 3.6 and 3.8. The output of
+the library is tested with Python 2.7, 3.5, 3.6, 3.7 and 3.8. No
+testing has been done with Python 2.6 or earlier or with Python 3.0
+to Python 3.4.
 
-Lib3to6 does not add any runtime dependencies. It may inject code, such as imports or temporary variables, but any such changes will only add an `O(1)` overhead.
+Lib3to6 does not add any runtime dependencies. It may inject code,
+such as imports or temporary variables, but any such changes will
+only add an `O(1)` overhead.
 
 Since lib3to6 only works at the ast level at the time you build a
 package, it is very easy violate some assumptions that lib3to6 makes
-about your code. You could for example have your own `itertools` module (which is one of the imports that lib3to6 may add to your code) and the output of lib3to6 may not work as expected, because it was assuming the import would be for the `itertools` module from the standard library.
+about your code. You could for example have your own `itertools`
+module (which is one of the imports that lib3to6 may add to your
+code) and the output of lib3to6 may not work as expected, because it
+was assuming the import would be for the `itertools` module from the
+standard library.
 
 
 ## Automatic Conversions
@@ -101,8 +108,8 @@ if match1:
     result = match1.group(1)
 ```
 
-Some expressions nested expressions in a condition are not so easy, in
-which case lib3to6 will bend over backwards.
+Some expressions nested expressions in a condition are not so easy,
+in which case lib3to6 will bend over backwards.
 
 ```python
 # Since 3.8
@@ -368,13 +375,13 @@ For a full list of modules for which these warnings and errors apply,
 please review [`MAYBE_UNUSABLE_MODULES` in
 src/lib3to6/checkers_backports.py](https://gitlab.com/mbarkhau/lib3to6/blob/master/src/lib3to6/checkers_backports.py)
 
-For some modules, the backport uses the same module name as the
-original module in the standard library. By default, lib3to6 will
-only warn about usage of such modules, since it cannot detect if
-you're using the module from the backported package (good) or from
-the standard library (bad if not available in your target version).
-If you would like to opt-in to hard error messages, you can whitelist
-modules for which you have the backported package as a dependency.
+For some modules, the backport uses the same module name as the original
+module in the standard library. By default, lib3to6 will only warn about
+usage of such modules, since it cannot detect if you're using the module
+from the backported package (good) or from the standard library (bad if
+not available in your target version). If you would like to opt-in to hard
+error messages, you can whitelist modules for which you have the
+backported package as a dependency.
 
 A good approach to adding such backports as dependencies is to
 qualify the requirement with a [dependency
@@ -382,7 +389,8 @@ specification](https://www.python.org/dev/peps/pep-0508/), so that
 users with a newer interpreter use the builtin module and don't
 install the backport package that they don't need.
 
-These work as arguments for `install_requires` and also in `requirements.txt` files.
+These work as arguments for `install_requires` and also in
+`requirements.txt` files.
 
 ```python
 import setuptools
@@ -394,21 +402,36 @@ setuptools.setup(
 )
 ```
 
-For testing, you can also pass these as a space separated parameter to the `lib3to6` cli command:
+For testing, you can also pass these as a space separated parameter
+to the `lib3to6` cli command:
 
 ```shell
-$ python --version
 $ lib3to6 my_script.py > /dev/null
-WARNING - my_script.py@1: Use of import 'enum' . This module is only available since Python 3.5, but you configured target_version=2.7.
-WARNING - my_script.py@2: Use of import 'typing' . This module is only available since Python 3.5, but you configured target_version=2.7.
-$ lib3to6 `--install-requires='typing'` my_script.py
+WARNING - my_script.py@1: Use of import 'enum'.
+    This module is only available since Python 3.5,
+    but you configured target_version=2.7.
+WARNING - my_script.py@2: Use of import 'typing'.
+    This module is only available since Python 3.5,
+    but you configured target_version=2.7.
+
+import enum
+import typing
+...
+
+$ lib3to6 `--install-requires='typing'` my_script.py > /dev/null
 Traceback (most recent call last):
   ...
   File "/home/user/.../lib3to6/src/lib3to6/checkers_backports.py", line 134, in __call__
     raise common.CheckError(errmsg, node)
-lib3to6.common.CheckError: my_script.py@1 - Prohibited import 'enum'. This module is available since Python 3.4, but you configured target_version='2.7'. Use 'https://pypi.org/project/enum34' instead.
-$ lib3to6 `--install-requires='typing enum34'` my_script.py
+lib3to6.common.CheckError: my_script.py@1 - Prohibited import 'enum'.
+    This module is available since Python 3.4,
+    but you configured target_version='2.7'.
+    Use 'https://pypi.org/project/enum34' instead.
 
+$ lib3to6 `--install-requires='typing enum34'` my_script.py
+import enum
+import typing
+...
 ```
 
 
