@@ -339,7 +339,8 @@ class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
     #   builtin names are not being overridden.
 
     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
-        return self.visit(tree)
+        new_tree = self.visit(tree)
+        return typ.cast(ast.Module, new_tree)
 
     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
         if isinstance(node.ctx, ast.Load) and node.id in ("map", "zip", "filter"):

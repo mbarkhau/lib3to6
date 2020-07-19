@@ -61,7 +61,7 @@ def dump_ast(
             lines.append((indent * (level - 1)) + ")")
             return "\n".join(lines)
         elif isinstance(node, list):
-            subnodes = typ.cast(typ.List[typ.Any], node)
+            subnodes = node
             if len(subnodes) == 0:
                 return "[]"
 

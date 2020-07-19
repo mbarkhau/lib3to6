@@ -30,7 +30,8 @@ class FixerBase:
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         try:
-            return self.visit(tree)
+            new_tree = self.visit(tree)
+            return typ.cast(ast.Module, new_tree)
         except common.FixerError as ex:
             if ex.module is None:
                 ex.module = tree
