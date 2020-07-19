@@ -19,6 +19,7 @@ flake8-builtins
 flake8-comprehensions
 flake8-junit-report
 pylint
+pylint-ignore
 mypy
 # pylint doesn't support isort>=5 for now
 #   https://github.com/PyCQA/pylint/issues/3722
@@ -30,12 +31,13 @@ isort<5
 # pytest 5.0 and onwards will support only Python 3.5+.
 pytest<5.0
 pytest-cov
-pytest-html
+# https://github.com/pytest-dev/pytest-html/blob/master/CHANGES.rst
+# pytest-html 2.0+ doesn't support python2.7
+pytest-html<2.0
 
 readme_renderer[md]
 twine
 
-setuptools
 md-toc
 straitjacket
 pycalver

@@ -332,14 +332,22 @@ lint_sjfmt:
 ## Run flake8
 .PHONY: lint_flake8
 lint_flake8:
+	@rm -f reports/flake8*;
+	@mkdir -p "reports/";
+
 	@printf "flake8 ..\n"
-	@$(DEV_ENV)/bin/flake8 src/
+	@$(DEV_ENV)/bin/flake8 src/ --tee --output-file reports/flake8.txt || exit 0;
+	@$(DEV_ENV)/bin/flake8_junit reports/flake8.txt reports/flake8.xml >> /dev/null;
+	@$(DEV_ENV_PY) scripts/exit_0_if_empty.py reports/flake8.txt;
+
 	@printf "\e[1F\e[9C ok\n"
 
 
 ## Run pylint.
 .PHONY: lint_pylint
 lint_pylint:
+	@mkdir -p "reports/";
+
 	@printf "pylint ..\n";
 	@$(DEV_ENV)/bin/pylint-ignore --rcfile=setup.cfg \
 		src/ test/
@@ -362,10 +370,12 @@ lint: lint_isort lint_sjfmt lint_flake8 lint_pylint
 .PHONY: mypy
 mypy:
 	@rm -rf ".mypy_cache";
+	@rm -rf "reports/mypycov";
+	@mkdir -p "reports/";
 
 	@printf "mypy ....\n"
 	@MYPYPATH=stubs/:vendor/ $(DEV_ENV_PY) -m mypy \
-		--html-report mypycov \
+		--html-report reports/mypycov \
 		--no-error-summary \
 		src/ | sed "/Generated HTML report/d"
 	@printf "\e[1F\e[9C ok\n"
@@ -377,14 +387,21 @@ test:
 	@rm -rf ".pytest_cache";
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
+	@rm -rf "reports/testcov/";
+	@rm -f "reports/pytest*";
+	@mkdir -p "reports/";
 
 	# First we test the local source tree using the dev environment
-	ENV=$${ENV-dev} PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+	ENV=$${ENV-dev} \
+		PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+		PATH=$(DEV_ENV)/bin:$$PATH \
 		$(DEV_ENV_PY) -m pytest -v \
 		--doctest-modules \
 		--verbose \
-		--cov-report html \
+		--cov-report "html:reports/testcov/" \
 		--cov-report term \
+		--html=reports/pytest/index.html \
+		--junitxml reports/pytest.xml \
 		-k "$${PYTEST_FILTER}" \
 		$(shell cd src/ && ls -1 */__init__.py | awk '{ sub(/\/__init__.py/, "", $$1); print "--cov "$$1 }') \
 		test/ src/;
@@ -397,17 +414,21 @@ test:
 ## -- Helpers --
 
 
-## Run code formatter on src/ and test/
-.PHONY: fmt
-fmt:
+## Run import sorting on src/ and test/
+.PHONY: fmt_isort
+fmt_isort:
 	@$(DEV_ENV)/bin/isort \
 		--force-single-line-imports \
 		--length-sort \
 		--recursive \
 		--line-width=$(MAX_LINE_LEN) \
-		--project $(PKG_NAME) \
+		--project $(MODULE_NAME) \
 		src/ test/;
 
+
+## Run code formatter on src/ and test/
+.PHONY: fmt_sjfmt
+fmt_sjfmt:
 	@$(DEV_ENV)/bin/sjfmt \
 		--target-version=py36 \
 		--skip-string-normalization \
@@ -415,10 +436,14 @@ fmt:
 		src/ test/;
 
 
+## Run code formatters
+.PHONY: fmt
+fmt: fmt_isort fmt_sjfmt
 
-## Shortcut for make fmt lint mypy test
+
+## Shortcut for make fmt lint mypy devtest test
 .PHONY: check
-check:  fmt lint mypy test
+check: fmt lint mypy devtest test
 
 
 ## Start subshell with environ variables set.
@@ -464,7 +489,9 @@ activate:
 ## Drop into an ipython shell with correct env variables set
 .PHONY: ipy
 ipy:
-	@ENV=$${ENV-dev} PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+	@ENV=$${ENV-dev} \
+		PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+		PATH=$(DEV_ENV)/bin:$$PATH \
 		$(DEV_ENV)/bin/ipython
 
 
@@ -474,7 +501,9 @@ devtest:
 	@rm -rf "src/__pycache__";
 	@rm -rf "test/__pycache__";
 
-	ENV=$${ENV-dev} PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+	ENV=$${ENV-dev} \
+		PYTHONPATH=src/:vendor/:$$PYTHONPATH \
+		PATH=$(DEV_ENV)/bin:$$PATH \
 		$(DEV_ENV_PY) -m pytest -v \
 		--doctest-modules \
 		--no-cov \
