@@ -26,7 +26,7 @@ if os.environ.get('ENABLE_BACKTRACE') == '1':
 
     backtrace.hook(align=True, strip_path=True, enable_on_envvar_only=True)
 
-log = logging.getLogger("lib3to6")
+logger = logging.getLogger("lib3to6")
 
 
 def _configure_logging(verbose: int = 0) -> None:
@@ -41,7 +41,7 @@ def _configure_logging(verbose: int = 0) -> None:
         log_level  = logging.INFO
 
     logging.basicConfig(level=log_level, format=log_format, datefmt="%Y-%m-%dT%H:%M:%S")
-    log.debug("Logging configured.")
+    logger.debug("Logging configured.")
 
 
 click.disable_unicode_literals_warning = True
@@ -69,7 +69,7 @@ def _print_diff(source_text: str, fixed_source_text: str) -> None:
     print()
 
 
-__install_requires_help = """
+__INSTALL_REQUIRES_HELP = """
 install_requires package dependencies (space separated). Functions as a whitelist for backported modules.
 """
 
@@ -84,7 +84,7 @@ install_requires package dependencies (space separated). Functions as a whitelis
 )
 @click.option("--in-place", default=False, is_flag=True, help="Write result back to input file.")
 @click.option(
-    "--install-requires", default=None, metavar="<packages>", help=__install_requires_help.strip()
+    "--install-requires", default=None, metavar="<packages>", help=__INSTALL_REQUIRES_HELP.strip()
 )
 @click.argument("source_files", metavar="<source_file>", nargs=-1, type=click.File(mode="r"))
 def main(
@@ -123,11 +123,13 @@ def main(
         if diff:
             _print_diff(source_text, fixed_source_text)
         elif in_place:
-            with io.open(src_file.name, mode="w") as fh:
-                fh.write(fixed_source_text)
+            with io.open(src_file.name, mode="w") as fobj:
+                fobj.write(fixed_source_text)
         else:
             print(fixed_source_text)
 
 
 if __name__ == '__main__':
+    # NOTE (mb 2020-07-18): click supplies the parameters
+    # pylint:disable=no-value-for-parameter
     main()  # type: ignore

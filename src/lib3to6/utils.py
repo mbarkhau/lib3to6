@@ -36,6 +36,7 @@ def dump_ast(
     """
 
     def _format(node: NodeOrNodelist, level: int = 1) -> str:
+        # pylint: disable=protected-access
         if isinstance(node, ast.AST):
             fields = [(a, _format(b, level + 1)) for a, b in ast.iter_fields(node)]
             if include_attributes and node._attributes:
@@ -110,9 +111,9 @@ def parsedump_source(code: str, mode: str = "exec") -> str:
 
 def transpile_and_dump(ctx: common.BuildContext, module_str: str) -> typ.Tuple[str, str, str]:
     module_str = clean_whitespace(module_str)
-    coding, header = transpile.parse_module_header(module_str, ctx.cfg.target_version)
+    header     = transpile.parse_module_header(module_str, ctx.cfg.target_version)
     result_str = transpile.transpile_module(ctx, module_str)
-    return coding, header, result_str
+    return header.coding, header.text, result_str
 
 
 def has_base_class(

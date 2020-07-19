@@ -15,8 +15,8 @@ def project_path(*sub_paths):
 
 
 def read(*sub_paths):
-    with open(project_path(*sub_paths), mode="rb") as fh:
-        return fh.read().decode("utf-8")
+    with open(project_path(*sub_paths), mode="rb") as fobj:
+        return fobj.read().decode("utf-8")
 
 
 install_requires = [

@@ -667,8 +667,8 @@ A more subtle example is the change in semantics of the builtin
 
 ```bash
 $ cat open_example.py
-with open("myfile.txt", mode="w", encoding="utf-8") as fh:
-    fh.write("Hello Wörld!")
+with open("myfile.txt", mode="w", encoding="utf-8") as fobj:
+    fobj.write("Hello Wörld!")
 $ python2 open_example.py
 Traceback (most recent call last):
   File "<string>", line 1, in <module>

@@ -1,5 +1,4 @@
 import sys
-import logging
 from collections import namedtuple
 
 import pytest
@@ -172,32 +171,32 @@ FIXTURES = [
     make_fixture(
         "no_open_with_encoding",
         """
-        with open(filepath, mode="wb") as fh:
-            fh.write(b"test")
+        with open(filepath, mode="wb") as fobj:
+            fobj.write(b"test")
         """,
         None,
     ),
     make_fixture(
         "no_open_with_encoding",
         """
-        with open(filepath, x) as fh:
-            fh.write("test")
+        with open(filepath, x) as fobj:
+            fobj.write("test")
         """,
         "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
     make_fixture(
         "no_open_with_encoding",
         """
-        with open(filepath, mode=x) as fh:
-            fh.write("test")
+        with open(filepath, mode=x) as fobj:
+            fobj.write("test")
         """,
         "Prohibited value for argument 'mode' of builtin.open. Expected ast.Str node",
     ),
     make_fixture(
         "no_open_with_encoding",
         """
-        with open(filepath, mode="w") as fh:
-            fh.write("test")
+        with open(filepath, mode="w") as fobj:
+            fobj.write("test")
         """,
         [
             "Prohibited value 'w' for argument 'mode' of builtin.open. ",
@@ -207,8 +206,8 @@ FIXTURES = [
     make_fixture(
         "no_open_with_encoding",
         """
-        with open(filepath, mode="w", encoding="utf-8") as fh:
-            fh.write("test")
+        with open(filepath, mode="w", encoding="utf-8") as fobj:
+            fobj.write("test")
         """,
         "Prohibited keyword argument 'encoding' to builtin.open.",
     ),

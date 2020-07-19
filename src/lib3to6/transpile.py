@@ -35,9 +35,25 @@ SOURCE_ENCODING_PATTERN = r"""
 SOURCE_ENCODING_RE = re.compile(SOURCE_ENCODING_PATTERN, re.VERBOSE)
 
 
-def parse_module_header(
-    module_source: typ.Union[bytes, str], target_version: str
-) -> typ.Tuple[str, str]:
+class ModuleHeader(typ.NamedTuple):
+
+    coding: str
+    text  : str
+
+
+def _parse_header_line(line_data: typ.Union[bytes, str], coding: str) -> str:
+    if isinstance(line_data, bytes):
+        return line_data.decode(coding)
+    if isinstance(line_data, str):
+        return line_data
+
+    # unreachable
+    bad_type = type(line_data)
+    errmsg   = f"Invalid type: line_data must be str/bytes but was '{bad_type}'"
+    raise TypeError(errmsg)
+
+
+def parse_module_header(module_source: typ.Union[bytes, str], target_version: str) -> ModuleHeader:
     shebang = False
     coding  = None
     line: str
@@ -45,14 +61,8 @@ def parse_module_header(
     header_lines: typ.List[str] = []
 
     for i, line_data in enumerate(module_source.splitlines()):
-        if isinstance(line_data, bytes):
-            line = line_data.decode(coding or DEFAULT_SOURCE_ENCODING)
-        elif isinstance(line_data, str):
-            line = line_data
-        else:
-            bad_type = type(module_source)
-            errmsg   = f"Invalid type: module_source must be str/bytes but was '{bad_type}'"
-            raise TypeError(errmsg)
+        assert isinstance(line_data, (bytes, str))
+        line = _parse_header_line(line_data, coding or DEFAULT_SOURCE_ENCODING)
 
         if i < 2:
             if i == 0 and line.startswith("#!") and "python" in line:
@@ -62,10 +72,10 @@ def parse_module_header(
                 if match:
                     coding = match.group("coding").strip()
 
-        if not line.rstrip() or line.rstrip().startswith("#"):
-            header_lines.append(line)
-        else:
+        if line.rstrip() and not line.rstrip().startswith("#"):
             break
+
+        header_lines.append(line)
 
     if coding is None:
         coding = DEFAULT_SOURCE_ENCODING
@@ -76,8 +86,8 @@ def parse_module_header(
             else:
                 header_lines.insert(0, coding_decl)
 
-    header = "\n".join(header_lines) + "\n"
-    return coding, header
+    header_text = "\n".join(header_lines) + "\n"
+    return ModuleHeader(coding, header_text)
 
 
 CheckerType = typ.Type[cb.CheckerBase]
@@ -109,7 +119,7 @@ def get_available_classes(module: object, clazz: CheckerOrFixer) -> typ.Dict[str
     return {
         normalize_name(attr_name): attr
         for attr_name, attr in maybe_classes.items()
-        if type(attr) == type and issubclass(attr, clazz)
+        if isinstance(attr, type) and issubclass(attr, clazz)
     }
 
 
@@ -153,6 +163,10 @@ def iter_fuzzy_selected_fixers(names: FuzzyNames) -> typ.Iterable[fb.FixerBase]:
 
 
 def find_import_decls(node: ast.AST) -> typ.Iterable[common.ImportDecl]:
+    # NOTE (mb 2020-07-18): returns as fences are fine
+    # pylint:disable=too-many-return-statements
+    # NOTE (mb 2020-07-18): despite the brnaches, the code is quite linear
+    # pylint:disable=too-many-branches
     if not isinstance(node, (ast.Try, ast.Import, ast.ImportFrom)):
         return
 
@@ -171,16 +185,16 @@ def find_import_decls(node: ast.AST) -> typ.Iterable[common.ImportDecl]:
             return
 
         maybe_import = node.body[0]
-        if isinstance(maybe_import, ast.Import):
-            default_import = maybe_import
-        else:
+        if not isinstance(maybe_import, ast.Import):
             return
 
+        default_import = maybe_import
+
         maybe_fallback_import = except_handler.body[0]
-        if isinstance(maybe_fallback_import, ast.Import):
-            fallback_import = maybe_fallback_import
-        else:
+        if not isinstance(maybe_fallback_import, ast.Import):
             return
+
+        fallback_import = maybe_fallback_import
 
         if len(default_import.names) == 1 and len(fallback_import.names) == 1:
             default_import_alias  = default_import.names[0]
@@ -193,22 +207,20 @@ def find_import_decls(node: ast.AST) -> typ.Iterable[common.ImportDecl]:
         if len(node.names) != 1 and any(alias.asname for alias in node.names):
             # we never use multi name imports or asname, so this is user code
             return
-        else:
-            alias = node.names[0]
-            yield common.ImportDecl(alias.name, None, None)
+
+        alias = node.names[0]
+        yield common.ImportDecl(alias.name, None, None)
     elif isinstance(node, ast.ImportFrom):
         if any(alias.asname for alias in node.names):
             # we never use multi name imports or asname, so this is user code
             return
-        else:
-            module_name = node.module
-            if not module_name:
-                return
 
-            for alias in node.names:
-                yield common.ImportDecl(module_name, alias.name, None)
-    else:
-        return
+        module_name = node.module
+        if not module_name:
+            return
+
+        for alias in node.names:
+            yield common.ImportDecl(module_name, alias.name, None)
 
 
 def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
@@ -342,13 +354,13 @@ def transpile_module(ctx: common.BuildContext, module_source: str) -> str:
         add_required_imports(module_tree, required_imports)
     if any(module_declarations):
         add_module_declarations(module_tree, module_declarations)
-    coding, header = parse_module_header(module_source, target_version)
-    return header + "".join(astor.to_source(module_tree))
+    header = parse_module_header(module_source, target_version)
+    return header.text + "".join(astor.to_source(module_tree))
 
 
 def transpile_module_data(ctx: common.BuildContext, module_source_data: bytes) -> bytes:
-    target_version = ctx.cfg.target_version
-    coding, header = parse_module_header(module_source_data, target_version)
-    module_source       = module_source_data.decode(coding)
+    target_version      = ctx.cfg.target_version
+    header              = parse_module_header(module_source_data, target_version)
+    module_source       = module_source_data.decode(header.coding)
     fixed_module_source = transpile_module(ctx, module_source)
-    return fixed_module_source.encode(coding)
+    return fixed_module_source.encode(header.coding)

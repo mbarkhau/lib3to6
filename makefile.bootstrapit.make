@@ -21,6 +21,7 @@ ifndef SUPPORTED_PYTHON_VERSIONS
 endif
 
 PKG_NAME := $(PACKAGE_NAME)
+MODULE_NAME := $(shell echo $(subst -,_,$(PACKAGE_NAME)) | tr A-Z a-z)
 
 # TODO (mb 2018-09-23): Support for bash on windows
 #    perhaps we need to install conda using this
@@ -300,9 +301,9 @@ git_hooks:
 ## -- Integration --
 
 
-## Run flake8 linter and check for fmt
-.PHONY: lint
-lint:
+## Run isort with --check-only
+.PHONY: lint_isort
+lint_isort:
 	@printf "isort ...\n"
 	@$(DEV_ENV)/bin/isort \
 		--check-only \
@@ -310,10 +311,14 @@ lint:
 		--length-sort \
 		--recursive \
 		--line-width=$(MAX_LINE_LEN) \
-		--project $(PKG_NAME) \
+		--project $(MODULE_NAME) \
 		src/ test/
 	@printf "\e[1F\e[9C ok\n"
 
+
+## Run sjfmt with --check
+.PHONY: lint_sjfmt
+lint_sjfmt:
 	@printf "sjfmt ...\n"
 	@$(DEV_ENV)/bin/sjfmt \
 		--target-version=py36 \
@@ -323,9 +328,34 @@ lint:
 		src/ test/ 2>&1 | sed "/All done/d" | sed "/left unchanged/d"
 	@printf "\e[1F\e[9C ok\n"
 
+
+## Run flake8
+.PHONY: lint_flake8
+lint_flake8:
 	@printf "flake8 ..\n"
 	@$(DEV_ENV)/bin/flake8 src/
 	@printf "\e[1F\e[9C ok\n"
+
+
+## Run pylint.
+.PHONY: lint_pylint
+lint_pylint:
+	@printf "pylint ..\n";
+	@$(DEV_ENV)/bin/pylint-ignore --rcfile=setup.cfg \
+		src/ test/
+	@printf "\e[1F\e[9C ok\n"
+
+
+## Run pylint-ignore --update-ignorefile.
+.PHONY: pylint_update_ignorefile
+pylint_update_ignorefile:
+	$(DEV_ENV)/bin/pylint-ignore --rcfile=setup.cfg \
+		src/ test/ --update-ignorefile
+
+
+## Run flake8 linter and check for fmt
+.PHONY: lint
+lint: lint_isort lint_sjfmt lint_flake8 lint_pylint
 
 
 ## Run mypy type checker
@@ -338,22 +368,6 @@ mypy:
 		--html-report mypycov \
 		--no-error-summary \
 		src/ | sed "/Generated HTML report/d"
-	@printf "\e[1F\e[9C ok\n"
-
-
-## Run pylint. Should not break the build yet
-.PHONY: pylint
-pylint:
-	@printf "pylint ..\n";
-	@$(DEV_ENV)/bin/pylint --jobs=4 --output-format=colorized --score=no \
-		 --disable=C0103,C0301,C0330,C0326,C0330,C0411,R0903,W1619,W1618,W1203 \
-		 --extension-pkg-whitelist=ujson,lxml,PIL,numpy,pandas,sklearn,pyblake2 \
-		 src/
-	@$(DEV_ENV)/bin/pylint --jobs=4 --output-format=colorized --score=no \
-		 --disable=C0103,C0111,C0301,C0330,C0326,C0330,C0411,R0903,W1619,W1618,W1203 \
-		 --extension-pkg-whitelist=ujson,lxml,PIL,numpy,pandas,sklearn,pyblake2 \
-		 test/
-
 	@printf "\e[1F\e[9C ok\n"
 
 

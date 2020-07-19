@@ -90,34 +90,34 @@ class NoOpenWithEncodingChecker(cb.CheckerBase):
             mode = "r"
             if len(node.args) >= 2:
                 mode_node = node.args[1]
-                if isinstance(mode_node, ast.Str):
-                    mode = mode_node.s
-                else:
+                if not isinstance(mode_node, ast.Str):
                     msg = (
                         "Prohibited value for argument 'mode' of builtin.open. "
                         + f"Expected ast.Str node, got: {mode_node}"
                     )
                     raise common.CheckError(msg, node)
+
+                mode = mode_node.s
 
             if len(node.args) > 3:
                 raise common.CheckError("Prohibited positional arguments to builtin.open", node)
 
-            for kw in node.keywords:
-                if kw.arg in PROHIBITED_OPEN_ARGUMENTS:
-                    msg = f"Prohibited keyword argument '{kw.arg}' to builtin.open."
+            for keyword in node.keywords:
+                if keyword.arg in PROHIBITED_OPEN_ARGUMENTS:
+                    msg = f"Prohibited keyword argument '{keyword.arg}' to builtin.open."
                     raise common.CheckError(msg, node)
-                if kw.arg != 'mode':
+                if keyword.arg != 'mode':
                     continue
 
-                mode_node = kw.value
-                if isinstance(mode_node, ast.Str):
-                    mode = mode_node.s
-                else:
+                mode_node = keyword.value
+                if not isinstance(mode_node, ast.Str):
                     msg = (
                         "Prohibited value for argument 'mode' of builtin.open. "
                         + f"Expected ast.Str node, got: {mode_node}"
                     )
                     raise common.CheckError(msg, node)
+
+                mode = mode_node.s
 
             if "b" not in mode:
                 msg = (
@@ -190,6 +190,29 @@ class NoMatMultOpChecker(cb.CheckerBase):
             raise common.CheckError(msg, node)
 
 
+def _raise_if_complex_named_tuple(node: ast.ClassDef) -> None:
+    for subnode in node.body:
+        if isinstance(subnode, ast.Expr) and isinstance(subnode.value, ast.Str):
+            # docstring is fine
+            continue
+
+        if isinstance(subnode, ast.AnnAssign):
+            if subnode.value:
+                tgt = subnode.target
+                assert isinstance(tgt, ast.Name)
+                msg = (
+                    "Prohibited use of default value "
+                    + f"for field '{tgt.id}' of class '{node.name}'"
+                )
+                raise common.CheckError(msg, subnode, node)
+        elif isinstance(subnode, ast.FunctionDef):
+            msg = "Prohibited definition of method " + f"'{subnode.name}' for class '{node.name}'"
+            raise common.CheckError(msg, subnode, node)
+        else:
+            msg = f"Unexpected subnode defined for class {node.name}: {subnode}"
+            raise common.CheckError(msg, subnode, node)
+
+
 class NoComplexNamedTuple(cb.CheckerBase):
 
     version_info = common.VersionInfo(apply_until="3.4", works_since="3.5")
@@ -202,51 +225,25 @@ class NoComplexNamedTuple(cb.CheckerBase):
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     if alias.name == 'typing':
-                        if alias.asname is None:
-                            _typing_module_name = alias.name
-                        else:
-                            _typing_module_name = alias.asname
+                        _typing_module_name = alias.name if alias.asname is None else alias.asname
+                continue
 
             if isinstance(node, ast.ImportFrom) and node.module == 'typing':
                 for alias in node.names:
                     if alias.name == 'NamedTuple':
-                        if alias.asname is None:
-                            _namedtuple_class_name = alias.name
-                        else:
-                            _namedtuple_class_name = alias.asname
-
-            if not isinstance(node, ast.ClassDef):
-                continue
-
-            if not (_typing_module_name or _namedtuple_class_name):
-                continue
-
-            if not utils.has_base_class(node, _typing_module_name, _namedtuple_class_name):
-                continue
-
-            for subnode in node.body:
-                if isinstance(subnode, ast.Expr) and isinstance(subnode.value, ast.Str):
-                    # docstring is fine
-                    pass
-                elif isinstance(subnode, ast.AnnAssign):
-                    if subnode.value:
-                        tgt = subnode.target
-                        assert isinstance(tgt, ast.Name)
-                        msg = (
-                            "Prohibited use of default value "
-                            + f"for field '{tgt.id}' of class '{node.name}'"
+                        _namedtuple_class_name = (
+                            alias.name if alias.asname is None else alias.asname
                         )
-                        raise common.CheckError(msg, subnode, node)
+                continue
 
-                elif isinstance(subnode, ast.FunctionDef):
-                    msg = (
-                        "Prohibited definition of method "
-                        + f"'{subnode.name}' for class '{node.name}'"
-                    )
-                    raise common.CheckError(msg, subnode, node)
-                else:
-                    msg = f"Unexpected subnode defined for class {node.name}: {subnode}"
-                    raise common.CheckError(msg, subnode, node)
+            is_namedtuple_class = (
+                isinstance(node, ast.ClassDef)
+                and (_typing_module_name or _namedtuple_class_name)
+                and utils.has_base_class(node, _typing_module_name, _namedtuple_class_name)
+            )
+            if is_namedtuple_class:
+                assert isinstance(node, ast.ClassDef), "mypy is stupid sometimes"
+                _raise_if_complex_named_tuple(node)
 
 
 # NOTE (mb 2018-06-24): I don't know how this could be done reliably.

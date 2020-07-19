@@ -15,6 +15,30 @@ PackageDir       = typ.Dict[PackageName, PackageDirectory]
 InstallRequires = typ.Optional[typ.Set[str]]
 
 
+ConstantNodeTypes: typ.Tuple[typ.Type[ast.Constant], ...] = (ast.Constant,)
+
+# Deprecated since version 3.8: Class ast.Constant is now used for all
+# constants. Old classes ast.Num, ast.Str, ast.Bytes, ast.NameConstant and
+# ast.Ellipsis are still available, but they will be removed in future Python
+# releases.
+
+if hasattr(ast, 'Num'):
+    ConstantNodeTypes += (ast.Num, ast.Str, ast.Bytes, ast.NameConstant, ast.Ellipsis)
+
+
+LeafNodeTypes = ConstantNodeTypes + (
+    ast.Name,
+    ast.cmpop,
+    ast.boolop,
+    ast.operator,
+    ast.unaryop,
+    ast.expr_context,
+)
+
+
+ContainerNodes = (ast.List, ast.Set, ast.Tuple)
+
+
 class BuildConfig(typ.NamedTuple):
 
     target_version  : str  # e.g. "2.7"
@@ -45,7 +69,7 @@ def init_build_context(
         checkers=checkers,
         install_requires=install_requires,
     )
-    return BuildContext(cfg=cfg, filepath="<testfile>")
+    return BuildContext(cfg=cfg, filepath=filepath)
 
 
 # Additional items:
@@ -83,6 +107,7 @@ class FixerError(Exception):
         self.msg    = msg
         self.node   = node
         self.module = module
+        super().__init__(msg)
 
 
 class VersionInfo:

@@ -10,22 +10,23 @@ from . import common
 from . import fixer_base as fb
 
 
+def _try_fallback(node: ast.stmt, fallback_node: ast.stmt) -> ast.Try:
+    return ast.Try(
+        body=[node],
+        handlers=[
+            ast.ExceptHandler(
+                type=ast.Name(id="ImportError", ctx=ast.Load()), name=None, body=[fallback_node]
+            )
+        ],
+        orelse=[],
+        finalbody=[],
+    )
+
+
 class ModuleImportFallbackFixerBase(fb.TransformerFixerBase):
 
     new_name: str
     old_name: str
-
-    def _try_fallback(self, node: ast.stmt, fallback_node: ast.stmt) -> ast.Try:
-        return ast.Try(
-            body=[node],
-            handlers=[
-                ast.ExceptHandler(
-                    type=ast.Name(id="ImportError", ctx=ast.Load()), name=None, body=[fallback_node]
-                )
-            ],
-            orelse=[],
-            finalbody=[],
-        )
 
     def visit_Import(self, node: ast.Import) -> ast.stmt:
         if len(node.names) != 1:
@@ -47,15 +48,13 @@ class ModuleImportFallbackFixerBase(fb.TransformerFixerBase):
         else:
             asname = self.new_name
 
-        return self._try_fallback(
-            node, ast.Import(names=[ast.alias(name=self.old_name, asname=asname)])
-        )
+        return _try_fallback(node, ast.Import(names=[ast.alias(name=self.old_name, asname=asname)]))
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> ast.stmt:
         if node.module != self.new_name:
             return node
 
-        return self._try_fallback(
+        return _try_fallback(
             node, ast.ImportFrom(module=self.old_name, names=node.names, level=node.level)
         )
 

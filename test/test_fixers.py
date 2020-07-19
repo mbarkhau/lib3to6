@@ -56,9 +56,11 @@ def test_header_preserved():
     expected_source = utils.clean_whitespace(expected_source)
 
     ctx = common.init_build_context(filepath="<testfile>")
-    result_coding, result_header, result_source = utils.transpile_and_dump(ctx, test_source)
-    assert result_coding   == "utf-8"
-    assert expected_source == result_source
+    result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
+        ctx, test_source
+    )
+    assert result_header_coding == "utf-8"
+    assert expected_source      == result_source
 
     expected_ast = utils.parsedump_ast(expected_source)
     result_ast   = utils.parsedump_ast(result_source)
@@ -1153,9 +1155,7 @@ def test_fixers(fixture):
 
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
-    expected_coding, expected_header = transpile.parse_module_header(
-        expected_source, fixture.target_version
-    )
+    expected_header = transpile.parse_module_header(expected_source, fixture.target_version)
 
     test_source = utils.clean_whitespace(fixture.test_source)
 
@@ -1181,7 +1181,9 @@ def test_fixers(fixture):
     ctx = common.init_build_context(
         target_version=fixture.target_version, fixers=fixture.names, filepath="<testfile>"
     )
-    result_coding, result_header, result_source = utils.transpile_and_dump(ctx, test_source)
+    result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
+        ctx, test_source
+    )
     result_ast = utils.parsedump_ast(result_source)
 
     if DEBUG_VERBOSITY > 0:
@@ -1193,8 +1195,8 @@ def test_fixers(fixture):
             print(repr(result_source))
         print(result_source)
 
-    assert result_coding == expected_coding
-    assert result_header == expected_header
+    assert result_header_coding == expected_header.coding
+    assert result_header_text   == expected_header.text
 
     assert result_ast == expected_ast
     assert _normalized_source(result_source) == _normalized_source(expected_source)

@@ -90,11 +90,7 @@ def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
 
 def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
     output_dir = pl.Path("build") / "lib3to6_out"
-    try:
-        output_dir.mkdir(parents=True)
-    except Exception:
-        # forgiveness > permission
-        pass
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     build_package_dir: common.PackageDir = {}
 
@@ -118,14 +114,15 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
 
 
 def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None:
+    # pylint:disable=unused-argument ; `package` is part of the public api now
     for root, _dirs, files in os.walk(build_dir):
         for filename in files:
             filepath = pl.Path(root) / filename
             if filepath.suffix != ".py":
                 continue
 
-            with open(filepath, mode="rb") as fh:
-                module_source_data = fh.read()
+            with open(filepath, mode="rb") as fobj:
+                module_source_data = fobj.read()
 
             filehash   = hl.sha1(module_source_data).hexdigest()
             cache_path = CACHE_DIR / (filehash + ".py")
@@ -144,8 +141,8 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
                     err.args = (loc + " - " + err.args[0],) + err.args[1:]
                     raise
 
-                with open(cache_path, mode="wb") as fh:
-                    fh.write(fixed_module_source_data)
+                with open(cache_path, mode="wb") as fobj:
+                    fobj.write(fixed_module_source_data)
 
             shutil.copy(cache_path, filepath)
 
