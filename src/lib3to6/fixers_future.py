@@ -90,6 +90,7 @@ class RemoveUnsupportedFuturesFixer(fb.FixerBase):
         target_version    = ctx.cfg.target_version
         supported_futures = set()
         for cls in FutureImportFixerBase.__subclasses__():
+            # pylint:disable=no-member; yes it does
             if cls.version_info.is_compatible_with(target_version):
                 supported_futures.add(cls.future_name)
 

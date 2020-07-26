@@ -125,7 +125,7 @@ def _expand_stararg_g12n(node: ast.AST) -> ast.expr:
     for elt in elts:
         tail_list = operands[-1]
         assert isinstance(tail_list, ast.List)
-        tail_elts = tail_list.elts
+        tail_elts = tail_list.elts  # pylint:disable=no-member; yes it does
 
         if not isinstance(elt, ast.Starred):
             # NOTE (mb 2018-07-06): Simple case, just a new
@@ -154,13 +154,14 @@ def _expand_stararg_g12n(node: ast.AST) -> ast.expr:
 
     tail_list = operands[-1]
     assert isinstance(tail_list, ast.List)
-    if len(tail_list.elts) == 0:
+
+    if len(tail_list.elts) == 0:  # pylint:disable=no-member; yes it does
         operands = operands[:-1]
 
     if len(operands) == 1:
         tail_list = operands[0]
         assert isinstance(tail_list, ast.List)
-        return _node_with_elts(node, tail_list.elts)
+        return _node_with_elts(node, tail_list.elts)  # pylint:disable=no-member; yes it does
 
     if len(operands) > 1:
         binop = ast.BinOp(left=operands[0], op=ast.Add(), right=operands[1])

@@ -1146,12 +1146,13 @@ def _normalized_source(in_source):
     return out_source
 
 
+DEBUG_VERBOSITY = 0
+
+
 @pytest.mark.parametrize("fixture", FIXTURES)
 def test_fixers(fixture):
     if "--capture=no" in sys.argv:
         print()
-
-    DEBUG_VERBOSITY = 0
 
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
