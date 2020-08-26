@@ -15,7 +15,8 @@ Project/Repo:
 
 Code Quality/CI:
 
-[![Build Status][build_img]][build_ref]
+[![GitHub CI Status][github_build_img]][github_build_ref]
+[![GitLab CI Status][gitlab_build_img]][gitlab_build_ref]
 [![Type Checked with mypy][mypy_img]][mypy_ref]
 [![Code Coverage][codecov_img]][codecov_ref]
 [![Code Style: sjfmt][style_img]][style_ref]
@@ -845,8 +846,11 @@ Some features that might be implemented
 
 [repo_ref]: https://gitlab.com/mbarkhau/lib3to6
 
-[build_img]: https://gitlab.com/mbarkhau/lib3to6/badges/master/pipeline.svg
-[build_ref]: https://gitlab.com/mbarkhau/lib3to6/pipelines
+[github_build_img]: https://github.com/mbarkhau/lib3to6/workflows/CI/badge.svg
+[github_build_ref]: https://github.com/mbarkhau/lib3to6/actions?query=workflow%3ACI
+
+[gitlab_build_img]: https://gitlab.com/mbarkhau/lib3to6/badges/master/pipeline.svg
+[gitlab_build_ref]: https://gitlab.com/mbarkhau/lib3to6/pipelines
 
 [codecov_img]: https://gitlab.com/mbarkhau/lib3to6/badges/master/coverage.svg
 [codecov_ref]: https://mbarkhau.gitlab.io/lib3to6/cov
