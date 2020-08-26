@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: MIT
 
 import io
-import os
 import re
 import sys
 import typing as typ
@@ -19,12 +18,13 @@ from . import common
 from . import packaging
 from . import transpile
 
-# To enable pretty tracebacks:
-#   echo "export ENABLE_BACKTRACE=1;" >> ~/.bashrc
-if os.environ.get('ENABLE_BACKTRACE') == '1':
-    import backtrace
+try:
+    import pretty_traceback
 
-    backtrace.hook(align=True, strip_path=True, enable_on_envvar_only=True)
+    pretty_traceback.install(envvar='ENABLE_PRETTY_TRACEBACK')
+except ImportError:
+    pass  # no need to fail because of missing dev dependency
+
 
 logger = logging.getLogger("lib3to6")
 

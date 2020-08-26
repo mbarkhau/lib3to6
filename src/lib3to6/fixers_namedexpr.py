@@ -73,11 +73,14 @@ class NamedExprFixer(fb.TransformerFixerBase):
 
                     #   __loop_condition = test
                     loopcond_assign_node = ast.Assign(
-                        targets=[ast.Name(id=loopcond_name, ctx=ast.Store())], value=new_test,
+                        targets=[ast.Name(id=loopcond_name, ctx=ast.Store())],
+                        value=new_test,
                     )
                     # if __loop_condition:
                     new_ifnode = ast.If(
-                        test=ast.Name(id=loopcond_name, ctx=ast.Load()), body=node.body, orelse=[],
+                        test=ast.Name(id=loopcond_name, ctx=ast.Load()),
+                        body=node.body,
+                        orelse=[],
                     )
                     node.body = new_assigns + [loopcond_assign_node, new_ifnode]
                     i += 1

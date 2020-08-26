@@ -14,11 +14,10 @@ pudb
 # https://pypi.org/project/q/
 q
 
-# backtrace manipulates Python tracebacks to make them more
-# readable. It provides different configuration options for
-# coloring and formatting.
-# https://github.com/nir0s/backtrace
-backtrace
+# pretty-traceback manipulates Python tracebacks to make
+# them more readable.
+# https://pypi.org/project/pretty-traceback/
+pretty-traceback
 
 # Py-Spy: A sampling profiler for Python programs.
 # https://github.com/benfred/py-spy

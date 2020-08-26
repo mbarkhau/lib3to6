@@ -273,7 +273,11 @@ FIXTURES = [
         """,
         ["Prohibited import 'asyncio'. This module is available since Python 3.4", "No backport"],
     ),
-    make_fixture("no_mat_mult_op", "foo = bar @ baz", "Prohibited use of matrix multiplication",),
+    make_fixture(
+        "no_mat_mult_op",
+        "foo = bar @ baz",
+        "Prohibited use of matrix multiplication",
+    ),
 ]
 
 
