@@ -35,6 +35,11 @@ SOURCE_ENCODING_PATTERN = r"""
 SOURCE_ENCODING_RE = re.compile(SOURCE_ENCODING_PATTERN, re.VERBOSE)
 
 
+MODE_MARKER_PATTERN = r"#\s*lib3to6:\s*(?P<mode>disabled|enabled)"
+
+MODE_MARKER_RE = re.compile(MODE_MARKER_PATTERN, flags=re.MULTILINE)
+
+
 class ModuleHeader(typ.NamedTuple):
 
     coding: str
@@ -327,6 +332,18 @@ def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str])
 
 
 def transpile_module(ctx: common.BuildContext, module_source: str) -> str:
+    _module_header = module_source.split("import", 1)[0]
+    _module_header = _module_header.split("'''", 1)[0]
+    _module_header = _module_header.split('"""', 1)[0]
+
+    if lib3to6_mode_marker := MODE_MARKER_RE.search(_module_header):
+        mode = lib3to6_mode_marker.group('mode')
+    else:
+        mode = ctx.cfg.default_mode
+
+    if mode == 'disabled':
+        return module_source
+
     checker_names: FuzzyNames = ctx.cfg.checkers
     fixer_names  : FuzzyNames = ctx.cfg.fixers
     module_tree = ast.parse(module_source)
