@@ -36,10 +36,11 @@ Code Quality/CI:
 
 [](TOC)
 
-- [Project Status (as of 2020-05-29): Beta](#project-status-as-of-2020-05-29-beta)
+- [Project Status (as of 2020-09-01): Beta](#project-status-as-of-2020-09-01-beta)
 - [Python Versions and Compatibility](#python-versions-and-compatibility)
+- [Per-File Opt-In/Opt-Out](#per-file-opt-inopt-out)
+- [Compatibility Matters](#compatibility-matters)
 - [Automatic Conversions](#automatic-conversions)
-- [Projects that use lib3to6](#projects-that-use-lib3to6)
 - [Motivation](#motivation)
 - [How it works](#how-it-works)
 - [Contributing](#contributing)
@@ -51,12 +52,28 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2020-05-29): Beta
+## Project Status (as of 2020-09-01): Beta
+
+I have tested with Python 3.8 and made some fixes and updates. Updates for
+Python3.9 should be possible and contributions are welcome to support some
+of the [new features in Python 3.9][href_py39_whatsnew], in particular:
+
+- Dictionary Merge & Update Operators
+- `str.removeprefix(prefix)` and `str.removeprefix(prefix)`
+
+[href_py39_whatsnew]: https://docs.python.org/3.9/whatsnew/3.9.html
 
 I've been using this library for over a year on a few projects
-without much incident. An example of such a project is
-[PyCalVer](https://pypi.org/project/pycalver/). I have tested with
-Python 3.8 and made some fixes and updates.
+without much incident. Examples of such projects are:
+
+- [markdown-katex](https://pypi.org/project/markdown-katex/)
+- [markdown-svgbob](https://pypi.org/project/markdown-svgbob/)
+- [markdown-aafigure](https://pypi.org/project/markdown-aafigure/)
+- [PyCalVer](https://pypi.org/project/pycalver/).
+- [pylint-ignore](https://pypi.org/project/pylint-ignore/)
+- [pretty-traceback](https://pypi.org/project/pretty-traceback/)
+- [backports.pampy](https://pypi.org/project/backports.pampy/)
+
 
 The library serves my purposes and I don't anticipate major updates,
 but I will refrain from calling it stable until there has been more
@@ -67,11 +84,66 @@ Please give it a try and send your feedback.
 
 ## Python Versions and Compatibility
 
-The test-suite for the lib3to6 is run using Python 3.6, 3.7 and 3.8. The compiled output is run using Python 2.7, 3.5, 3.6, 3.7 and 3.8. The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but the test-suite is not run with those versions.
+The test-suite for the transpiler is run using .
 
-Lib3to6 does not add any runtime dependencies. It may inject code, such as imports or temporary variables, but any such changes will only add an `O(1)` overhead.
+- Python 3.8
+- Python 3.7
+- Python 3.6
+- PyPy 3.6
+
+The compiled output is tested using
+
+- Python 3.8
+- Python 3.7
+- Python 3.6
+- Python 3.5
+- Python 2.7
+- PyPy 3.6
+- PyPy 3.5
+
+The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but the test-suite is not run with those versions.
+
+`lib3to6` does not add any runtime dependencies of its own. It may inject code, such as `import six`, `import itertools` or temporary variables, but any such changes will only add an `O(1)` overhead.
 
 Since lib3to6 only works at the ast level at the time you build a package, it is very easy violate some assumptions that lib3to6 makes about your code. You could for example have your own `itertools` module (which is one of the imports that lib3to6 may add to your code) and the output of lib3to6 may not work as expected, because it was assuming the import would be for the `itertools` module from the standard library.
+
+
+## Per-File Opt-In/Opt-Out
+
+Since `lib3to6==v202008.1042` there is support to selectively enable/disable transpilation on a per-file basis.
+
+Any file which starts with a `# lib3to6: disabled` comment, will not be transpiled.
+
+```python
+# -*- coding: utf-8 -*-
+# lib3to6: disabled
+"""A module written to work both with Python2 and 3.
+
+This module doesn't need to be transpiled by lib3to6.
+"""
+
+from __future__ import print_function
+...
+
+import sys
+
+PY2 = sys.version_info[0] == 2
+...
+```
+
+If you instead want to selectively enable transpilation per-file, you can set `lib3to6.fix(..., default_mode='disabled')` and instead add `# lib3to6: enabled` only for files you wish to transpile.
+
+
+```python
+# lib3to6: enabled
+"""A module written to work both with Python2 and 3.
+
+This module doesn't need to be transpiled by lib3to6.
+"""
+
+name: str = "Wörld"
+print(f"Hello {world}!")
+```
 
 
 ## Compatibility Matters
@@ -444,15 +516,6 @@ import typing
 ```
 
 
-## Projects that use lib3to6
-
- - [pycalver](https://gitlab.com/mbarkhau/pycalver)
- - [markdown-katex](https://gitlab.com/mbarkhau/markdown-katex)
- - [markdown-svgbob](https://gitlab.com/mbarkhau/markdown-svgbob)
- - [markdown-aafigure](https://gitlab.com/mbarkhau/markdown_aafigure)
- - [backports.pampy](https://pypi.org/project/backports.pampy/)
-
-
 ## Motivation
 
 The main motivation for this project is to be able to use `mypy`
@@ -532,6 +595,7 @@ if any(arg.startswith("bdist") for arg in sys.argv):
         package_dir,
         target_version="2.7",
         install_requires=install_requires,
+        default_mode='enabled',
     )
 
 setuptools.setup(

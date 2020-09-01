@@ -11,3 +11,4 @@ pathlib2
 astor
 typing;python_version<"3.5"
 click
+wheel
