@@ -70,42 +70,92 @@ def _print_diff(source_text: str, fixed_source_text: str) -> None:
 
 
 __INSTALL_REQUIRES_HELP = """
-install_requires package dependencies (space separated). Functions as a whitelist for backported modules.
+install_requires package dependencies (space separated).
+Functions as a whitelist for backported modules.
+"""
+
+__DEFAULT_MODE_HELP = """
+[enabled/disabled] Default transpile mode.
+To transpile some files but not others.
 """
 
 
 @click.command()
-@click.option('-v', '--verbose', count=True, help="Control log level. -vv for debug level.")
 @click.option(
-    "--target-version", default="2.7", metavar="<version>", help="Target version of python."
+    '-v',
+    '--verbose',
+    count=True,
+    help="Control log level. -vv for debug level.",
 )
 @click.option(
-    "--diff", default=False, is_flag=True, help="Output diff instead of transpiled source."
+    "--target-version",
+    default="2.7",
+    metavar="<version>",
+    help="Target version of python.",
 )
-@click.option("--in-place", default=False, is_flag=True, help="Write result back to input file.")
 @click.option(
-    "--install-requires", default=None, metavar="<packages>", help=__INSTALL_REQUIRES_HELP.strip()
+    "--diff",
+    default=False,
+    is_flag=True,
+    help="Output diff instead of transpiled source.",
 )
-@click.argument("source_files", metavar="<source_file>", nargs=-1, type=click.File(mode="r"))
+@click.option(
+    "--in-place",
+    default=False,
+    is_flag=True,
+    help="Write result back to input file.",
+)
+@click.option(
+    "--install-requires",
+    default=None,
+    metavar="<packages>",
+    help=__INSTALL_REQUIRES_HELP.strip(),
+)
+@click.option(
+    "--default-mode",
+    default='enabled',
+    metavar="<mode>",
+    help=__DEFAULT_MODE_HELP.strip(),
+)
+@click.argument(
+    "source_files",
+    metavar="<source_file>",
+    nargs=-1,
+    type=click.File(mode="r"),
+)
 def main(
     target_version  : str,
     diff            : bool,
     in_place        : bool,
     install_requires: typ.Optional[str],
     source_files    : typ.Sequence[io.TextIOWrapper],
+    default_mode    : str = 'enabled',
     verbose         : int = 0,
 ) -> None:
     _configure_logging(verbose)
-    if not any(source_files):
-        print("No files.")
-        sys.exit(1)
+
+    has_opt_error = False
 
     if target_version and not re.match(r"[0-9]+\.[0-9]+", target_version):
         print(f"Invalid argument --target-version={target_version}")
+        has_opt_error = True
+
+    if default_mode not in ('enabled', 'disabled'):
+        print(f"Invalid argument --default-mode={default_mode}")
+        print("    Must be either 'enabled' or 'disabled'")
+        has_opt_error = True
+
+    if not any(source_files):
+        print("No files.")
+        has_opt_error = True
+
+    if has_opt_error:
         sys.exit(1)
 
     cfg = packaging.eval_build_config(
-        target_version=target_version, install_requires=install_requires
+        target_version=target_version,
+        install_requires=install_requires,
+        default_mode=default_mode,
     )
     for src_file in source_files:
         ctx         = common.BuildContext(cfg, src_file.name)

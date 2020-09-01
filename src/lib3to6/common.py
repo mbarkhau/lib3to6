@@ -43,6 +43,7 @@ class BuildConfig(typ.NamedTuple):
 
     target_version  : str  # e.g. "2.7"
     cache_enabled   : bool
+    default_mode    : str
     fixers          : str
     checkers        : str
     install_requires: InstallRequires
@@ -57,6 +58,7 @@ class BuildContext(typ.NamedTuple):
 def init_build_context(
     target_version  : str             = "2.7",
     cache_enabled   : bool            = True,
+    default_mode    : str             = 'enabled',
     fixers          : str             = "",
     checkers        : str             = "",
     install_requires: InstallRequires = None,
@@ -65,6 +67,7 @@ def init_build_context(
     cfg = BuildConfig(
         target_version=target_version,
         cache_enabled=cache_enabled,
+        default_mode=default_mode,
         fixers=fixers,
         checkers=checkers,
         install_requires=install_requires,

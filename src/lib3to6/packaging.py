@@ -44,6 +44,8 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
     target_version    = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
     _install_requires = kwargs.get('install_requires', None)
     cache_enabled     = kwargs.get('cache_enabled', True)
+    default_mode      = kwargs.get('default_mode', 'enabled')
+
     install_requires: common.InstallRequires
     if _install_requires is None:
         install_requires = None
@@ -60,6 +62,7 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
     return common.BuildConfig(
         target_version=target_version,
         cache_enabled=cache_enabled,
+        default_mode=default_mode,
         fixers="",
         checkers="",
         install_requires=install_requires,
@@ -163,11 +166,16 @@ def fix(
     package_dir     : common.PackageDir = None,
     target_version  : str = transpile.DEFAULT_TARGET_VERSION,
     install_requires: typ.List[str] = None,
+    default_mode    : str = 'enabled',
 ) -> common.PackageDir:
     if package_dir is None:
         package_dir = {"": "."}
 
     build_package_dir = init_build_package_dir(package_dir)
-    build_cfg         = eval_build_config(target_version=target_version, install_requires=install_requires)
+    build_cfg         = eval_build_config(
+        target_version=target_version,
+        install_requires=install_requires,
+        default_mode=default_mode,
+    )
     build_packages(build_cfg, build_package_dir)
     return build_package_dir
