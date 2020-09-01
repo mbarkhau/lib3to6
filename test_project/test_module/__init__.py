@@ -15,6 +15,8 @@ based on the fixtures in test/test_checkers.py
 
 import typing
 
+from . import mysix
+
 assert __doc__.startswith("A docstring.")
 
 x = [*[1, 2], 3]
@@ -22,6 +24,12 @@ x = [*[1, 2], 3]
     lambda l: l.extend([*[1, 2, *l, 4], 5])
 )(x)
 assert x == [1, 2, 3, 1, 2, 1, 2, 3, 4, 5]
+
+assert isinstance(1, mysix.integer_types)
+assert isinstance(1_000_000, mysix.integer_types)
+assert isinstance(1_000_000 ** 10, mysix.integer_types)
+
+assert isinstance("Hello Wörld", mysix.str)
 
 class Foo:
 

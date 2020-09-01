@@ -336,7 +336,8 @@ def transpile_module(ctx: common.BuildContext, module_source: str) -> str:
     _module_header = _module_header.split("'''", 1)[0]
     _module_header = _module_header.split('"""', 1)[0]
 
-    if lib3to6_mode_marker := MODE_MARKER_RE.search(_module_header):
+    lib3to6_mode_marker = MODE_MARKER_RE.search(_module_header)
+    if lib3to6_mode_marker:
         mode = lib3to6_mode_marker.group('mode')
     else:
         mode = ctx.cfg.default_mode
