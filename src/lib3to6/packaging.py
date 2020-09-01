@@ -113,6 +113,32 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
     return build_package_dir
 
 
+def _transpile_path(cfg: common.BuildConfig, filepath: pl.Path) -> pl.Path:
+    with open(filepath, mode="rb") as fobj:
+        module_source_data = fobj.read()
+
+    filehash   = hl.sha1(module_source_data).hexdigest()
+    cache_path = CACHE_DIR / (filehash + ".py")
+
+    # NOTE (mb 2020-09-01): not cache_enabled -> always update cache
+    if not cfg.cache_enabled or not cache_path.exists():
+        ctx = common.BuildContext(cfg, str(filepath))
+        try:
+            fixed_module_source_data = transpile.transpile_module_data(ctx, module_source_data)
+        except common.CheckError as err:
+            loc = str(filepath)
+            if err.lineno >= 0:
+                loc += "@" + str(err.lineno)
+
+            err.args = (loc + " - " + err.args[0],) + err.args[1:]
+            raise
+
+        with open(cache_path, mode="wb") as fobj:
+            fobj.write(fixed_module_source_data)
+
+    return cache_path
+
+
 def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None:
     # pylint:disable=unused-argument ; `package` is part of the public api now
     for root, _dirs, files in os.walk(build_dir):
@@ -121,30 +147,9 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
             if filepath.suffix != ".py":
                 continue
 
-            with open(filepath, mode="rb") as fobj:
-                module_source_data = fobj.read()
-
-            filehash   = hl.sha1(module_source_data).hexdigest()
-            cache_path = CACHE_DIR / (filehash + ".py")
-
-            if not cfg.cache_enabled or not cache_path.exists():
-                ctx = common.BuildContext(cfg, str(filepath))
-                try:
-                    fixed_module_source_data = transpile.transpile_module_data(
-                        ctx, module_source_data
-                    )
-                except common.CheckError as err:
-                    loc = str(filepath)
-                    if err.lineno >= 0:
-                        loc += "@" + str(err.lineno)
-
-                    err.args = (loc + " - " + err.args[0],) + err.args[1:]
-                    raise
-
-                with open(cache_path, mode="wb") as fobj:
-                    fobj.write(fixed_module_source_data)
-
-            shutil.copy(cache_path, filepath)
+            transpiled_path = _transpile_path(cfg, filepath)
+            # overwrite original with transpiled
+            shutil.copy(transpiled_path, filepath)
 
 
 def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir) -> None:
