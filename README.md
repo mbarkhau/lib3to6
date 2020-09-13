@@ -811,7 +811,7 @@ You can get started with local development in just a few commands.
 user@host:~/ $ git clone https://gitlab.com/mbarkhau/lib3to6.git
 user@host:~/ $ cd lib3to6/
 user@host:~/lib3to6/ ⎇master $ make help
-user@host:~/lib3to6/ ⎇master $ make install     # creates conda environments
+user@host:~/lib3to6/ ⎇master $ make conda     # creates conda environments
 ...
 user@host:~/lib3to6/ ⎇master $ ls ~/miniconda3/envs/
 user@host:~/lib3to6_pypy35 lib3to6_py27 lib3to6_py36 lib3to6_py37 lib3to6_py38
