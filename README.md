@@ -56,7 +56,7 @@ Code Quality/CI:
 
 ## Ease the Transition from Old Interpreters
 
-If your existing project uses Python2.7, it may not be possible to dedicate a substantial block of time to update all of your code and then flip a switch to start running on Python3. To make matters worse, you may continue to write code only for Python2.7, since that is what your production code will actually run on. With `lib3to6` you can start to use Python3 for development and integration (ensuring forward compatibility) and still maintain breaking backward compatibility while you have to deploy for Python2.
+If your existing project uses Python2.7, it may not be possible to dedicate a substantial block of time to update all of your code and then flip a switch to start running on Python3. To make matters worse, you may continue to write code only for Python2.7, since that is what your production code will actually run on. With `lib3to6` you can start to use Python3 for development and integration (ensuring forward compatibility) and still maintain backward compatibility while you have to deploy for Python2.
 
 An especially attractive feature of Python3.6+ are type annotations and type checking with MyPy. With `lib3to6` you can write new code to a higher quality standard without breaking backward compatibility, even if the most recent version you want to support is Python3.5 (which does not support variable annotation for example).
 
