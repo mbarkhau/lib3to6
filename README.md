@@ -198,7 +198,7 @@ setuptools.setup(
 )
 ```
 
-When you build you package, the contends of the resulting distribution
+When you build you package, the contents of the resulting distribution
 will be the code that was converted by lib3to6.
 
 
