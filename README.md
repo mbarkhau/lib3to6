@@ -2,7 +2,7 @@
 
 Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is
 quite similar to Babel https://babeljs.io/. Develop using the newest
-interpreter and use (most) new language features without sacrificing
+interpreter and use (most) new language features and still maintain
 backward compatibility.
 
 Project/Repo:
@@ -36,14 +36,16 @@ Code Quality/CI:
 
 [](TOC)
 
-- [Project Status (as of 2020-09-01): Beta](#project-status-as-of-2020-09-01-beta)
+- [Ease the Transition from Old Interpreters](#ease-the-transition-from-old-interpreters)
 - [Python Versions and Compatibility](#python-versions-and-compatibility)
+- [Usage Caveats](#usage-caveats)
 - [Per-File Opt-In/Opt-Out](#per-file-opt-inopt-out)
-- [Compatibility Matters](#compatibility-matters)
+- [Integration using `setup.py`](#integration-using-setuppy)
 - [Automatic Conversions](#automatic-conversions)
 - [Motivation](#motivation)
 - [How it works](#how-it-works)
 - [Contributing](#contributing)
+- [Project Status (as of 2020-09-01): Beta](#project-status-as-of-2020-09-01-beta)
 - [Future Work](#future-work)
 - [Alternatives](#alternatives)
 - [FAQ](#faq)
@@ -52,46 +54,16 @@ Code Quality/CI:
 [](TOC)
 
 
-## Project Status (as of 2020-09-01): Beta
+## Ease the Transition from Old Interpreters
 
-I have tested with Python 3.8 and made some fixes and updates. Updates for
-Python3.9 should be possible and contributions are welcome to support some
-of the [new features in Python 3.9][href_py39_whatsnew], in particular:
+If your existing project uses Python2.7, it may not be possible to dedicate a substantial block of time to update all of your code and then flip a switch to start running on Python3. To make matters worse, you may continue to write code only for Python2.7, since that is what your production code will actually run on. With `lib3to6` you can start to use Python3 for development and integration (ensuring forward compatibility) and still maintain breaking backward compatibility while you have to deploy for Python2.
 
-- Dictionary Merge & Update Operators
-- `str.removeprefix(prefix)` and `str.removeprefix(prefix)`
-
-[href_py39_whatsnew]: https://docs.python.org/3.9/whatsnew/3.9.html
-
-I've been using this library for over a year on a few projects
-without much incident. Examples of such projects are:
-
-- [markdown-katex](https://pypi.org/project/markdown-katex/)
-- [markdown-svgbob](https://pypi.org/project/markdown-svgbob/)
-- [markdown-aafigure](https://pypi.org/project/markdown-aafigure/)
-- [PyCalVer](https://pypi.org/project/pycalver/).
-- [pylint-ignore](https://pypi.org/project/pylint-ignore/)
-- [pretty-traceback](https://pypi.org/project/pretty-traceback/)
-- [backports.pampy](https://pypi.org/project/backports.pampy/)
-
-
-The library serves my purposes and I don't anticipate major updates,
-but I will refrain from calling it stable until there has been more
-adoption by projects other than my own.
-
-Please give it a try and send your feedback.
+An especially attractive feature of Python3.6+ are type annotations and type checking with MyPy. With `lib3to6` you can write new code to a higher quality standard without breaking backward compatibility, even if the most recent version you want to support is Python3.5 (which does not support variable annotation for example).
 
 
 ## Python Versions and Compatibility
 
-The test-suite for the transpiler is run using .
-
-- Python 3.8
-- Python 3.7
-- Python 3.6
-- PyPy 3.6
-
-The compiled output is tested using
+The compiled output is tested using:
 
 - Python 3.8
 - Python 3.7
@@ -101,18 +73,43 @@ The compiled output is tested using
 - PyPy 3.6
 - PyPy 3.5
 
-The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but the test-suite is not run with those versions.
+The test-suite for the transpiler is run using:
 
-`lib3to6` does not add any runtime dependencies of its own. It may inject code, such as `import six`, `import itertools` or temporary variables, but any such changes will only add an `O(1)` overhead.
+- Python 3.8
+- Python 3.7
+- Python 3.6
+- PyPy 3.6
 
-Since lib3to6 only works at the ast level at the time you build a package, it is very easy violate some assumptions that lib3to6 makes about your code. You could for example have your own `itertools` module (which is one of the imports that lib3to6 may add to your code) and the output of lib3to6 may not work as expected, because it was assuming the import would be for the `itertools` module from the standard library.
+The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but these are not tested.
+
+
+## Usage Caveats
+
+`lib3to6` does not add any runtime dependencies of its own, but it does inject code, such as temporary variables and imports from the standard library (`itertools` and `builtins` in particular). Any changes will only add a constant `O(1)` overhead.
+
+`lib3to6` does optimistic ast transformations, with the assumption that you're not doing anything too crazy in your code. An example of such a transformation is the support for [PEP3102 - Keyword-Only Arguments](https://www.python.org/dev/peps/pep-3102/). `lib3to6` will change the function signature to use `**kwargs` and add locals extracted from `kwargs`.
+
+```
+$ cat kwonly_args_demo.py
+def compare(a, b, *, key=None):
+    ...
+```
+
+```
+$ lib3to6 kwonly_args_demo.py
+def compare(a, b, **kwargs):
+    key = kwargs.get('key', None)
+    pass
+```
+
+This means that the function signature you can get using the `inspect` module may not be what you expect for the output of `lib3to6`.
 
 
 ## Per-File Opt-In/Opt-Out
 
 Since `lib3to6==v202008.1042` there is support to selectively enable/disable transpilation on a per-file basis.
 
-Any file which starts with a `# lib3to6: disabled` comment, will not be transpiled.
+Any file which starts with a `# lib3to6: disabled` comment, will not be transpiled. For these, you will have to take care of forward/backward compatibility yourself.
 
 ```python
 # -*- coding: utf-8 -*-
@@ -127,12 +124,26 @@ from __future__ import print_function
 
 import sys
 
-PY2 = sys.version_info[0] == 2
-...
+PY3 = sys.version_info[0] > 2
+
+if PY3:
+    ...
+else:
+    ...
 ```
 
-If you instead want to selectively enable transpilation per-file, you can set `lib3to6.fix(..., default_mode='disabled')` and instead add `# lib3to6: enabled` only for files you wish to transpile.
+Instead of opt-out, you can also take an opt-in approach. You will have to switch the `default_mode` argument:
 
+```python
+# setup.py
+package_dir = {"": "src"}
+
+if is_bdist and "Programming Language :: Python :: 2" in classifiers:
+    import lib3to6
+    package_dir = lib3to6.fix(package_dir, default_mode='disabled')
+```
+
+This will leave all files untouched, except for those marked with a `# lib3to6: enabled` comment.
 
 ```python
 # lib3to6: enabled
@@ -146,23 +157,87 @@ print(f"Hello {world}!")
 ```
 
 
-## Compatibility Matters
+## Integration using `setup.py`
 
-I've seen a common gut reaction to lib3to6, which is that we shouldn't care about older versions of Python, Python 2.7 in particular. I would humbly suggest you consider the position of people other than developers who have full control over their development environment and only use CPython. As of this writing (August 2020), the most recent language version supported by alternative interpreters is the following:
+The cli command `lib3to6 <filename>` is nice for demo purposes, but for integration with your project, you may prefer to use it in your `setup.py` file. Contributions for other kinds of integration are most welcome.
 
-| Interpreter | Version |
-|-------------|---------|
-| Stackless   |     3.7 |
-| PyPy        |     3.6 |
-| MicroPython |     3.4 |
-| IronPython  |     2.7 |
-| Jython      |     2.7 |
+```python
+# setup.py
 
-Notice that even Stackless Python, which has the least effort to keep up with new language features, is nonetheless lagging behind CPython. And even if all you care about is CPython, be aware that the most recent interpreter may not be available on platforms that users care about. For example on PythonAnywhere.com, the most recent version of CPython is 3.5 and of PyPy is 2.7.
+import sys
+import setuptools
 
-If you are writing a library and it doesn't **need** any of the newer **runtime** features, such as async/await or ordered dictionaries, then I would humbly suggest you do not unnecessarily prevent users of such platforms from using your library.
+packages = setuptools.find_packages(".")
+package_dir = {"": "."}
 
-From a users perspective, only supporting the newest versions of Python might be interpreted as arrogance, but your time as a maintainer isn't free, and you don't owe users of your library anything. Lib3to6 exists to minimize your effort to maintain backward comparability. If you have difficulties integrating lib3to6 into your packaging process, please report an issue: [gitlab.com/mbarkhau/lib3to6/-/issues](https://gitlab.com/mbarkhau/lib3to6/-/issues).
+install_requires = ['typing;python_version<"3.5"']
+
+is_bdist = any(arg.startswith("bdist") for arg in sys.argv)
+
+if is_bdist:
+    import lib3to6
+    package_dir = lib3to6.fix(
+        package_dir,
+        target_version="2.7",
+        install_requires=install_requires,
+        default_mode='enabled',
+    )
+
+setuptools.setup(
+    name="my-module",
+    version="0.1.0",
+    packages=packages,
+    package_dir=package_dir,
+    install_requires=install_requires,
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
+        ...
+    ],
+)
+```
+
+When you build you package, the contends of the resulting distribution
+will be the code that was converted by lib3to6.
+
+
+```bash
+~/my-module $ python setup.py bdist_wheel --python-tag=py2.py3
+running bdist_wheel
+...
+~/my-module$ ls -1 dist/
+my_module-201808.1-py2.py3-none-any.whl
+
+~/my-module$ python3 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
+Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
+Installing collected packages: my-module
+Successfully installed my-module-201808.1
+
+~/my-module$ python2 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
+Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
+Installing collected packages: my-module
+Successfully installed my-module-201808.1
+```
+
+When testing, make sure you're not importing `my_module` from your local
+directory, which is probably the original source code. Instead you can
+either manipulate your `PYTHONPATH`, or simply switch directories...
+
+```bash
+~/$ python3 -c "import my_module"
+/home/user/my-module/my_module/__init__.py
+Hello 世界 from 3.6.5!
+
+~/my-module$ cd ..
+~/$ python3 -c "import my_module"
+/home/user/envs/py36/lib/python3.6/site-packages/my_module/__init__.py
+Hello 世界 from 3.6.5!
+
+~$ python2 -c "import my_module"
+/home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
+Hello 世界 from 2.7.15!
+```
 
 
 ## Automatic Conversions
@@ -420,7 +495,7 @@ from __future__ import annotations
 x = True
 ```
 
-Note that lib3to6 works mostly at the ast level, but an exception is
+Note that `lib3to6` works mostly at the ast level, but an exception is
 made for any comments that appear at the top of the file. These are
 preserved as is, so your shebang, file encoding and licensing headers
 will be preserved.
@@ -571,88 +646,24 @@ Some fixes that have been applied in the above:
     - `f""` string -> `"".format()` conversion
 
 
-### Usage in your `setup.py`
+### Compatibility Matters
 
-The cli command `lib3to6` is nice for demo purposes,
-but for your project it is better to use it in your
-setup.py file.
+I've seen a common gut reaction to lib3to6, which is that we shouldn't care about older versions of Python, Python 2.7 in particular. I would humbly suggest you consider the position of people other than developers who have full control over their development environment and only use CPython. As of this writing (August 2020), the most recent language version supported by alternative interpreters is the following:
 
+| Interpreter | Version |
+|-------------|---------|
+| Stackless   |     3.7 |
+| PyPy        |     3.6 |
+| MicroPython |     3.4 |
+| IronPython  |     2.7 |
+| Jython      |     2.7 |
 
-```python
-# setup.py
+Notice that even Stackless Python, which has the least effort to keep up with new language features, is nonetheless lagging behind CPython. And even if all you care about is CPython, be aware that the most recent interpreter may not be available on platforms that users care about. For example on PythonAnywhere.com, the most recent version of CPython is 3.5 and of PyPy is 2.7.
 
-import sys
-import setuptools
+If you are writing a library and it doesn't **need** any of the newer **runtime** features, such as async/await or ordered dictionaries, then I would humbly suggest you do not unnecessarily prevent users of such platforms from using your library.
 
-packages = setuptools.find_packages(".")
-package_dir = {"": "."}
+From a users perspective, only supporting the newest versions of Python might be interpreted as arrogance, but your time as a maintainer isn't free, and you don't owe users of your library anything. Lib3to6 exists to minimize your effort to maintain backward compatibility. If you have difficulties integrating lib3to6 into your packaging process, please report an issue: [gitlab.com/mbarkhau/lib3to6/-/issues](https://gitlab.com/mbarkhau/lib3to6/-/issues).
 
-install_requires = ['typing;python_version<"3.5"']
-
-if any(arg.startswith("bdist") for arg in sys.argv):
-    import lib3to6
-    package_dir = lib3to6.fix(
-        package_dir,
-        target_version="2.7",
-        install_requires=install_requires,
-        default_mode='enabled',
-    )
-
-setuptools.setup(
-    name="my-module",
-    version="2020.1001",
-    packages=packages,
-    package_dir=package_dir,
-    install_requires=install_requires,
-    classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.5",
-        ...
-    ],
-)
-```
-
-When you build you package, the contends of the resulting distribution
-will be the code that was converted by lib3to6.
-
-
-```bash
-~/my-module $ python setup.py bdist_wheel --python-tag=py2.py3
-running bdist_wheel
-...
-~/my-module$ ls -1 dist/
-my_module-201808.1-py2.py3-none-any.whl
-
-~/my-module$ python3 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
-Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
-Installing collected packages: my-module
-Successfully installed my-module-201808.1
-
-~/my-module$ python2 -m pip install dist/my_module-201808.1-py2.py3-none-any.whl
-Processing ./dist/my_module-201808.1-py2.py3-none-any.whl
-Installing collected packages: my-module
-Successfully installed my-module-201808.1
-```
-
-When testing, make sure you're not importing `my_module` from your local
-directory, which is probably the original source code. Instead you can
-either manipulate your `PYTHONPATH`, or simply switch directories...
-
-```bash
-~/$ python3 -c "import my_module"
-/home/user/my-module/my_module/__init__.py
-Hello 世界 from 3.6.5!
-
-~/my-module$ cd ..
-~/$ python3 -c "import my_module"
-/home/user/envs/py36/lib/python3.6/site-packages/my_module/__init__.py
-Hello 世界 from 3.6.5!
-
-~$ python2 -c "import my_module"
-/home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
-Hello 世界 from 2.7.15!
-```
 
 ### On Testing your Project
 
@@ -836,6 +847,29 @@ In [1]: import lib3to6
 In [2]: lib3to6.__file__
 Out[2]: '/home/user/lib3to6/src/lib3to6/__init__.py'
 ```
+
+
+## Project Status (as of 2020-09-01): Beta
+
+I have tested with Python 3.8 and made some fixes and updates. Updates for
+Python3.9 should be possible and contributions are welcome to support some
+of the [new features in Python 3.9][href_py39_whatsnew], in particular:
+
+- Dictionary Merge & Update Operators
+- `str.removeprefix(prefix)` and `str.removeprefix(prefix)`
+
+[href_py39_whatsnew]: https://docs.python.org/3.9/whatsnew/3.9.html
+
+I've been using this library for over a year on a few projects
+without much incident. Examples of such projects are:
+
+- [markdown-katex](https://pypi.org/project/markdown-katex/)
+- [markdown-svgbob](https://pypi.org/project/markdown-svgbob/)
+- [markdown-aafigure](https://pypi.org/project/markdown-aafigure/)
+- [PyCalVer](https://pypi.org/project/pycalver/).
+- [pylint-ignore](https://pypi.org/project/pylint-ignore/)
+- [pretty-traceback](https://pypi.org/project/pretty-traceback/)
+- [backports.pampy](https://pypi.org/project/backports.pampy/)
 
 
 ## Future Work

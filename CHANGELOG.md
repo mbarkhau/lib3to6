@@ -2,7 +2,7 @@
 
 ## v202009.1042
 
- - New: per-file opt-in/opt-out using `# lib3to6: disabled`/`# lib3to6: enabled`
+ - New #6: per-file opt-in/opt-out using `# lib3to6: disabled`/`# lib3to6: enabled`
 
 
 ## v202006.1041
