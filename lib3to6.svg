@@ -9,15 +9,15 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="210mm"
-   height="297mm"
-   viewBox="0 0 210 297"
+   width="128"
+   height="128"
+   viewBox="0 0 33.866667 33.866668"
    version="1.1"
    id="svg8"
    inkscape:export-filename="C:\Users\ManuelBarkhau\lib3to6.png"
    inkscape:export-xdpi="1199.86"
    inkscape:export-ydpi="1199.86"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
    sodipodi:docname="lib3to6.svg">
   <defs
      id="defs2" />
@@ -29,16 +29,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="376.11582"
-     inkscape:cy="552.13142"
+     inkscape:cx="68.145251"
+     inkscape:cy="65.729845"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="2560"
-     inkscape:window-height="1377"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="2512"
+     inkscape:window-height="1376"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     units="px" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -54,10 +55,19 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1">
+     id="layer1"
+     transform="translate(0,-263.13332)">
+    <rect
+       id="rect3730"
+       width="33.866665"
+       height="33.866665"
+       x="-33.866665"
+       y="263.13333"
+       style="fill:#ffffff;stroke-width:0.23387626"
+       transform="scale(-1,1)" />
     <g
        id="g839"
-       transform="translate(19.528217,5.2106658)">
+       transform="matrix(1.2334585,0,0,1.2334585,-88.492564,103.08628)">
       <g
          id="g869"
          transform="translate(-0.37452049)">
@@ -109,15 +119,15 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.69999981px;line-height:1.25;font-family:Audiowide;-inkscape-font-specification:Audiowide;letter-spacing:-0.63764584px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="96.494553"
-       y="145.93399"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15.66492271px;line-height:1.25;font-family:Audiowide;-inkscape-font-specification:Audiowide;letter-spacing:-0.78650963px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.32635254"
+       x="6.4422178"
+       y="276.66263"
        id="text833"><tspan
          sodipodi:role="line"
          id="tspan831"
-         x="96.494553"
-         y="145.93399"
-         style="letter-spacing:-0.63764584px;stroke-width:0.26458332"
+         x="6.4422178"
+         y="276.66263"
+         style="letter-spacing:-0.78650963px;stroke-width:0.32635254"
          dx="0"
          dy="0">py</tspan></text>
   </g>
