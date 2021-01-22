@@ -138,7 +138,7 @@ Instead of opt-out, you can also take an opt-in approach. You will have to switc
 # setup.py
 package_dir = {"": "src"}
 
-if is_bdist and "Programming Language :: Python :: 2" in classifiers:
+if any(arg.startswith("bdist") for arg in sys.argv):
     import lib3to6
     package_dir = lib3to6.fix(package_dir, default_mode='disabled')
 ```
@@ -172,9 +172,7 @@ package_dir = {"": "."}
 
 install_requires = ['typing;python_version<"3.5"']
 
-is_bdist = any(arg.startswith("bdist") for arg in sys.argv)
-
-if is_bdist:
+if any(arg.startswith("bdist") for arg in sys.argv):
     import lib3to6
     package_dir = lib3to6.fix(
         package_dir,
