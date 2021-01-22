@@ -1,5 +1,10 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
+## v202101.1043
+
+ - Fixes for Python 3.9 and mypy 0.800
+
+
 ## v202009.1042
 
  - New #6: per-file opt-in/opt-out using `# lib3to6: disabled`/`# lib3to6: enabled`
