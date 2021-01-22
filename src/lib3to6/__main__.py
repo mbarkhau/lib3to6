@@ -2,7 +2,7 @@
 # This file is part of the lib3to6 project
 # https://gitlab.com/mbarkhau/lib3to6
 #
-# Copyright (c) 2019 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
+# Copyright (c) 2019-2020 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import io
@@ -182,4 +182,4 @@ def main(
 if __name__ == '__main__':
     # NOTE (mb 2020-07-18): click supplies the parameters
     # pylint:disable=no-value-for-parameter
-    main()  # type: ignore
+    main()
