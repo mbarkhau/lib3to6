@@ -9,7 +9,7 @@ Project/Repo:
 
 [![MIT License][license_img]][license_ref]
 [![Supported Python Versions][pyversions_img]][pyversions_ref]
-[![PyCalVer v202101.1045][version_img]][version_ref]
+[![CalVer v202101.1045][version_img]][version_ref]
 [![PyPI Version][pypi_img]][pypi_ref]
 [![PyPI Downloads][downloads_img]][downloads_ref]
 
@@ -65,6 +65,7 @@ An especially attractive feature of Python3.6+ are type annotations and type che
 
 The compiled output is tested using:
 
+- Python 3.9
 - Python 3.8
 - Python 3.7
 - Python 3.6
@@ -75,6 +76,7 @@ The compiled output is tested using:
 
 The test-suite for the transpiler is run using:
 
+- Python 3.9
 - Python 3.8
 - Python 3.7
 - Python 3.6
@@ -847,24 +849,15 @@ Out[2]: '/home/user/lib3to6/src/lib3to6/__init__.py'
 ```
 
 
-## Project Status (as of 2020-09-01): Beta
+## Project Status (as of 2021-01-01): Beta
 
-I have tested with Python 3.8 and made some fixes and updates. Updates for
-Python3.9 should be possible and contributions are welcome to support some
-of the [new features in Python 3.9][href_py39_whatsnew], in particular:
-
-- Dictionary Merge & Update Operators
-- `str.removeprefix(prefix)` and `str.removeprefix(prefix)`
-
-[href_py39_whatsnew]: https://docs.python.org/3.9/whatsnew/3.9.html
-
-I've been using this library for over a year on a few projects
+I have tested with Python 3.9 with only minor updates required since Python 3.8. I've been using this library for over two years on a few projects
 without much incident. Examples of such projects are:
 
+- [BumpVer](https://pypi.org/project/bumpver/).
 - [markdown-katex](https://pypi.org/project/markdown-katex/)
 - [markdown-svgbob](https://pypi.org/project/markdown-svgbob/)
 - [markdown-aafigure](https://pypi.org/project/markdown-aafigure/)
-- [PyCalVer](https://pypi.org/project/pycalver/).
 - [pylint-ignore](https://pypi.org/project/pylint-ignore/)
 - [pretty-traceback](https://pypi.org/project/pretty-traceback/)
 - [backports.pampy](https://pypi.org/project/backports.pampy/)
@@ -966,8 +959,8 @@ Some features that might be implemented
 [downloads_img]: https://pepy.tech/badge/lib3to6/month
 [downloads_ref]: https://pepy.tech/project/lib3to6
 
-[version_img]: https://img.shields.io/static/v1.svg?label=PyCalVer&message=v202101.1045&color=blue
-[version_ref]: https://pypi.org/project/pycalver/
+[version_img]: https://img.shields.io/static/v1.svg?label=CalVer&message=v202101.1045&color=blue
+[version_ref]: https://pypi.org/project/bumpver/
 
 [pyversions_img]: https://img.shields.io/pypi/pyversions/lib3to6.svg
 [pyversions_ref]: https://pypi.python.org/pypi/lib3to6
