@@ -6,7 +6,7 @@ PACKAGE_NAME := lib3to6
 # - `make ipy`
 # - `make lint`
 # - `make devtest`
-DEVELOPMENT_PYTHON_VERSION := python=3.8
+DEVELOPMENT_PYTHON_VERSION := python=3.9
 
 # These must be valid (space separated) conda package names.
 # A separate conda environment will be created for each of these.
@@ -14,7 +14,7 @@ DEVELOPMENT_PYTHON_VERSION := python=3.8
 # These are the interpreters we use to test that the output of lib3to6 works
 # with that version. The interpreter used to run lib3to6 and produce that output
 # is the DEVELOPMENT_PYTHON_VERSION.
-SUPPORTED_PYTHON_VERSIONS := python=3.8 python=3.7 python=3.6 pypy3.6 pypy3.5 python=2.7
+SUPPORTED_PYTHON_VERSIONS := python=3.9 python=3.8 python=3.7 python=3.6 pypy3.6 pypy3.5 python=2.7
 
 
 include Makefile.bootstrapit.make
