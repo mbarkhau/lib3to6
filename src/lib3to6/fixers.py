@@ -102,12 +102,26 @@ class _FRAFContext:
                 if self.is_forward_ref(elt.id):
                     elts[i] = ast.Constant(elt.id)
             elif isinstance(elt, ast.Subscript):
-                idx = elt.slice
-                assert isinstance(idx, ast.Index)
-                self.update_index(idx)
+                self.update_subscript(elt)
             else:
                 msg = f"Error fixing index element with forward ref of type {type(elt)}"
                 raise NotImplementedError(msg)
+
+    def update_subscript(self, val: ast.Subscript) -> None:
+        idx = val.slice
+        if isinstance(idx, ast.Tuple):
+            elts = typ.cast(Elts, idx.elts)
+            self.update_index_elts(elts)
+        elif isinstance(idx, ast.Index):
+            self.update_index(idx)
+        elif isinstance(idx, ast.Subscript):
+            self.update_subscript(idx)
+        elif isinstance(idx, ast.Name):
+            if self.is_forward_ref(idx.id):
+                val.slice = AstStr(idx.id)
+        else:
+            msg = f"Error fixing annotation of forward ref with type {type(idx)}"
+            raise NotImplementedError(msg)
 
     def update_index(self, idx: ast.Index) -> None:
         val = idx.value
@@ -118,9 +132,7 @@ class _FRAFContext:
             if self.is_forward_ref(val.id):
                 idx.value = AstStr(val.id)
         elif isinstance(val, ast.Subscript):
-            sub_idx = val.slice
-            assert isinstance(sub_idx, ast.Index)
-            self.update_index(sub_idx)
+            self.update_subscript(val)
         elif isinstance(val, ast.Tuple):
             elts = typ.cast(Elts, val.elts)
             self.update_index_elts(elts)
@@ -137,9 +149,7 @@ class _FRAFContext:
             if self.is_forward_ref(anno.id):
                 setattr(node, attrname, AstStr(anno.id))
         elif isinstance(anno, ast.Subscript):
-            idx = anno.slice
-            assert isinstance(idx, ast.Index)
-            self.update_index(idx)
+            self.update_subscript(anno)
         else:
             msg = f"Error fixing annotation of forward ref with type {type(anno)}"
             raise NotImplementedError(msg)
