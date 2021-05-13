@@ -44,7 +44,7 @@ def _configure_logging(verbose: int = 0) -> None:
     logger.debug("Logging configured.")
 
 
-click.disable_unicode_literals_warning = True
+click.disable_unicode_literals_warning = True  # type: ignore[attr-defined]
 
 
 def _print_diff(source_text: str, fixed_source_text: str) -> None:
