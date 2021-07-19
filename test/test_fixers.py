@@ -934,6 +934,47 @@ FIXTURES = [
             result = None
         """,
     ),
+    # make_fixture(
+    #     "named_expr",
+    #     "2.7",
+    #     """
+    #     if a == b and x != y and ((m1 := p1.match(data)) or (m2 := p2.match(data))):
+    #         result = m1.group(1)
+    #     else:
+    #         result = None
+    #     """,
+    #     """
+    #     if a == b and x != y:
+    #         m1 = p1.match(data)
+    #         __condition = m1
+    #     else:
+    #         __condition = False
+
+    #     if __condition:
+    #         result = match1.group(1)
+    #     else:
+    #         result = None
+    #     """,
+    # ),
+    # make_fixture(
+    #     "named_expr",
+    #     "2.7",
+    #     """
+    #     accu = []
+    #     while len(data) > 0 and (match1 := pattern1.match(data)):
+    #         accu.append(match1.group(1))
+    #         data = match1.group(1)
+    #     """,
+    #     """
+    #     accu = []
+    #     __loop_condition = True
+    #     while __loop_condition:
+    #         if len(data) > 0
+    #         while len(data) > 0 and (match1 := pattern1.match(data)):
+    #             accu.append(match1.group(1))
+    #             data = match1.group(1)
+    #     """,
+    # ),
     make_fixture(
         "named_expr",
         "2.7",
