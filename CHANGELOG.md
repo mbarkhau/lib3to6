@@ -1,5 +1,10 @@
 # Changelog for https://gitlab.com/mbarkhau/lib3to6
 
+## v202107.1044
+
+ - Fix type annotations with attribute access
+
+
 ## v202101.1043
 
  - Fixes for Python 3.9 and mypy 0.800

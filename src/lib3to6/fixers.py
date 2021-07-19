@@ -119,6 +119,8 @@ class _FRAFContext:
         elif isinstance(idx, ast.Name):
             if self.is_forward_ref(idx.id):
                 val.slice = AstStr(idx.id)
+        elif isinstance(idx, ast.Attribute):
+            return
         else:
             msg = f"Error fixing annotation of forward ref with type {type(idx)}"
             raise NotImplementedError(msg)
