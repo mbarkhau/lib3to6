@@ -949,7 +949,6 @@ FIXTURES = [
     #         __condition = m1
     #     else:
     #         __condition = False
-
     #     if __condition:
     #         result = match1.group(1)
     #     else:
