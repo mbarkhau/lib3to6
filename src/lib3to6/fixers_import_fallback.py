@@ -1,5 +1,5 @@
 # This file is part of the lib3to6 project
-# https://gitlab.com/mbarkhau/lib3to6
+# https://github.com/mbarkhau/lib3to6
 #
 # Copyright (c) 2019-2021 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT

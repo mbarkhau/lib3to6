@@ -1,4 +1,4 @@
-# Changelog for https://gitlab.com/mbarkhau/lib3to6
+# Changelog for https://github.com/mbarkhau/lib3to6
 
 ## v202107.1044
 

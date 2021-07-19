@@ -1,7 +1,7 @@
 # This file is part of the lib3to6 project
-# https://gitlab.com/mbarkhau/lib3to6
+# https://github.com/mbarkhau/lib3to6
 #
-# Copyright (c) 2019 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
+# Copyright (c) 2019-2021 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
 
 import os
@@ -49,7 +49,7 @@ setuptools.setup(
     license="MIT",
     author="Manuel Barkhau",
     author_email="mbarkhau@gmail.com",
-    url="https://gitlab.com/mbarkhau/lib3to6",
+    url="https://github.com/mbarkhau/lib3to6",
     version="202101.1045",
     keywords="six lib2to3 astor ast",
     description="Compile Python 3.6+ code to Python 2.7+",

@@ -1,3 +1,9 @@
+<div align="center">
+<p align="center">
+  <img alt="logo" src="https://raw.githubusercontent.com/mbarkhau/lib3to6/master/lib3to6_128.png">
+</p>
+</div>
+
 # [lib3to6][repo_ref]
 
 Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is
@@ -54,11 +60,24 @@ Code Quality/CI:
 [](TOC)
 
 
-## Ease the Transition from Old Interpreters
+## Motivation: Ease the Transition from Old Interpreters
 
-If your existing project uses Python2.7, it may not be possible to dedicate a substantial block of time to update all of your code and then flip a switch to start running on Python3. To make matters worse, you may continue to write code only for Python2.7, since that is what your production code will actually run on. With `lib3to6` you can start to use Python3 for development and integration (ensuring forward compatibility) and still maintain backward compatibility while you have to deploy for Python2.
+Especially for packages, you probably don't want to force all your
+users to already use python 3.10, so maintaining backward
+compatibility is a good idea. Nonetheless, for development it is a
+good idea to use the newest interpreter you can and ideally you can
+use the newer type annotation features to type-check your code, but
+ellide these annotations in the distribution, since they are not
+needed at runtime.
 
-An especially attractive feature of Python3.6+ are type annotations and type checking with MyPy. With `lib3to6` you can write new code to a higher quality standard without breaking backward compatibility, even if the most recent version you want to support is Python3.5 (which does not support variable annotation for example).
+If your existing project uses Python2.7, it may not be possible to
+dedicate a substantial block of time to update all of your code and
+then flip a switch to start running on Python3. To make matters worse,
+you may continue to write code only for Python2.7, since that is what
+your production code will actually run on. With `lib3to6` you can
+start to use Python3 for development and integration (ensuring forward
+compatibility) and still maintain backward compatibility while you
+have to deploy for Python2.
 
 
 ## Python Versions and Compatibility
@@ -272,7 +291,7 @@ in which case lib3to6 will bend over backwards.
 while (block := f.read(4096)) != '':
     process(block)
 
-# From 2.7 to 3.7
+# For [2.7 - 3.7]
 __loop_condition = True
 while __loop_condition:
     block = f.read(4096)
@@ -933,7 +952,7 @@ Some features that might be implemented
    to 3.5.
 
 
-[repo_ref]: https://gitlab.com/mbarkhau/lib3to6
+[repo_ref]: https://github.com/mbarkhau/lib3to6
 
 [github_build_img]: https://github.com/mbarkhau/lib3to6/workflows/CI/badge.svg
 [github_build_ref]: https://github.com/mbarkhau/lib3to6/actions?query=workflow%3ACI
