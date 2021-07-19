@@ -1,6 +1,6 @@
 # Pylint-Ignore
 
-**WARNING: This file is programatically generated.**
+**WARNING: This file is programmatically generated.**
 
 This file is parsed by [`pylint-ignore`](https://pypi.org/project/pylint-ignore/)
 to determine which
@@ -23,497 +23,11 @@ The recommended approach to using `pylint-ignore` is:
 
 # Overview
 
- - [E0239: inherit-non-class (5x)](#e0239-inherit-non-class)
- - [E1136: unsubscriptable-object (25x)](#e1136-unsubscriptable-object)
  - [W0511: fixme (4x)](#w0511-fixme)
  - [W0612: unused-variable (1x)](#w0612-unused-variable)
  - [C0103: invalid-name (2x)](#c0103-invalid-name)
  - [C0302: too-many-lines (1x)](#c0302-too-many-lines)
  - [R0912: too-many-branches (1x)](#r0912-too-many-branches)
-
-
-# E0239: inherit-non-class
-
-## File src/lib3to6/checkers_backports.py - Line 26 - E0239 (inherit-non-class)
-
-- `message: Inheriting 'typ.NamedTuple', which is not a class.`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  24:
-  25:
-> 26: class ModuleVersionInfo(typ.NamedTuple):
-  27:
-  28:     available_since : str
-```
-
-
-## File src/lib3to6/common.py - Line 42 - E0239 (inherit-non-class)
-
-- `message: Inheriting 'typ.NamedTuple', which is not a class.`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  40:
-  41:
-> 42: class BuildConfig(typ.NamedTuple):
-  43:
-  44:     target_version  : str  # e.g. "2.7"
-```
-
-
-## File src/lib3to6/transpile.py - Line 43 - E0239 (inherit-non-class)
-
-- `message: Inheriting 'typ.NamedTuple', which is not a class.`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  41:
-  42:
-> 43: class ModuleHeader(typ.NamedTuple):
-  44:
-  45:     coding: str
-```
-
-
-## File src/lib3to6/common.py - Line 52 - E0239 (inherit-non-class)
-
-- `message: Inheriting 'typ.NamedTuple', which is not a class.`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  50:
-  51:
-> 52: class BuildContext(typ.NamedTuple):
-  53:
-  54:     cfg     : BuildConfig
-```
-
-
-## File src/lib3to6/common.py - Line 182 - E0239 (inherit-non-class)
-
-- `message: Inheriting 'typ.NamedTuple', which is not a class.`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  180: #   detected as already imported, and another import (without the
-  181: #   asname) will be added to the module.
-> 182: class ImportDecl(typ.NamedTuple):
-  183:     module_name    : str
-  184:     import_name    : typ.Optional[str]
-```
-
-
-# E1136: unsubscriptable-object
-
-## File src/lib3to6/common.py - Line 15 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  13: PackageDir       = typ.Dict[PackageName, PackageDirectory]
-  14:
-> 15: InstallRequires = typ.Optional[typ.Set[str]]
-  16:
-  17:
-```
-
-
-## File src/lib3to6/utils.py - Line 17 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  15: # Recursive types not fully supported yet, nested types replaced with "Any"
-  16: # NodeOrNodelist = typ.Union[ast.AST, typ.List["NodeOrNodelist"]]
-> 17: NodeOrNodelist = typ.Union[ast.AST, typ.List[typ.Any]]
-  18:
-  19:
-```
-
-
-## File src/lib3to6/checkers_backports.py - Line 29 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  26: class ModuleVersionInfo(typ.NamedTuple):
-  ...
-  27:
-  28:     available_since : str
-> 29:     backport_module : typ.Optional[str]
-  30:     backport_package: typ.Optional[str]
-  31:
-```
-
-
-## File src/lib3to6/checkers_backports.py - Line 30 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  26: class ModuleVersionInfo(typ.NamedTuple):
-  ...
-  28:     available_since : str
-  29:     backport_module : typ.Optional[str]
-> 30:     backport_package: typ.Optional[str]
-  31:
-  32:
-```
-
-
-## File src/lib3to6/transpile.py - Line 49 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  47:
-  48:
-> 49: def _parse_header_line(line_data: typ.Union[bytes, str], coding: str) -> str:
-  50:     if isinstance(line_data, bytes):
-  51:         return line_data.decode(coding)
-```
-
-
-## File src/lib3to6/transpile.py - Line 61 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  59:
-  60:
-> 61: def parse_module_header(module_source: typ.Union[bytes, str], target_version: str) -> ModuleHeader:
-  62:     shebang = False
-  63:     coding  = None
-```
-
-
-## File src/lib3to6/fixers.py - Line 74 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  72:
-  73:
-> 74: Elt  = typ.Union[ast.Name, ast.Constant, ast.Subscript]
-  75: Elts = typ.List[Elt]
-  76:
-```
-
-
-## File src/lib3to6/fixers.py - Line 78 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  76:
-  77:
-> 78: AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
-  79:
-  80:
-```
-
-
-## File src/lib3to6/transpile.py - Line 102 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  100: FixerType = typ.Type[fb.FixerBase]
-  101:
-> 102: CheckerOrFixer = typ.Union[CheckerType, FixerType]
-  103:
-  104:
-```
-
-
-## File src/lib3to6/common.py - Line 107 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  103: class FixerError(Exception):
-  ...
-  105:     msg   : str
-  106:     node  : ast.AST
-> 107:     module: typ.Optional[ast.Module]
-  108:
-  109:     def __init__(self, msg: str, node: ast.AST, module: ast.Module = None) -> None:
-```
-
-
-## File src/lib3to6/common.py - Line 127 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  116: class VersionInfo:
-  ...
-  125:     # since/until is inclusive
-  126:     apply_since: typ.List[int]
-> 127:     apply_until: typ.Optional[typ.List[int]]
-  128:     works_since: typ.List[int]
-  129:     works_until: typ.Optional[typ.List[int]]
-```
-
-
-## File src/lib3to6/common.py - Line 129 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  116: class VersionInfo:
-  ...
-  127:     apply_until: typ.Optional[typ.List[int]]
-  128:     works_since: typ.List[int]
-> 129:     works_until: typ.Optional[typ.List[int]]
-  130:
-  131:     def __init__(
-```
-
-
-## File src/lib3to6/__main__.py - Line 130 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  126: def main(
-  ...
-  128:     diff            : bool,
-  129:     in_place        : bool,
-> 130:     install_requires: typ.Optional[str],
-  131:     source_files    : typ.Sequence[io.TextIOWrapper],
-  132:     default_mode    : str = 'enabled',
-```
-
-
-## File src/lib3to6/transpile.py - Line 131 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  129:
-  130:
-> 131: FuzzyNames = typ.Union[str, typ.List[str]]
-  132:
-  133:
-```
-
-
-## File src/lib3to6/common.py - Line 134 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  131:     def __init__(
-  ...
-  132:         self,
-  133:         apply_since: str = "1.0",
-> 134:         apply_until: typ.Optional[str] = None,
-  135:         works_since: typ.Optional[str] = None,
-  136:         works_until: typ.Optional[str] = None,
-```
-
-
-## File src/lib3to6/common.py - Line 135 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  131:     def __init__(
-  ...
-  133:         apply_since: str = "1.0",
-  134:         apply_until: typ.Optional[str] = None,
-> 135:         works_since: typ.Optional[str] = None,
-  136:         works_until: typ.Optional[str] = None,
-  137:     ) -> None:
-```
-
-
-## File src/lib3to6/common.py - Line 136 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  131:     def __init__(
-  ...
-  134:         apply_until: typ.Optional[str] = None,
-  135:         works_since: typ.Optional[str] = None,
-> 136:         works_until: typ.Optional[str] = None,
-  137:     ) -> None:
-  138:
-```
-
-
-## File src/lib3to6/common.py - Line 184 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  182: class ImportDecl(typ.NamedTuple):
-  183:     module_name    : str
-> 184:     import_name    : typ.Optional[str]
-  185:     py2_module_name: typ.Optional[str]
-  186:
-```
-
-
-## File src/lib3to6/common.py - Line 185 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  182: class ImportDecl(typ.NamedTuple):
-  ...
-  183:     module_name    : str
-  184:     import_name    : typ.Optional[str]
-> 185:     py2_module_name: typ.Optional[str]
-  186:
-  187:
-```
-
-
-## File src/lib3to6/checkers.py - Line 221 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  219:
-  220:     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> None:
-> 221:         _typing_module_name   : typ.Optional[str] = None
-  222:         _namedtuple_class_name: str = "NamedTuple"
-  223:
-```
-
-
-## File src/lib3to6/fixers.py - Line 355 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  339: class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
-  ...
-  353:         return typ.cast(ast.Module, new_tree)
-  354:
-> 355:     def visit_Name(self, node: ast.Name) -> typ.Union[ast.Name, ast.Attribute]:
-  356:         if isinstance(node.ctx, ast.Load) and node.id in ("map", "zip", "filter"):
-  357:             self.required_imports.add(common.ImportDecl("itertools", None, None))
-```
-
-
-## File src/lib3to6/fixers.py - Line 368 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  364: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
-  ...
-  366:     version_info = common.VersionInfo(apply_since="2.6", apply_until="3.4")
-  367:
-> 368:     _typing_module_name   : typ.Optional[str]
-  369:     _namedtuple_class_name: typ.Optional[str]
-  370:
-```
-
-
-## File src/lib3to6/fixers.py - Line 369 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Optional' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  364: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
-  ...
-  367:
-  368:     _typing_module_name   : typ.Optional[str]
-> 369:     _namedtuple_class_name: typ.Optional[str]
-  370:
-  371:     def __init__(self) -> None:
-```
-
-
-## File src/lib3to6/fixers.py - Line 396 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  364: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
-  ...
-  394:         return node
-  395:
-> 396:     def visit_ClassDef(self, node: ast.ClassDef) -> typ.Union[ast.ClassDef, ast.Assign]:
-  397:         self.generic_visit(node)
-  398:         if len(node.bases) == 0:
-```
-
-
-## File src/lib3to6/fixers.py - Line 411 - E1136 (unsubscriptable-object)
-
-- `message: Value 'typ.Union' is unsubscriptable`
-- `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2021-01-22T16:47:46`
-
-```
-  396:     def visit_ClassDef(self, node: ast.ClassDef) -> typ.Union[ast.ClassDef, ast.Assign]:
-  ...
-  409:             return node
-  410:
-> 411:         func: typ.Union[ast.Attribute, ast.Name]
-  412:
-  413:         if self._typing_module_name:
-```
 
 
 # W0511: fixme
@@ -526,7 +40,7 @@ The recommended approach to using `pylint-ignore` is:
 
 ```
   11: from . import checker_base as cb
-  12:
+  12: 
 > 13: # TODO (mb 2020-05-28):
   14: #   instead of functools.singledispatch
   15: #   from singledispatch import singledispatch
@@ -540,7 +54,7 @@ The recommended approach to using `pylint-ignore` is:
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  33:
+  33: 
   34: def eval_build_config(**kwargs) -> common.BuildConfig:
 > 35:     # TODO (mb 2018-06-07): Get options from setup.cfg
   36:     # python_tags = "py2.py3"
@@ -558,7 +72,7 @@ The recommended approach to using `pylint-ignore` is:
    94: def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
   ...
   105:         build_package_subdir = output_dir / src_package_dir
-  106:
+  106: 
 > 107:         # TODO (mb 2018-08-25): As an optimization, we could
   108:         #   restrict deletion to files that we manipulate, in
   109:         #   other words, to *.py files.
@@ -572,8 +86,8 @@ The recommended approach to using `pylint-ignore` is:
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  326:
-  327:
+  326: 
+  327: 
 > 328: # TODO (mb 2018-09-02): Only ImportFrom is permitted for
   329: #   certain imports, so that we can determine which old
   330: #   module to import from
@@ -591,7 +105,7 @@ The recommended approach to using `pylint-ignore` is:
 ```
   31: def test_header_preserved():
   ...
-  57:
+  57: 
   58:     ctx = common.init_build_context(filepath="<testfile>")
 > 59:     result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
   60:         ctx, test_source
@@ -601,37 +115,37 @@ The recommended approach to using `pylint-ignore` is:
 
 # C0103: invalid-name
 
-## File src/lib3to6/fixers.py - Line 448 - C0103 (invalid-name)
+## File src/lib3to6/fixers.py - Line 450 - C0103 (invalid-name)
 
 - `message: Constant name "FStringToStrFormatFixer" doesn't conform to UPPER_CASE naming style`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  364: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
+  366: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
   ...
-  446:     from .fixers_fstring import FStringToStrFormatFixer
-  447: else:
-> 448:     FStringToStrFormatFixer = None
-  449:
-  450:
+  448:     from .fixers_fstring import FStringToStrFormatFixer
+  449: else:
+> 450:     FStringToStrFormatFixer = None
+  451: 
+  452:
 ```
 
 
-## File src/lib3to6/fixers.py - Line 454 - C0103 (invalid-name)
+## File src/lib3to6/fixers.py - Line 456 - C0103 (invalid-name)
 
 - `message: Constant name "NamedExprFixer" doesn't conform to UPPER_CASE naming style`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  364: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
+  366: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
   ...
-  452:     from .fixers_namedexpr import NamedExprFixer
-  453: else:
-> 454:     NamedExprFixer = None
-  455:
-  456:
+  454:     from .fixers_namedexpr import NamedExprFixer
+  455: else:
+> 456:     NamedExprFixer = None
+  457: 
+  458:
 ```
 
 
@@ -639,7 +153,7 @@ The recommended approach to using `pylint-ignore` is:
 
 ## File test/test_fixers.py - Line 1 - C0302 (too-many-lines)
 
-- `message: Too many lines in module (1203/1000)`
+- `message: Too many lines in module (1265/1000)`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
@@ -662,7 +176,7 @@ The recommended approach to using `pylint-ignore` is:
   179: class UnpackingGeneralizationsFixer(fb.FixerBase):
   ...
   181:     version_info = common.VersionInfo(apply_since="2.0", apply_until="3.4")
-  182:
+  182: 
 > 183:     def expand_starstararg_g12n(self, node: ast.expr) -> ast.expr:
   184:         chain_values: typ.List[ast.expr] = []
   185:         chain_val   : ast.expr

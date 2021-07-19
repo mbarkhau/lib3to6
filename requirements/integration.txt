@@ -11,18 +11,16 @@
 # Support for Python 2.x and PyPy has been dropped (#340).
 pydocstyle<4
 
-
 flake8
 flake8-bugbear
 flake8-docstrings
 flake8-builtins
 flake8-comprehensions
 flake8-junit-report
+pylint>=2.8
 pylint-ignore>=2020.1013
 mypy
-# pylint doesn't support isort>=5 for now
-#   https://github.com/PyCQA/pylint/issues/3722
-isort<5
+isort
 
 # http://doc.pytest.org/en/latest/py27-py34-deprecation.html
 # The pytest 4.6 series will be the last to support Python 2.7

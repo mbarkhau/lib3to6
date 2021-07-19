@@ -301,7 +301,6 @@ git_hooks:
 lint_isort:
 	@printf "isort ...\n"
 	@$(DEV_ENV)/bin/isort \
-		--recursive \
 		--check-only \
 		--line-width=$(MAX_LINE_LEN) \
 		--project $(MODULE_NAME) \
@@ -408,7 +407,6 @@ test:
 .PHONY: fmt_isort
 fmt_isort:
 	@$(DEV_ENV)/bin/isort \
-		--recursive \
 		--line-width=$(MAX_LINE_LEN) \
 		--project $(MODULE_NAME) \
 		src/ test/;
