@@ -103,6 +103,8 @@ class _FRAFContext:
                     elts[i] = ast.Constant(elt.id)
             elif isinstance(elt, ast.Subscript):
                 self.update_subscript(elt)
+            elif isinstance(elt, ast.List):
+                self.update_index_elts(elt.elts)
             else:
                 msg = f"Error fixing index element with forward ref of type {type(elt)}"
                 raise NotImplementedError(msg)

@@ -1142,13 +1142,13 @@ FIXTURES = [
         def bar(foos: typing.Optional[typing.Sequence[Foo, str, Foo, str], Foo, m.Bar]):
             ...
 
-        def before_foo(foo: Optional[Sequence[Sequence[Foo]]]):
+        def before_foo(foo: Callable[[Sequence[Foo]], None]):
             ...
 
         class Foo:
             foo: Foo
 
-        def after_foo(foo: Optional[Sequence[Sequence[Foo]]]):
+        def after_foo(foo: Callable[[Foo], None]):
             ...
         """,
         """
@@ -1157,13 +1157,13 @@ FIXTURES = [
         def bar(foos: typing.Optional[typing.Sequence['Foo', str, 'Foo', str], 'Foo', m.Bar]):
             ...
 
-        def before_foo(foo: Optional[Sequence[Sequence['Foo']]]):
+        def before_foo(foo: Callable[[Sequence['Foo']], None]):
             ...
 
         class Foo:
             foo: 'Foo'
 
-        def after_foo(foo: Optional[Sequence[Sequence[Foo]]]):
+        def after_foo(foo: Callable[[Foo], None]):
             ...
         """,
     ),
