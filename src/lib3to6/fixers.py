@@ -71,7 +71,7 @@ def is_const_node(node: ast.AST) -> bool:
     return node is None or any(isinstance(node, cntype) for cntype in common.ConstantNodeTypes)
 
 
-Elt  = typ.Union[ast.Name, ast.Constant, ast.Subscript]
+Elt  = typ.Union[ast.expr, ast.Name, ast.Constant, ast.Subscript]
 Elts = typ.List[Elt]
 
 
@@ -112,8 +112,7 @@ class _FRAFContext:
     def update_subscript(self, val: ast.Subscript) -> None:
         idx = val.slice
         if isinstance(idx, ast.Tuple):
-            elts = typ.cast(Elts, idx.elts)
-            self.update_index_elts(elts)
+            self.update_index_elts(idx.elts)
         elif isinstance(idx, ast.Index):
             self.update_index(idx)
         elif isinstance(idx, ast.Subscript):
@@ -138,8 +137,7 @@ class _FRAFContext:
         elif isinstance(val, ast.Subscript):
             self.update_subscript(val)
         elif isinstance(val, ast.Tuple):
-            elts = typ.cast(Elts, val.elts)
-            self.update_index_elts(elts)
+            self.update_index_elts(val.elts)
         else:
             msg = f"Error fixing index with forward ref of type {type(val)}"
             raise NotImplementedError(msg)
