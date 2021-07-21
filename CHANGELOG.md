@@ -1,5 +1,10 @@
 # Changelog for https://github.com/mbarkhau/lib3to6
 
+## v202107.1045
+
+ - Fix type annotations with list arguments
+
+
 ## v202107.1044
 
  - Fix type annotations with attribute access
