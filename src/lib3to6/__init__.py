@@ -9,6 +9,6 @@ from .utils import parsedump_source
 from .packaging import fix
 from .transpile import transpile_module
 
-__version__ = "v202107.1046"
+__version__ = "v202107.1047"
 
 __all__ = ["fix", "transpile_module", "parsedump_ast", 'parsedump_source']

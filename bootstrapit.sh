@@ -13,7 +13,7 @@ MODULE_NAME="lib3to6"
 GIT_REPO_NAMESPACE="mbarkhau"
 GIT_REPO_DOMAIN="gitlab.com"
 
-PACKAGE_VERSION="v202107.1046"
+PACKAGE_VERSION="v202107.1047"
 
 DEFAULT_PYTHON_VERSION="python=3.7"
 # Note: python2.7 is not supported, but we need the interpreter
