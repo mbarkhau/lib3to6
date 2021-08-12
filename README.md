@@ -196,6 +196,15 @@ Hello 世界 from 2.7.15!
 ```
 
 
+## Deprecations
+
+Before `v202108.1048` the recomendation was to use
+`package_dir = lib3to6.fix(package_dir, ...)`.
+This approach did not make use of metadata already provided to
+`setuptools.setup()` and also caused issues when using
+`include_package_data=True`. Use the above described
+`lib3to6.build_py` instead.
+
 
 ## Per-File Opt-In/Opt-Out
 

@@ -11,6 +11,7 @@ import shutil
 import typing as typ
 import hashlib
 import tempfile
+import warnings
 
 import pathlib2 as pl
 import setuptools.command.build_py as _build_py
@@ -173,6 +174,9 @@ def fix(
     install_requires: typ.List[str] = None,
     default_mode    : str = 'enabled',
 ) -> common.PackageDir:
+    msg = "Depricated: lib3to6.fix(). See https://github.com/mbarkhau/lib3to6#Deprications"
+    warnings.warn(msg, DeprecationWarning)
+
     if package_dir is None:
         package_dir = {"": "."}
 
