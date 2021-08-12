@@ -177,7 +177,8 @@ class VersionInfo:
         apply_until = self.apply_until
         if apply_until and apply_until < version_num:
             return False
-        return self.apply_since <= version_num
+        else:
+            return self.apply_since <= version_num
 
     def is_compatible_with(self, version: str) -> bool:
         version_num = [int(part) for part in version.split(".")]
@@ -185,9 +186,10 @@ class VersionInfo:
         works_until = self.works_until
         if works_since and version_num < works_since:
             return False
-        if works_until and works_until < version_num:
+        elif works_until and works_until < version_num:
             return False
-        return True
+        else:
+            return True
 
     def is_applicable_to(self, source_version: str, target_version: str) -> bool:
         return self.is_required_for(target_version) and self.is_compatible_with(source_version)

@@ -227,15 +227,15 @@ class RemoveAnnAssignFixer(fb.TransformerFixerBase):
     @staticmethod
     def visit_AnnAssign(node: ast.AnnAssign) -> ast.Assign:
         tgt_node = node.target
-        if not isinstance(tgt_node, (ast.Name, ast.Attribute)):
-            raise common.FixerError("Unexpected Node type", tgt_node)
-
-        value: ast.expr
-        if node.value is None:
-            value = ast.NameConstant(value=None)
+        if isinstance(tgt_node, (ast.Name, ast.Attribute)):
+            value: ast.expr
+            if node.value is None:
+                value = ast.NameConstant(value=None)
+            else:
+                value = node.value
+            return ast.Assign(targets=[tgt_node], value=value)
         else:
-            value = node.value
-        return ast.Assign(targets=[tgt_node], value=value)
+            raise common.FixerError("Unexpected Node type", tgt_node)
 
 
 class ShortToLongFormSuperFixer(fb.TransformerFixerBase):
@@ -306,9 +306,7 @@ class InlineKWOnlyArgsFixer(fb.TransformerFixerBase):
                     ctx=ast.Load(),
                 )
             elif not isinstance(default, common.ConstantNodeTypes):
-                msg = (
-                    f"Keyword only arguments must be immutable. " f"Found: {default} for {arg_name}"
-                )
+                msg = f"Keyword only arguments must be immutable. Found: {default} for {arg_name}"
                 raise common.FixerError(msg, node)
             else:
                 node_value = ast.Call(
