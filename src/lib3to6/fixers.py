@@ -107,7 +107,7 @@ class _FRAFContext:
                 self.update_index_elts(elt.elts)
             else:
                 msg = f"Error fixing index element with forward ref of type {type(elt)}"
-                raise NotImplementedError(msg)
+                raise common.FixerError(msg, elt)
 
     def update_subscript(self, val: ast.Subscript) -> None:
         idx = val.slice
@@ -126,7 +126,7 @@ class _FRAFContext:
             return
         else:
             msg = f"Error fixing annotation of forward ref with type {type(idx)}"
-            raise NotImplementedError(msg)
+            raise common.FixerError(msg, idx)
 
     def update_index(self, idx: ast.Index) -> None:
         val = idx.value
@@ -142,7 +142,7 @@ class _FRAFContext:
             self.update_index_elts(val.elts)
         else:
             msg = f"Error fixing index with forward ref of type {type(val)}"
-            raise NotImplementedError(msg)
+            raise common.FixerError(msg, val)
 
     def update_annotation_refs(self, node: AnnoNode, attrname: str) -> None:
         anno = getattr(node, attrname)
@@ -156,7 +156,7 @@ class _FRAFContext:
             self.update_subscript(anno)
         else:
             msg = f"Error fixing annotation of forward ref with type {type(anno)}"
-            raise NotImplementedError(msg)
+            raise common.FixerError(msg, anno)
 
     def remove_forward_references(self, node: ast.AST) -> None:
         for sub_node in ast.iter_child_nodes(node):
@@ -188,13 +188,14 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
 
     version_info = common.VersionInfo(apply_since="3.0", apply_until="3.6")
 
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         local_classes: typ.Set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 local_classes.add(node.name)
 
-        _FRAFContext(local_classes).remove_forward_references(tree)
+        fraf_ctx = _FRAFContext(local_classes, tree)
+        fraf_ctx.remove_forward_references(tree)
         return tree
 
 
@@ -202,7 +203,7 @@ class RemoveFunctionDefAnnotationsFixer(fb.FixerBase):
 
     version_info = common.VersionInfo(apply_since="1.0", apply_until="2.7")
 
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 node.returns = None
@@ -352,7 +353,7 @@ class ItertoolsBuiltinsFixer(fb.TransformerFixerBase):
     #   only be used in combination with a sanity check that the
     #   builtin names are not being overridden.
 
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         new_tree = self.visit(tree)
         return typ.cast(ast.Module, new_tree)
 
@@ -531,7 +532,7 @@ __all__ = [
 #         apply_until="3.3",
 #     )
 #
-#     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+#     def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
 #         return tree
 #
 #     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:

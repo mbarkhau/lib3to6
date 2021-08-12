@@ -83,12 +83,15 @@ class InvalidPackage(Exception):
     pass
 
 
-def get_node_lineno(node: ast.AST = None, parent: ast.AST = None) -> int:
+def get_node_lineno(
+    node: typ.Optional[ast.AST] = None, parent: typ.Optional[ast.AST] = None
+) -> int:
     if isinstance(node, (ast.stmt, ast.expr)):
         return node.lineno
-    if isinstance(parent, (ast.stmt, ast.expr)):
+    elif isinstance(parent, (ast.stmt, ast.expr)):
         return parent.lineno
-    return -1
+    else:
+        return -1
 
 
 class CheckError(Exception):
@@ -102,15 +105,30 @@ class CheckError(Exception):
 
 class FixerError(Exception):
 
-    msg   : str
-    node  : ast.AST
-    module: typ.Optional[ast.Module]
+    msg = str
+    node    : ast.AST
+    parent  : typ.Optional[ast.AST]
+    filepath: str
 
-    def __init__(self, msg: str, node: ast.AST, module: ast.Module = None) -> None:
-        self.msg    = msg
-        self.node   = node
-        self.module = module
+    def __init__(
+        self,
+        msg     : str,
+        node    : ast.AST,
+        parent  : typ.Optional[ast.AST] = None,
+        filepath: typ.Optional[str    ] = None,
+    ) -> None:
+        self.msg      = msg
+        self.node     = node
+        self.parent   = parent
+        self.filepath = filepath
         super().__init__(msg)
+
+    def __str__(self) -> str:
+        msg = self.msg
+        if self.filepath:
+            lineno = get_node_lineno(self.node, self.parent)
+            msg += f" File: {self.filepath}@{lineno}"
+        return msg
 
 
 class VersionInfo:

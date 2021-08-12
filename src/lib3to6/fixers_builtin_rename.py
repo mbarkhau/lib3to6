@@ -15,7 +15,7 @@ class BuiltinsRenameFixerBase(fb.FixerBase):
     new_name: str
     old_name: str
 
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         for node in ast.walk(tree):
             is_access_to_builtin = (
                 isinstance(node, ast.Name)

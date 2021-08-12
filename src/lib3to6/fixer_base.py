@@ -24,15 +24,20 @@ class FixerBase:
         self.module_declarations = set()
 
     def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+        try:
+            return self.apply_fix(ctx, tree)
+        except common.FixerError as ex:
+            if ex.parent is None:
+                ex.parent = tree
+            if ex.filepath is None:
+                ex.filepath = ctx.filepath
+            raise
+
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         raise NotImplementedError()
 
 
 class TransformerFixerBase(FixerBase, ast.NodeTransformer):
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
-        try:
-            new_tree = self.visit(tree)
-            return typ.cast(ast.Module, new_tree)
-        except common.FixerError as ex:
-            if ex.module is None:
-                ex.module = tree
-            raise
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+        new_tree = self.visit(tree)
+        return typ.cast(ast.Module, new_tree)

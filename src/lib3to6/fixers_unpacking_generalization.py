@@ -371,6 +371,6 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
 
         return node
 
-    def __call__(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
+    def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
         tree.body = self.walk_stmtlist(tree.body)
         return tree
