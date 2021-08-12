@@ -1,6 +1,11 @@
 # Changelog for https://github.com/mbarkhau/lib3to6
 
-## v202107.1045
+
+## Next
+
+ - Fix type annotations with constants (e.g. `Optional['MyClass']`)
+
+## v202107.1047
 
  - Fix type annotations with list arguments
 

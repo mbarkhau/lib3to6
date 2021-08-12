@@ -1185,6 +1185,20 @@ FIXTURES = [
 
         """,
     ),
+    make_fixture(
+        ['forward_reference_annotations'],
+        "3.6",
+        """
+        class Foo:
+            def bar(foos: Optional['Foo']) -> Sequence['Foo']:
+                ...
+        """,
+        """
+        class Foo:
+            def bar(foos: Optional['Foo']) -> Sequence['Foo']:
+                ...
+        """,
+    ),
     # FixerFixture(
     #     "generator_return_to_stop_iteration_exception",
     #     "2.7",
