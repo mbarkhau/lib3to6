@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 import os
+import re
 import sys
 import shutil
 import typing as typ
@@ -57,7 +58,7 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
         raise TypeError(f"Invalid argument for install_requires: {type(_install_requires)}")
 
     if install_requires:
-        install_requires = {req.split(";")[0] for req in install_requires}
+        install_requires = {re.split(r"[\^\~<>=;]", req.strip())[0] for req in install_requires}
 
     return common.BuildConfig(
         target_version=target_version,

@@ -3,6 +3,7 @@
 
 ## Next
 
+ - Fix invalid parsing of install_requires.
  - Fix cache invalidation when build config changes.
  - Fix type annotations with constants (e.g. `Optional['MyClass']`)
 
