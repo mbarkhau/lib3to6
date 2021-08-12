@@ -4,7 +4,6 @@
 ## Next
 
 
- - Add better default integration method: [`lib3to6.build_py`][href_readme_integration]
  - Add new default integration method: [`lib3to6.build_py`][href_readme_integration]
  - Deprecate old integration method (had issues with package data).
  - Fix invalid parsing of install_requires.
@@ -20,12 +19,12 @@
  - Fix type annotations with list arguments
 
 
-## v202107.1044
+## v202107.1046
 
  - Fix type annotations with attribute access
 
 
-## v202101.1043
+## v202101.1045
 
  - Fixes for Python 3.9 and mypy 0.800
 

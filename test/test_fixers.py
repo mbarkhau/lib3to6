@@ -1221,6 +1221,18 @@ def _normalized_source(in_source):
 DEBUG_VERBOSITY = 0
 
 
+def _debug_ast(casename, source):
+    if DEBUG_VERBOSITY > 0:
+        print(casename.upper() * 9)
+        if DEBUG_VERBOSITY > 1:
+            ast = utils.parsedump_ast(source)
+            print(ast)
+            print("-------- " * 9)
+        if DEBUG_VERBOSITY > 2:
+            print(repr(source))
+        print(source)
+
+
 @pytest.mark.parametrize("fixture", FIXTURES)
 def test_fixers(fixture):
     if "--capture=no" in sys.argv:
@@ -1232,41 +1244,18 @@ def test_fixers(fixture):
 
     test_source = utils.clean_whitespace(fixture.test_source)
 
-    if DEBUG_VERBOSITY > 0:
-        print("TESTCASE " * 9)
-        if DEBUG_VERBOSITY > 1:
-            test_ast = utils.parsedump_ast(test_source)
-            print(test_ast)
-            print("-------- " * 9)
-        if DEBUG_VERBOSITY > 2:
-            print(repr(test_source))
-        print(test_source)
-
-    if DEBUG_VERBOSITY > 0:
-        print("EXPECTED " * 9)
-        if DEBUG_VERBOSITY > 1:
-            print(expected_ast)
-            print("-------- " * 9)
-        if DEBUG_VERBOSITY > 2:
-            print(repr(expected_source))
-        print(expected_source)
+    _debug_ast("testcase", test_source)
+    _debug_ast("expected", expected_source)
 
     ctx = common.init_build_context(
         target_version=fixture.target_version, fixers=fixture.names, filepath="<testfile>"
     )
-    result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
-        ctx, test_source
-    )
-    result_ast = utils.parsedump_ast(result_source)
+    results = utils.transpile_and_dump(ctx, test_source)
+    result_header_coding, result_header_text, result_source = results
 
-    if DEBUG_VERBOSITY > 0:
-        print("RESULT " * 9)
-        if DEBUG_VERBOSITY > 1:
-            print(result_ast)
-            print("-------- " * 9)
-        if DEBUG_VERBOSITY > 2:
-            print(repr(result_source))
-        print(result_source)
+    _debug_ast("result", result_source)
+
+    result_ast = utils.parsedump_ast(result_source)
 
     assert result_header_coding == expected_header.coding
     assert result_header_text   == expected_header.text

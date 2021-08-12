@@ -153,12 +153,10 @@ def build_package(cfg: common.BuildConfig, package: str, build_dir: str) -> None
     for root, _dirs, files in os.walk(build_dir):
         for filename in files:
             filepath = pl.Path(root) / filename
-            if filepath.suffix != ".py":
-                continue
-
-            transpiled_path = _transpile_path(cfg, filepath)
-            # overwrite original with transpiled
-            shutil.copy(transpiled_path, filepath)
+            if filepath.suffix == ".py":
+                transpiled_path = transpile_path(cfg, filepath)
+                # overwrite original with transpiled
+                shutil.copy(transpiled_path, filepath)
 
 
 def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir) -> None:
