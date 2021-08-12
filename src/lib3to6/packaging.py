@@ -8,7 +8,7 @@ import os
 import sys
 import shutil
 import typing as typ
-import hashlib as hl
+import hashlib
 import tempfile
 
 import pathlib2 as pl
@@ -116,12 +116,15 @@ def init_build_package_dir(local_package_dir: common.PackageDir) -> common.Packa
     return build_package_dir
 
 
-def _transpile_path(cfg: common.BuildConfig, filepath: pl.Path) -> pl.Path:
+def transpile_path(cfg: common.BuildConfig, filepath: pl.Path) -> pl.Path:
     with open(filepath, mode="rb") as fobj:
         module_source_data = fobj.read()
 
-    filehash   = hl.sha1(module_source_data).hexdigest()
-    cache_path = CACHE_DIR / (filehash + ".py")
+    filehash = hashlib.sha1()
+    filehash.update(str(cfg).encode("utf-8"))
+    filehash.update(module_source_data)
+
+    cache_path = CACHE_DIR / (filehash.hexdigest() + ".py")
 
     # NOTE (mb 2020-09-01): not cache_enabled -> always update cache
     if not cfg.cache_enabled or not cache_path.exists():

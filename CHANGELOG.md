@@ -3,6 +3,7 @@
 
 ## Next
 
+ - Fix cache invalidation when build config changes.
  - Fix type annotations with constants (e.g. `Optional['MyClass']`)
 
 ## v202107.1047
