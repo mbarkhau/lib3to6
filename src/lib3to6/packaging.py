@@ -191,12 +191,14 @@ def fix(
 class build_py(_build_py.build_py):
     # pylint: disable=invalid-name      ; following the convention of setuptools
 
-    def run_3to6(self):
+    def run_3to6(self) -> None:
         outputs = _build_py.orig.build_py.get_outputs(self, include_bytecode=0)
         dist    = self.distribution
         pyreq   = dist.python_requires
-        if isinstance(pyreq, str) and pyreq.startswith(">="):
-            target_version = re.match(r">=([0-9]+\.[0-9]+)", pyreq).group(1)
+
+        preq_match = isinstance(pyreq, str) and re.match(r">=([0-9]+\.[0-9]+)", pyreq)
+        if preq_match:
+            target_version = preq_match.group(1)
         else:
             raise ValueError('lib3to6: missing python_requires=">=X.Y" in setup.py')
 
@@ -210,7 +212,7 @@ class build_py(_build_py.build_py):
                 transpiled_path = transpile_path(build_cfg, pl.Path(output))
                 shutil.copy(transpiled_path, output)
 
-    def run(self):
+    def run(self) -> None:
         """Build modules, packages, and copy data files to build directory"""
         if not self.py_modules and not self.packages:
             return
