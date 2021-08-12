@@ -3,6 +3,11 @@
 
 ## Next
 
+ - Add fixer for type hinting generics `'x: list[int]` -> `x: typing.List[int]`
+ - Add fixer for Union Operator `'x: A | B` -> `x: typing.Union[A, B]`
+
+
+## v202108.1048
 
  - Add new default integration method: [`lib3to6.build_py`][href_readme_integration]
  - Deprecate old integration method (had issues with package data).
