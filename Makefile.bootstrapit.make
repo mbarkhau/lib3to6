@@ -29,7 +29,7 @@ MODULE_NAME := $(shell echo $(subst -,_,$(PACKAGE_NAME)) | tr A-Z a-z)
 PLATFORM = $(shell uname -s)
 
 # miniconda is shared between projects
-CONDA_ROOT := $(shell if [[ -d /opt/conda/envs ]]; then echo "/opt/conda"; else echo "$$HOME/miniconda3"; fi;)
+CONDA_ROOT := $(shell if [[ -d /opt/conda/envs ]]; then echo "/opt/conda"; else echo "$${HOME}/miniconda3"; fi;)
 CONDA_BIN := $(CONDA_ROOT)/bin/conda
 
 ENV_PREFIX := $(CONDA_ROOT)/envs
@@ -57,8 +57,7 @@ CONDA_ENV_BIN_PYTHON_PATHS := \
 empty :=
 literal_space := $(empty) $(empty)
 
-BDIST_WHEEL_PYTHON_TAG := \
-	$(subst python,py,$(subst $(literal_space),.,$(subst .,,$(subst =,,$(SUPPORTED_PYTHON_VERSIONS)))))
+BDIST_WHEEL_PYTHON_TAG := py3
 
 SDIST_FILE_CMD = ls -1t dist/*.tar.gz | head -n 1
 
@@ -548,7 +547,7 @@ bump_version:
 .PHONY: dist_build
 dist_build:
 	$(DEV_ENV_PY) setup.py sdist;
-	$(DEV_ENV_PY) setup.py bdist_wheel --python-tag=py36.py37.py38;
+	$(DEV_ENV_PY) setup.py bdist_wheel --python-tag=$(BDIST_WHEEL_PYTHON_TAG);
 	@rm -rf src/*.egg-info
 
 

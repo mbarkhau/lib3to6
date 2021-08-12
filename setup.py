@@ -27,18 +27,13 @@ install_requires = [
 
 
 packages = setuptools.find_packages(project_path("src"))
-package_dir = {"": "src"}
 
 
-if any(arg.startswith("bdist") for arg in sys.argv):
-    try:
-        import lib3to6
-        package_dir = lib3to6.fix(package_dir, install_requires=install_requires)
-    except ImportError as ex:
-        if "lib3to6" in str(ex):
-            print("WARNING: 'lib3to6' missing, package will not be universal")
-        else:
-            raise
+try:
+    import lib3to6
+    cmdclass = {'build_py': lib3to6.build_py}
+except ImportError:
+    cmdclass = {}
 
 
 long_description = (read("README.md") + "\n\n" + read("CHANGELOG.md"))
@@ -57,7 +52,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
 
     packages=packages,
-    package_dir=package_dir,
+    package_dir={"": "src"},
     install_requires=install_requires,
     entry_points="""
         [console_scripts]
@@ -78,10 +73,7 @@ setuptools.setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS :: MacOS X",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
