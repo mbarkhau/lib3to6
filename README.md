@@ -126,94 +126,31 @@ def compare(a, b, **kwargs):
 This means that the function signature you can get using the `inspect` module may not be what you expect for the output of `lib3to6`.
 
 
-## Per-File Opt-In/Opt-Out
+## Integration with `setup.py`
 
-Since `lib3to6==v202008.1042` there is support to selectively enable/disable transpilation on a per-file basis.
+The cli command `lib3to6 <filename>` is nice for demo purposes, but
+for integration with your project, you may prefer to use it in your
+`setup.py` file. Contributions for other kinds of integration are most
+welcome.
 
-Any file which starts with a `# lib3to6: disabled` comment, will not be transpiled. For these, you will have to take care of forward/backward compatibility yourself.
-
-```python
-# -*- coding: utf-8 -*-
-# lib3to6: disabled
-"""A module written to work both with Python2 and 3.
-
-This module doesn't need to be transpiled by lib3to6.
-"""
-
-from __future__ import print_function
-...
-
-import sys
-
-PY3 = sys.version_info[0] > 2
-
-if PY3:
-    ...
-else:
-    ...
-```
-
-Instead of opt-out, you can also take an opt-in approach. You will have to switch the `default_mode` argument:
 
 ```python
 # setup.py
-package_dir = {"": "src"}
-
-if any(arg.startswith("bdist") for arg in sys.argv):
+try:
     import lib3to6
-    package_dir = lib3to6.fix(package_dir, default_mode='disabled')
-```
-
-This will leave all files untouched, except for those marked with a `# lib3to6: enabled` comment.
-
-```python
-# lib3to6: enabled
-"""A module written to work both with Python2 and 3.
-
-This module doesn't need to be transpiled by lib3to6.
-"""
-
-name: str = "Wörld"
-print(f"Hello {world}!")
-```
-
-
-## Integration using `setup.py`
-
-The cli command `lib3to6 <filename>` is nice for demo purposes, but for integration with your project, you may prefer to use it in your `setup.py` file. Contributions for other kinds of integration are most welcome.
-
-```python
-# setup.py
-
-import sys
-import setuptools
-
-packages = setuptools.find_packages(".")
-package_dir = {"": "."}
-
-install_requires = ['typing;python_version<"3.5"']
-
-if any(arg.startswith("bdist") for arg in sys.argv):
-    import lib3to6
-    package_dir = lib3to6.fix(
-        package_dir,
-        target_version="2.7",
-        install_requires=install_requires,
-        default_mode='enabled',
-    )
+    cmdclass = {'build_py': lib3to6.build_py}
+except ImportError:
+    cmdclass = {}
 
 setuptools.setup(
     name="my-module",
-    version="0.1.0",
-    packages=packages,
-    package_dir=package_dir,
-    install_requires=install_requires,
-    classifiers=[
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 3",
-        ...
-    ],
+    license="MIT",
+    ...
+    python_requires=">=2.7",
+    install_requires=[...],
+    setup_requires=['lib3to6>=202107.1048'],
+    lib3to6={'elide_annotations': True},
+    cmdclass=cmdclass,
 )
 ```
 
@@ -256,6 +193,73 @@ Hello 世界 from 3.6.5!
 ~$ python2 -c "import my_module"
 /home/user/envs/py27/lib/python2.7/site-packages/my_module/__init__.py
 Hello 世界 from 2.7.15!
+```
+
+
+
+## Per-File Opt-In/Opt-Out
+
+Since `lib3to6==v202009.1044` there is support to selectively
+enable/disable transpilation on a per-file basis.
+
+Any file which starts with a `# lib3to6: disabled` comment, will not
+be transpiled. For these, you will have to take care of
+forward/backward compatibility yourself.
+
+```python
+# -*- coding: utf-8 -*-
+# lib3to6: disabled
+"""A module written to work both with Python2 and 3.
+
+This module is not transpiled by lib3to6.
+"""
+
+from __future__ import print_function
+...
+
+import sys
+
+PY3 = sys.version_info[0] > 2
+
+if PY3:
+    ...
+else:
+    ...
+```
+
+Instead of opt-out, you can also take an opt-in approach. You will
+have to use the `lib3to6_default_mode` option:
+
+```python
+# setup.py
+try:
+    import lib3to6
+    cmdclass = {'build_py': lib3to6.build_py}
+except ImportError:
+    cmdclass = {}
+
+
+setuptools.setup(
+    ...
+    lib3to6={
+        'elide_annotations': True,
+        'default_mode': 'disabled',     # default: enabled
+    },
+    cmdclass=cmdclass,
+)
+```
+
+This will leave all files untouched, except for those marked with a `# lib3to6: enabled` comment.
+
+```python
+# lib3to6: enabled
+"""A module written to work both with Python2 and 3.
+
+This module is transpiled with lib3to6.
+"""
+
+name: str = "Wörld"
+print(f"Hello {world}!")
 ```
 
 

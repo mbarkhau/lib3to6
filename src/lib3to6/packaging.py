@@ -13,6 +13,7 @@ import hashlib
 import tempfile
 
 import pathlib2 as pl
+import setuptools.command.build_py as _build_py
 
 from . import common
 from . import transpile
@@ -183,3 +184,48 @@ def fix(
     )
     build_packages(build_cfg, build_package_dir)
     return build_package_dir
+
+
+class build_py(_build_py.build_py):
+    # pylint: disable=invalid-name      ; following the convention of setuptools
+
+    def run_3to6(self):
+        outputs = _build_py.orig.build_py.get_outputs(self, include_bytecode=0)
+        dist    = self.distribution
+        pyreq   = dist.python_requires
+        if isinstance(pyreq, str) and pyreq.startswith(">="):
+            target_version = re.match(r">=([0-9]+\.[0-9]+)", pyreq).group(1)
+        else:
+            raise ValueError('lib3to6: missing python_requires=">=X.Y" in setup.py')
+
+        build_cfg = eval_build_config(
+            target_version=target_version,
+            install_requires=sorted(dist.install_requires),
+            default_mode=getattr(dist, 'lib3to6_default_mode', 'enabled'),
+        )
+        for output in outputs:
+            if output.endswith(".py"):
+                transpiled_path = transpile_path(build_cfg, pl.Path(output))
+                shutil.copy(transpiled_path, output)
+
+    def run(self):
+        """Build modules, packages, and copy data files to build directory"""
+        if not self.py_modules and not self.packages:
+            return
+
+        if self.py_modules:
+            self.build_modules()
+
+        if self.packages:
+            self.build_packages()
+            self.build_package_data()
+
+        self.run_2to3(self.__updated_files, False)
+        self.run_2to3(self.__updated_files, True)
+        self.run_2to3(self.__doctests_2to3, True)
+
+        self.run_3to6()
+
+        # Only compile actual .py files, using our base class' idea of what our
+        # output files are.
+        self.byte_compile(_build_py.orig.build_py.get_outputs(self, include_bytecode=0))

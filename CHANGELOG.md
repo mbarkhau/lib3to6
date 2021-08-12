@@ -3,9 +3,16 @@
 
 ## Next
 
+
+ - Add better default integration method: [`lib3to6.build_py`][href_readme_integration]
+ - Add new default integration method: [`lib3to6.build_py`][href_readme_integration]
  - Fix invalid parsing of install_requires.
  - Fix cache invalidation when build config changes.
  - Fix type annotations with constants (e.g. `Optional['MyClass']`)
+
+
+[href_readme_integration]: https://github.com/mbarkhau/lib3to6#integration-with-setuppy
+
 
 ## v202107.1047
 
