@@ -105,7 +105,7 @@ class CheckError(Exception):
 
 class FixerError(Exception):
 
-    msg = str
+    msg     : str
     node    : ast.AST
     parent  : typ.Optional[ast.AST]
     filepath: str
