@@ -52,13 +52,13 @@ setuptools.setup(
     packages=setuptools.find_packages("src/"),
     package_dir={"": "src"},
     install_requires=install_requires,
+    python_requires=">=3.6",
+    zip_safe=True,
+
     entry_points="""
         [console_scripts]
         lib3to6=lib3to6.__main__:main
     """,
-    python_requires=">=3.6",
-    zip_safe=True,
-
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Development Status :: 4 - Beta",
