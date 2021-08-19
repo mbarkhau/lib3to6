@@ -67,7 +67,7 @@ def _iter_module_names(node: ast.AST) -> typ.Iterable[str]:
             yield mname
 
 
-def _iter_maybe_unusable_modules(node: ast.AST) -> typ.Iterable[typ.Tuple[str, ModuleVersionInfo]]:
+def _iter_maybe_unusable_modules(node: ast.AST) -> typ.Iterable[tuple[str, ModuleVersionInfo]]:
     for mname in _iter_module_names(node):
         vnfo = MAYBE_UNUSABLE_MODULES.get(mname)
         if vnfo:

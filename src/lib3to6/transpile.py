@@ -63,7 +63,7 @@ def parse_module_header(module_source: typ.Union[bytes, str], target_version: st
     coding  = None
     line: str
 
-    header_lines: typ.List[str] = []
+    header_lines: list[str] = []
 
     for i, line_data in enumerate(module_source.splitlines()):
         assert isinstance(line_data, (bytes, str))
@@ -111,7 +111,7 @@ def normalize_name(name: str) -> str:
     return name
 
 
-def get_available_classes(module: object, clazz: CheckerOrFixer) -> typ.Dict[str, CheckerOrFixer]:
+def get_available_classes(module: object, clazz: CheckerOrFixer) -> dict[str, CheckerOrFixer]:
 
     assert isinstance(clazz, type)
     clazz_name = clazz.__name__
@@ -128,10 +128,10 @@ def get_available_classes(module: object, clazz: CheckerOrFixer) -> typ.Dict[str
     }
 
 
-FuzzyNames = typ.Union[str, typ.List[str]]
+FuzzyNames = typ.Union[str, list[str]]
 
 
-def get_selected_names(names: FuzzyNames, available_names: typ.Set[str]) -> typ.List[str]:
+def get_selected_names(names: FuzzyNames, available_names: set[str]) -> list[str]:
     if isinstance(names, str):
         names_list = names.split(",")
     else:
@@ -228,11 +228,11 @@ def find_import_decls(node: ast.AST) -> typ.Iterable[common.ImportDecl]:
             yield common.ImportDecl(module_name, alias.name, None)
 
 
-def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.ImportDecl]]:
+def parse_imports(tree: ast.Module) -> tuple[int, int, set[common.ImportDecl]]:
     future_imports_offset = 0
     imports_end_offset    = 0
 
-    import_decls: typ.Set[common.ImportDecl] = set()
+    import_decls: set[common.ImportDecl] = set()
 
     for body_offset, node in enumerate(tree.body):
         is_docstring = (
@@ -258,7 +258,7 @@ def parse_imports(tree: ast.Module) -> typ.Tuple[int, int, typ.Set[common.Import
     return (future_imports_offset, imports_end_offset, import_decls)
 
 
-def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.ImportDecl]) -> None:
+def add_required_imports(tree: ast.Module, required_imports: set[common.ImportDecl]) -> None:
     """Add imports required by fixers.
 
     Some fixers depend on modules which may not be imported in
@@ -314,7 +314,7 @@ def add_required_imports(tree: ast.Module, required_imports: typ.Set[common.Impo
             imports_end_offset += 1
 
 
-def add_module_declarations(tree: ast.Module, module_declarations: typ.Set[str]) -> None:
+def add_module_declarations(tree: ast.Module, module_declarations: set[str]) -> None:
     """Add global declarations required by fixers.
 
     Some fixers declare globals (or override builtins) the source
@@ -348,8 +348,8 @@ def transpile_module(ctx: common.BuildContext, module_source: str) -> str:
     checker_names: FuzzyNames = ctx.cfg.checkers
     fixer_names  : FuzzyNames = ctx.cfg.fixers
     module_tree = ast.parse(module_source)
-    required_imports   : typ.Set[common.ImportDecl] = set()
-    module_declarations: typ.Set[str              ] = set()
+    required_imports   : set[common.ImportDecl] = set()
+    module_declarations: set[str              ] = set()
 
     ver            = sys.version_info
     source_version = f"{ver.major}.{ver.minor}"

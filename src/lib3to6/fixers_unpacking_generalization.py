@@ -58,7 +58,7 @@ def _has_starstarargs_g12n(node: ast.expr) -> bool:
         raise TypeError(f"Unexpected node: {node}")
 
 
-def _node_with_elts(node: ast.AST, new_elts: typ.List[ast.expr]) -> ast.expr:
+def _node_with_elts(node: ast.AST, new_elts: list[ast.expr]) -> ast.expr:
     if isinstance(node, ast.Call):
         node.args = new_elts
         return node
@@ -120,7 +120,7 @@ def _expand_stararg_g12n(node: ast.AST) -> ast.expr:
     else:
         raise TypeError(f"Unexpected node: {node}")
 
-    operands: typ.List[ast.expr] = [ast.List(elts=[])]
+    operands: list[ast.expr] = [ast.List(elts=[])]
 
     for elt in elts:
         tail_list = operands[-1]
@@ -181,7 +181,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
     version_info = common.VersionInfo(apply_since="2.0", apply_until="3.4")
 
     def expand_starstararg_g12n(self, node: ast.expr) -> ast.expr:
-        chain_values: typ.List[ast.expr] = []
+        chain_values: list[ast.expr] = []
         chain_val   : ast.expr
 
         if isinstance(node, ast.Dict):
@@ -203,7 +203,7 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
 
         # collapse consecutive Dict chain values
         # [{"a": 1}, {"b": 2}] -> {"a": 1, "b": 2}
-        collapsed_chain_values: typ.List[ast.expr] = []
+        collapsed_chain_values: list[ast.expr] = []
 
         for chain_val in chain_values:
             # NOTE (mb 2018-06-30): We only look at the previous
@@ -289,10 +289,10 @@ class UnpackingGeneralizationsFixer(fb.FixerBase):
             new_node = self.expand_starstararg_g12n(new_node)
         return new_node
 
-    def walk_stmtlist(self, stmtlist: typ.List[ast.stmt]) -> typ.List[ast.stmt]:
+    def walk_stmtlist(self, stmtlist: list[ast.stmt]) -> list[ast.stmt]:
         assert _is_stmtlist(stmtlist)
 
-        new_stmts: typ.List[ast.stmt] = []
+        new_stmts: list[ast.stmt] = []
         for stmt in stmtlist:
             new_stmt = self.walk_stmt(stmt)
             new_stmts.append(new_stmt)

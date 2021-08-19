@@ -72,7 +72,7 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
     )
 
 
-def _ignore_tmp_files(src: str, names: typ.List[str]) -> typ.List[str]:
+def _ignore_tmp_files(src: str, names: list[str]) -> list[str]:
     if isinstance(src, str):
         src_str = src
     else:
@@ -169,7 +169,7 @@ def build_packages(cfg: common.BuildConfig, build_package_dir: common.PackageDir
 def fix(
     package_dir     : common.PackageDir = None,
     target_version  : str = transpile.DEFAULT_TARGET_VERSION,
-    install_requires: typ.List[str] = None,
+    install_requires: list[str] = None,
     default_mode    : str = 'enabled',
 ) -> common.PackageDir:
     msg = "Depricated: lib3to6.fix(). See https://github.com/mbarkhau/lib3to6#Deprications"

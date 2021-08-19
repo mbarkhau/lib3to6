@@ -13,8 +13,8 @@ from . import common
 from . import transpile
 
 # Recursive types not fully supported yet, nested types replaced with "Any"
-# NodeOrNodelist = typ.Union[ast.AST, typ.List["NodeOrNodelist"]]
-NodeOrNodelist = typ.Union[ast.AST, typ.List[typ.Any]]
+# NodeOrNodelist = typ.Union[ast.AST, list["NodeOrNodelist"]]
+NodeOrNodelist = typ.Union[ast.AST, list[typ.Any]]
 
 
 # https://gist.github.com/marsam/d2a5af1563d129bb9482
@@ -109,7 +109,7 @@ def parsedump_source(code: str, mode: str = "exec") -> str:
     return astor.to_source(node)
 
 
-def transpile_and_dump(ctx: common.BuildContext, module_str: str) -> typ.Tuple[str, str, str]:
+def transpile_and_dump(ctx: common.BuildContext, module_str: str) -> tuple[str, str, str]:
     module_str = clean_whitespace(module_str)
     header     = transpile.parse_module_header(module_str, ctx.cfg.target_version)
     result_str = transpile.transpile_module(ctx, module_str)
