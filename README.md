@@ -149,7 +149,6 @@ setuptools.setup(
     python_requires=">=2.7",
     install_requires=[...],
     setup_requires=['lib3to6>=202107.1048'],
-    lib3to6={'elide_annotations': True},
     cmdclass=cmdclass,
 )
 ```
@@ -250,11 +249,8 @@ except ImportError:
 
 setuptools.setup(
     ...
-    lib3to6={
-        'elide_annotations': True,
-        'default_mode': 'disabled',     # default: enabled
-    },
     cmdclass=cmdclass,
+    lib3to6_default_mode='disabled',     # default: enabled
 )
 ```
 
