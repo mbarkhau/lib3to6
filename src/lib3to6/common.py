@@ -108,7 +108,7 @@ class FixerError(Exception):
     msg     : str
     node    : ast.AST
     parent  : typ.Optional[ast.AST]
-    filepath: str
+    filepath: typ.Optional[str    ]
 
     def __init__(
         self,
