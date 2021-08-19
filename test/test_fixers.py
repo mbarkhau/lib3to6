@@ -1235,9 +1235,6 @@ def _debug_ast(casename, source):
 
 @pytest.mark.parametrize("fixture", FIXTURES)
 def test_fixers(fixture):
-    if "--capture=no" in sys.argv:
-        print()
-
     expected_source = utils.clean_whitespace(fixture.expected_source)
     expected_ast    = utils.parsedump_ast(expected_source)
     expected_header = transpile.parse_module_header(expected_source, fixture.target_version)

@@ -283,9 +283,6 @@ FIXTURES = [
 
 @pytest.mark.parametrize("fixture", FIXTURES)
 def test_checkers(fixture):
-    if "--capture=no" in sys.argv:
-        print()
-
     if isinstance(fixture.expected_error_msg, list):
         expected_error_messages = fixture.expected_error_msg
     else:
