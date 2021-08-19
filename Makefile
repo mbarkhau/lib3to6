@@ -31,21 +31,21 @@ integration_test:
 	@rm -rf test_project/dist/;
 
 	@# self test with python 3.6
-	@$(ENV_CPY36) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
+	@$(ENV_CPY36) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py3;
 	@$(ENV_CPY36) -m pip install -U integration_test_dist/lib3to6*.whl;
 	@$(ENV_CPY36) -c "from lib3to6 import packaging"
 
 	@rm -rf integration_test_dist/;
 
 	@# self test with PyPy 3.6
-	@$(ENV_PYPY36) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
+	@$(ENV_PYPY36) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py3;
 	@$(ENV_PYPY36) -m pip install -U integration_test_dist/lib3to6*.whl;
 	@$(ENV_PYPY36) -c "from lib3to6 import packaging"
 
 	@rm -rf integration_test_dist/;
 
-	@# test project with python 3.8+
-	@$(DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py36.py37.py38;
+	@# test project with python 3.9+
+	@$(DEV_ENV_PY) setup.py bdist_wheel --dist-dir=integration_test_dist --python-tag=py3;
 	@$(DEV_ENV_PY) -m pip install -U integration_test_dist/lib3to6*.whl;
 	@$(DEV_ENV_PY) -c "from lib3to6 import packaging"
 

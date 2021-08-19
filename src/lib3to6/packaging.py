@@ -129,21 +129,23 @@ def transpile_path(cfg: common.BuildConfig, filepath: pl.Path) -> pl.Path:
 
     cache_path = CACHE_DIR / (filehash.hexdigest() + ".py")
 
+    if cfg.cache_enabled and cache_path.exists():
+        return cache_path
+
     # NOTE (mb 2020-09-01): not cache_enabled -> always update cache
-    if not cfg.cache_enabled or not cache_path.exists():
-        ctx = common.BuildContext(cfg, str(filepath))
-        try:
-            fixed_module_source_data = transpile.transpile_module_data(ctx, module_source_data)
-        except common.CheckError as err:
-            loc = str(filepath)
-            if err.lineno >= 0:
-                loc += "@" + str(err.lineno)
+    ctx = common.BuildContext(cfg, str(filepath))
+    try:
+        fixed_module_source_data = transpile.transpile_module_data(ctx, module_source_data)
+    except common.CheckError as err:
+        loc = str(filepath)
+        if err.lineno >= 0:
+            loc += "@" + str(err.lineno)
 
-            err.args = (loc + " - " + err.args[0],) + err.args[1:]
-            raise
+        err.args = (loc + " - " + err.args[0],) + err.args[1:]
+        raise
 
-        with open(cache_path, mode="wb") as fobj:
-            fobj.write(fixed_module_source_data)
+    with open(cache_path, mode="wb") as fobj:
+        fobj.write(fixed_module_source_data)
 
     return cache_path
 
@@ -207,6 +209,8 @@ class build_py(_build_py.build_py):
             install_requires=sorted(dist.install_requires),
             default_mode=getattr(dist, 'lib3to6_default_mode', 'enabled'),
         )
+
+        CACHE_DIR.mkdir(exist_ok=True)
         for output in outputs:
             if output.endswith(".py"):
                 transpiled_path = transpile_path(build_cfg, pl.Path(output))
