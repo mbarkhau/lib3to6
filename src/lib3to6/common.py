@@ -10,12 +10,12 @@ import builtins
 
 PackageName      = str
 PackageDirectory = str
-PackageDir       = dict[PackageName, PackageDirectory]
+PackageDir       = typ.Dict[PackageName, PackageDirectory]
 
 InstallRequires = typ.Optional[typ.Set[str]]
 
 
-ConstantNodeTypes: tuple[typ.Type[ast.Constant], ...] = (ast.Constant,)
+ConstantNodeTypes: typ.Tuple[typ.Type[ast.Constant], ...] = (ast.Constant,)
 
 # Deprecated since version 3.8: Class ast.Constant is now used for all
 # constants. Old classes ast.Num, ast.Str, ast.Bytes, ast.NameConstant and
@@ -108,7 +108,7 @@ class FixerError(Exception):
     msg     : str
     node    : ast.AST
     parent  : typ.Optional[ast.AST]
-    filepath: typ.Optional[str    ]
+    filepath: typ.Optional[str]
 
     def __init__(
         self,
@@ -141,10 +141,10 @@ class VersionInfo:
     """
 
     # since/until is inclusive
-    apply_since: list[int]
-    apply_until: typ.Optional[list[int]]
-    works_since: list[int]
-    works_until: typ.Optional[list[int]]
+    apply_since: typ.List[int]
+    apply_until: typ.Optional[typ.List[int]]
+    works_since: typ.List[int]
+    works_until: typ.Optional[typ.List[int]]
 
     def __init__(
         self,

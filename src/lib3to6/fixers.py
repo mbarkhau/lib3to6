@@ -72,7 +72,7 @@ def is_const_node(node: ast.AST) -> bool:
 
 
 Elt  = typ.Union[ast.expr, ast.Name, ast.Constant, ast.Subscript]
-Elts = list[Elt]
+Elts = typ.List[Elt]
 
 
 AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
@@ -80,10 +80,10 @@ AnnoNode = typ.Union[ast.arg, ast.AnnAssign, ast.FunctionDef]
 
 class _FRAFContext:
 
-    local_classes: set[str]
-    known_classes: set[str]
+    local_classes: typ.Set[str]
+    known_classes: typ.Set[str]
 
-    def __init__(self, local_classes: set[str]) -> None:
+    def __init__(self, local_classes: typ.Set[str]) -> None:
         self.local_classes = local_classes
         self.known_classes = set()
 
@@ -189,7 +189,7 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
     version_info = common.VersionInfo(apply_since="3.0", apply_until="3.6")
 
     def apply_fix(self, ctx: common.BuildContext, tree: ast.Module) -> ast.Module:
-        local_classes: set[str] = set()
+        local_classes: typ.Set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 local_classes.add(node.name)
@@ -424,7 +424,7 @@ class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
         else:
             raise RuntimeError("")
 
-        elts: list[ast.Tuple] = []
+        elts: typ.List[ast.Tuple] = []
 
         for assign in node.body:
             if not isinstance(assign, ast.AnnAssign):

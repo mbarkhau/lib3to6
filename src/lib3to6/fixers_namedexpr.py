@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 import ast
+import typing as typ
 
 from . import common
 from . import fixer_base as fb
@@ -14,8 +15,10 @@ class NamedExprFixer(fb.TransformerFixerBase):
 
     version_info = common.VersionInfo(apply_since="2.7", apply_until="3.7")
 
-    def _extract_and_replace_named_exprs(self, expr: ast.expr) -> tuple[list[ast.stmt], ast.expr]:
-        new_assigns: list[ast.stmt] = []
+    def _extract_and_replace_named_exprs(
+        self, expr: ast.expr
+    ) -> typ.Tuple[typ.List[ast.stmt], ast.expr]:
+        new_assigns: typ.List[ast.stmt] = []
         if isinstance(expr, ast.NamedExpr):
             new_assigns.append(ast.Assign(targets=[expr.target], value=expr.value))
             new_expr = ast.Name(id=expr.target.id, ctx=ast.Load())
@@ -50,7 +53,7 @@ class NamedExprFixer(fb.TransformerFixerBase):
 
             return new_assigns, expr
 
-    def _update(self, nodelist: list[ast.stmt], indent: int = 0) -> None:
+    def _update(self, nodelist: typ.List[ast.stmt], indent: int = 0) -> None:
         i = 0
         while i < len(nodelist):
             node = nodelist[i]

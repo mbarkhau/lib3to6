@@ -16,8 +16,8 @@ from . import common
 class FixerBase:
 
     version_info       : common.VersionInfo
-    required_imports   : set[common.ImportDecl]
-    module_declarations: set[str]
+    required_imports   : typ.Set[common.ImportDecl]
+    module_declarations: typ.Set[str]
 
     def __init__(self) -> None:
         self.required_imports    = set()
