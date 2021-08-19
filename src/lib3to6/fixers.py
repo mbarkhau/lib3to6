@@ -194,7 +194,7 @@ class ForwardReferenceAnnotationsFixer(fb.FixerBase):
             if isinstance(node, ast.ClassDef):
                 local_classes.add(node.name)
 
-        fraf_ctx = _FRAFContext(local_classes, tree)
+        fraf_ctx = _FRAFContext(local_classes)
         fraf_ctx.remove_forward_references(tree)
         return tree
 
