@@ -8,7 +8,6 @@ import os
 import re
 import sys
 import shutil
-import typing as typ
 import hashlib
 import tempfile
 import warnings

@@ -14,9 +14,7 @@ class NamedExprFixer(fb.TransformerFixerBase):
 
     version_info = common.VersionInfo(apply_since="2.7", apply_until="3.7")
 
-    def _extract_and_replace_named_exprs(
-        self, expr: ast.expr
-    ) -> tuple[list[ast.stmt], ast.expr]:
+    def _extract_and_replace_named_exprs(self, expr: ast.expr) -> tuple[list[ast.stmt], ast.expr]:
         new_assigns: list[ast.stmt] = []
         if isinstance(expr, ast.NamedExpr):
             new_assigns.append(ast.Assign(targets=[expr.target], value=expr.value))

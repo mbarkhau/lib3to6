@@ -32,50 +32,50 @@ The recommended approach to using `pylint-ignore` is:
 
 # W0511: fixme
 
-## File src/lib3to6/checkers_backports.py - Line 13 - W0511 (fixme)
+## File src/lib3to6/checkers_backports.py - Line 14 - W0511 (fixme)
 
 - `message: TODO (mb 2020-05-28):`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  11: from . import checker_base as cb
-  12: 
-> 13: # TODO (mb 2020-05-28):
-  14: #   instead of functools.singledispatch
-  15: #   from singledispatch import singledispatch
+  12: from . import checker_base as cb
+  13: 
+> 14: # TODO (mb 2020-05-28):
+  15: #   instead of functools.singledispatch
+  16: #   from singledispatch import singledispatch
 ```
 
 
-## File src/lib3to6/packaging.py - Line 35 - W0511 (fixme)
+## File src/lib3to6/packaging.py - Line 37 - W0511 (fixme)
 
 - `message: TODO (mb 2018-06-07): Get options from setup.cfg`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  33: 
-  34: def eval_build_config(**kwargs) -> common.BuildConfig:
-> 35:     # TODO (mb 2018-06-07): Get options from setup.cfg
-  36:     # python_tags = "py2.py3"
-  37:     # for argi, arg in enumerate(sys.argv):
+  35: 
+  36: def eval_build_config(**kwargs) -> common.BuildConfig:
+> 37:     # TODO (mb 2018-06-07): Get options from setup.cfg
+  38:     # python_tags = "py2.py3"
+  39:     # for argi, arg in enumerate(sys.argv):
 ```
 
 
-## File src/lib3to6/packaging.py - Line 107 - W0511 (fixme)
+## File src/lib3to6/packaging.py - Line 109 - W0511 (fixme)
 
 - `message: TODO (mb 2018-08-25): As an optimization, we could`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-   94: def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
+   96: def init_build_package_dir(local_package_dir: common.PackageDir) -> common.PackageDir:
   ...
-  105:         build_package_subdir = output_dir / src_package_dir
-  106: 
-> 107:         # TODO (mb 2018-08-25): As an optimization, we could
-  108:         #   restrict deletion to files that we manipulate, in
-  109:         #   other words, to *.py files.
+  107:         build_package_subdir = output_dir / src_package_dir
+  108: 
+> 109:         # TODO (mb 2018-08-25): As an optimization, we could
+  110:         #   restrict deletion to files that we manipulate, in
+  111:         #   other words, to *.py files.
 ```
 
 
@@ -96,56 +96,56 @@ The recommended approach to using `pylint-ignore` is:
 
 # W0612: unused-variable
 
-## File test/test_fixers.py - Line 59 - W0612 (unused-variable)
+## File test/test_fixers.py - Line 58 - W0612 (unused-variable)
 
 - `message: Unused variable 'result_header_text'`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  31: def test_header_preserved():
+  30: def test_header_preserved():
   ...
-  57: 
-  58:     ctx = common.init_build_context(filepath="<testfile>")
-> 59:     result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
-  60:         ctx, test_source
-  61:     )
+  56: 
+  57:     ctx = common.init_build_context(filepath="<testfile>")
+> 58:     result_header_coding, result_header_text, result_source = utils.transpile_and_dump(
+  59:         ctx, test_source
+  60:     )
 ```
 
 
 # C0103: invalid-name
 
-## File src/lib3to6/fixers.py - Line 450 - C0103 (invalid-name)
+## File src/lib3to6/fixers.py - Line 451 - C0103 (invalid-name)
 
 - `message: Constant name "FStringToStrFormatFixer" doesn't conform to UPPER_CASE naming style`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  366: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
+  367: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
   ...
-  448:     from .fixers_fstring import FStringToStrFormatFixer
-  449: else:
-> 450:     FStringToStrFormatFixer = None
-  451: 
-  452:
+  449:     from .fixers_fstring import FStringToStrFormatFixer
+  450: else:
+> 451:     FStringToStrFormatFixer = None
+  452: 
+  453:
 ```
 
 
-## File src/lib3to6/fixers.py - Line 456 - C0103 (invalid-name)
+## File src/lib3to6/fixers.py - Line 457 - C0103 (invalid-name)
 
 - `message: Constant name "NamedExprFixer" doesn't conform to UPPER_CASE naming style`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
 - `date   : 2020-07-19T19:10:40`
 
 ```
-  366: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
+  367: class NamedTupleClassToAssignFixer(fb.TransformerFixerBase):
   ...
-  454:     from .fixers_namedexpr import NamedExprFixer
-  455: else:
-> 456:     NamedExprFixer = None
-  457: 
-  458:
+  455:     from .fixers_namedexpr import NamedExprFixer
+  456: else:
+> 457:     NamedExprFixer = None
+  458: 
+  459:
 ```
 
 
@@ -153,14 +153,14 @@ The recommended approach to using `pylint-ignore` is:
 
 ## File test/test_fixers.py - Line 1 - C0302 (too-many-lines)
 
-- `message: Too many lines in module (1265/1000)`
+- `message: Too many lines in module (1260/1000)`
 - `author : Manuel Barkhau <mbarkhau@gmail.com>`
-- `date   : 2020-07-19T19:10:40`
+- `date   : 2021-08-19T21:41:34`
 
 ```
-> 1: import sys
-  2: import collections
-  3:
+> 1: import collections
+  2: 
+  3: import pytest
 ```
 
 
@@ -178,7 +178,7 @@ The recommended approach to using `pylint-ignore` is:
   181:     version_info = common.VersionInfo(apply_since="2.0", apply_until="3.4")
   182: 
 > 183:     def expand_starstararg_g12n(self, node: ast.expr) -> ast.expr:
-  184:         chain_values: typ.List[ast.expr] = []
+  184:         chain_values: list[ast.expr] = []
   185:         chain_val   : ast.expr
 ```
 

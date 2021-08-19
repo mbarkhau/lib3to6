@@ -26,9 +26,6 @@ install_requires = [
 ]
 
 
-packages = setuptools.find_packages(project_path("src"))
-
-
 try:
     import lib3to6
     cmdclass = {'build_py': lib3to6.build_py}
@@ -52,7 +49,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
 
     cmdclass=cmdclass,
-    packages=packages,
+    packages=setuptools.find_packages("src/"),
     package_dir={"": "src"},
     install_requires=install_requires,
     entry_points="""

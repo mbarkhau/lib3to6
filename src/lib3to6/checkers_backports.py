@@ -135,7 +135,7 @@ class NoUnusableImportsChecker(cb.CheckerBase):
                 # if there is no backport, then the import can obviously only
                 # be using the stdlib module -> hard error
                 is_backported  = vnfo.backport_package is not None
-                is_strict_mode = install_requires is not None
+                is_strict_mode = install_requires      is not None
                 is_hard_error  = not is_backported or is_strict_mode or not is_backport_name_same
 
                 vnfo_msg = (
