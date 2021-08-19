@@ -51,6 +51,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
+    cmdclass=cmdclass,
     packages=packages,
     package_dir={"": "src"},
     install_requires=install_requires,
