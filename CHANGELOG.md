@@ -9,7 +9,7 @@
 
 ## v202108.1048
 
- - Add new default integration method: [`lib3to6.build_py`][href_readme_integration]
+ - Add new default integration method: [`lib3to6.Distribution`][href_readme_integration]
  - Deprecate old integration method (had issues with package data).
  - Fix invalid parsing of install_requires.
  - Fix cache invalidation when build config changes.
