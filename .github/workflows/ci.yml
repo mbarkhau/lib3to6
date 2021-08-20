@@ -8,66 +8,41 @@ on:
 
 jobs:
 
-  build-ubuntu:
+  build:
+    runs-on: '${{ matrix.os }}'
+    name: "Build ${{ matrix.os }}"
 
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Cache Conda Envs
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/miniconda3
-          build/*.txt
-        key: ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'makefile*') }}
-        restore-keys: |
-          ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'makefile*') }}
-
-    - name: make conda
-      run:
-        if [[ -e build/envs.txt ]]; then touch build/envs.txt; fi;
-        if [[ -e build/deps.txt ]]; then touch build/deps.txt; fi;
-        make conda
-
-    - name: make lint
-      run: make lint
-
-    - name: make mypy
-      run: make mypy
-
-    - name: make test
-      run: make test
-
-  build-macos:
-
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          # - os: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Cache Conda Envs
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/miniconda3
-          build/*.txt
-        key: ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'makefile*') }}
-        restore-keys: |
-          ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'makefile*') }}
+      - name: Cache Conda Envs
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/miniconda3
+            build/*.txt
+          key: ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'Makefile*') }}
+          restore-keys: |
+            ${{ runner.OS }}-conda-cache-${{ hashFiles('requirements/*.txt', 'setup.py', 'Makefile*') }}
 
-    - name: make conda
-      run:
-        if [[ -e build/envs.txt ]]; then touch build/envs.txt; fi;
-        if [[ -e build/deps.txt ]]; then touch build/deps.txt; fi;
-        make conda
+      - name: make conda
+        run:
+          if [[ -e build/envs.txt ]]; then touch build/envs.txt; fi;
+          if [[ -e build/deps.txt ]]; then touch build/deps.txt; fi;
+          make conda
 
-    - name: make lint
-      run: make lint
+      - name: make lint
+        run: make lint
 
-    - name: make mypy
-      run: make mypy
+      - name: make mypy
+        run: make mypy
 
-    - name: make test
-      run: make test
+      - name: make test
+        run: make test
