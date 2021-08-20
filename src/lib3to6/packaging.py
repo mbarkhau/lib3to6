@@ -199,9 +199,11 @@ class build_py(_build_py.build_py):
         else:
             raise ValueError('lib3to6: missing python_requires=">=X.Y" in setup.py')
 
-        build_cfg = eval_build_config(
+        # pylint: disable=protected-access
+        install_requires = sorted(dist._lib3to6_install_requires)
+        build_cfg        = eval_build_config(
             target_version=target_version,
-            install_requires=sorted(dist._lib3to6_install_requires),
+            install_requires=install_requires,
             default_mode=getattr(dist, 'lib3to6_default_mode', 'enabled'),
         )
 
@@ -241,7 +243,7 @@ class Distribution(setuptools.dist.Distribution):
         #   need the original requirements for validation, so we
         #   capture them here.
         self._lib3to6_install_requires = attrs.get('install_requires')
-        return super(Distribution, self).__init__(attrs)
+        super().__init__(attrs)
 
     def get_command_class(self, command):
         if command in self.cmdclass:
@@ -250,4 +252,4 @@ class Distribution(setuptools.dist.Distribution):
             self.cmdclass[command] = build_py
             return build_py
         else:
-            return super(Distribution, self).get_command_class(command)
+            return super().get_command_class(command)
