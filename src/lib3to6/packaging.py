@@ -14,6 +14,7 @@ import tempfile
 import warnings
 
 import pathlib2 as pl
+import setuptools.dist
 import setuptools.command.build_py as _build_py
 
 from . import common
@@ -35,15 +36,6 @@ CACHE_DIR = pl.Path(tempfile.gettempdir()) / ".lib3to6_cache"
 
 
 def eval_build_config(**kwargs) -> common.BuildConfig:
-    # TODO (mb 2018-06-07): Get options from setup.cfg
-    # python_tags = "py2.py3"
-    # for argi, arg in enumerate(sys.argv):
-    #     if "--python-tag" in arg:
-    #         if "=" in arg:
-    #             python_tags = arg.split("=", 1)[-1]
-    #         else:
-    #             python_tags = sys.argv[argi + 1]
-
     target_version    = kwargs.get('target_version', transpile.DEFAULT_TARGET_VERSION)
     _install_requires = kwargs.get('install_requires', None)
     cache_enabled     = kwargs.get('cache_enabled', True)
@@ -60,6 +52,9 @@ def eval_build_config(**kwargs) -> common.BuildConfig:
         raise TypeError(f"Invalid argument for install_requires: {type(_install_requires)}")
 
     if install_requires:
+        # Remove version specs. We only handle the bare requirement
+        # and assume the maintainer knows what they're doing wrt.
+        # the appropriate versions.
         install_requires = {re.split(r"[\^\~<>=;]", req.strip())[0] for req in install_requires}
 
     return common.BuildConfig(
@@ -206,7 +201,7 @@ class build_py(_build_py.build_py):
 
         build_cfg = eval_build_config(
             target_version=target_version,
-            install_requires=sorted(dist.install_requires),
+            install_requires=sorted(dist._lib3to6_install_requires),
             default_mode=getattr(dist, 'lib3to6_default_mode', 'enabled'),
         )
 
@@ -237,3 +232,22 @@ class build_py(_build_py.build_py):
         # Only compile actual .py files, using our base class' idea of what our
         # output files are.
         self.byte_compile(_build_py.orig.build_py.get_outputs(self, include_bytecode=0))
+
+
+class Distribution(setuptools.dist.Distribution):
+    def __init__(self, attrs=None):
+        # NOTE (mb 2021-08-20): Distutils removes all requirements
+        #   that are not needed for the current python version. We
+        #   need the original requirements for validation, so we
+        #   capture them here.
+        self._lib3to6_install_requires = attrs.get('install_requires')
+        return super(Distribution, self).__init__(attrs)
+
+    def get_command_class(self, command):
+        if command in self.cmdclass:
+            return self.cmdclass[command]
+        elif command == 'build_py':
+            self.cmdclass[command] = build_py
+            return build_py
+        else:
+            return super(Distribution, self).get_command_class(command)

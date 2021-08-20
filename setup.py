@@ -28,13 +28,12 @@ install_requires = [
 
 try:
     import lib3to6
-    cmdclass = {'build_py': lib3to6.build_py}
+    distclass = lib3to6.Distribution
 except ImportError:
-    cmdclass = {}
+    distclass = setuptools.dist.Distribution
 
 
 long_description = (read("README.md") + "\n\n" + read("CHANGELOG.md"))
-
 
 setuptools.setup(
     name="lib3to6",
@@ -48,17 +47,18 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    cmdclass=cmdclass,
+    distclass=distclass,
     packages=setuptools.find_packages("src/"),
     package_dir={"": "src"},
     install_requires=install_requires,
     python_requires=">=3.6",
     zip_safe=True,
 
-    entry_points="""
-        [console_scripts]
-        lib3to6=lib3to6.__main__:main
-    """,
+    entry_points={
+        'console_scripts': ["lib3to6 = lib3to6.__main__:main"],
+        # NOTE (mb 2021-08-20): Not sure how to prioritze these
+        # 'distutils.commands': ["build_py = lib3to6:build_py"],
+    },
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         "Development Status :: 4 - Beta",

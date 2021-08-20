@@ -3,7 +3,6 @@
 #
 # Copyright (c) 2019-2021 Manuel Barkhau (mbarkhau@gmail.com) - MIT License
 # SPDX-License-Identifier: MIT
-import re
 import ast
 import typing as typ
 import logging
@@ -99,15 +98,7 @@ class NoUnusableImportsChecker(cb.CheckerBase):
         #     their config for this check to work and we don't want to
         #     break them.
 
-        install_requires: typ.Optional[set[str]] = None
-        if ctx.cfg.install_requires is not None:
-            install_requires = set()
-            for requirement in ctx.cfg.install_requires:
-                # Remove version specs. We only handle the bare requirement
-                # and assume the maintainer knows what they're doing wrt.
-                # the appropriate versions.
-                parts = re.split(r"[<>=~^;]", requirement)
-                install_requires.add(parts[0])
+        install_requires: typ.Optional[set[str]] = ctx.cfg.install_requires
 
         target_version = ctx.cfg.target_version
         for node in ast.iter_child_nodes(tree):

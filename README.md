@@ -138,9 +138,9 @@ welcome.
 # setup.py
 try:
     import lib3to6
-    cmdclass = {'build_py': lib3to6.build_py}
+    distclass = lib3to6.Distribution
 except ImportError:
-    cmdclass = {}
+    distclass = setuptools.dist.Distribution
 
 setuptools.setup(
     name="my-module",
@@ -148,8 +148,7 @@ setuptools.setup(
     ...
     python_requires=">=2.7",
     install_requires=[...],
-    setup_requires=['lib3to6>=202107.1048'],
-    cmdclass=cmdclass,
+    distclass=distclass,
 )
 ```
 
