@@ -173,7 +173,7 @@ def main(
         if diff:
             _print_diff(source_text, fixed_source_text)
         elif in_place:
-            with io.open(src_file.name, mode="w") as fobj:
+            with io.open(src_file.name, mode="w", encoding="utf-8") as fobj:
                 fobj.write(fixed_source_text)
         else:
             print(fixed_source_text)
