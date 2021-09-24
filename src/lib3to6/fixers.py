@@ -138,7 +138,7 @@ class _FRAFContext:
                 idx.value = AstStr(val.id)
         elif isinstance(val, ast.Subscript):
             self.update_subscript(val)
-        elif isinstance(val, ast.Tuple):
+        elif isinstance(val, (ast.Tuple, ast.List)):
             self.update_index_elts(val.elts)
         else:
             msg = f"Error fixing index with forward ref of type {type(val)}"

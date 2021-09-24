@@ -225,9 +225,10 @@ class build_py(_build_py.build_py):
             self.build_packages()
             self.build_package_data()
 
-        self.run_2to3(self.__updated_files, False)
-        self.run_2to3(self.__updated_files, True)
-        self.run_2to3(self.__doctests_2to3, True)
+        if hasattr(self, 'run_2to3'):
+            self.run_2to3(self.__updated_files, False)
+            self.run_2to3(self.__updated_files, True)
+            self.run_2to3(self.__doctests_2to3, True)
 
         self.run_3to6()
 
