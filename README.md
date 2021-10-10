@@ -6,7 +6,7 @@
 
 # [lib3to6][repo_ref]
 
-Compile Python 3.6+ code to Python 2.7+ compatible code. The idea is
+Compile Python 3.7+ code to Python 2.7+ compatible code. The idea is
 quite similar to Babel https://babeljs.io/. Develop using the newest
 interpreter and use (most) new language features and still maintain
 backward compatibility.
@@ -84,22 +84,20 @@ have to deploy for Python2.
 
 The compiled output is tested using:
 
+- Python 3.10
 - Python 3.9
 - Python 3.8
 - Python 3.7
-- Python 3.6
-- Python 3.5
 - Python 2.7
-- PyPy 3.6
-- PyPy 3.5
+- PyPy 3.7
 
 The test-suite for the transpiler is run using:
 
+- Python 3.10
 - Python 3.9
 - Python 3.8
 - Python 3.7
-- Python 3.6
-- PyPy 3.6
+- PyPy 3.7
 
 The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but these are not tested.
 

@@ -14,7 +14,7 @@ DEVELOPMENT_PYTHON_VERSION := python=3.10
 # These are the interpreters we use to test that the output of lib3to6 works
 # with that version. The interpreter used to run lib3to6 and produce that output
 # is the DEVELOPMENT_PYTHON_VERSION.
-SUPPORTED_PYTHON_VERSIONS := python=3.10 python=3.9 python=3.8 python=3.7 pypy3.6 python=2.7
+SUPPORTED_PYTHON_VERSIONS := python=3.10 python=3.9 python=3.8 python=3.7 pypy3.7 python=2.7
 
 
 include Makefile.bootstrapit.make

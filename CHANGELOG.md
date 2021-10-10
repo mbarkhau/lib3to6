@@ -7,13 +7,15 @@
  - Add fixer for Union Operator `'x: A | B` -> `x: typing.Union[A, B]`
 
 
-## v202108.1048
+## v202110.1049
 
  - Add new default integration method: [`lib3to6.Distribution`][href_readme_integration]
  - Deprecate old integration method (had issues with package data).
  - Fix invalid parsing of install_requires.
  - Fix cache invalidation when build config changes.
  - Fix type annotations with constants (e.g. `Optional['MyClass']`)
+ - Fix compat issues with python 3.10
+ - Disable testing for Python 3.5 and Python 3.6
 
 
 [href_readme_integration]: https://github.com/mbarkhau/lib3to6#integration-with-setuppy
