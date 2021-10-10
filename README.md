@@ -42,20 +42,20 @@ Code Quality/CI:
 
 [](TOC)
 
-- [Ease the Transition from Old Interpreters](#ease-the-transition-from-old-interpreters)
+- [Motivation: Ease the Transition from Old Interpreters](#motivation-ease-the-transition-from-old-interpreters)
 - [Python Versions and Compatibility](#python-versions-and-compatibility)
 - [Usage Caveats](#usage-caveats)
+- [Integration with `setup.py`](#integration-with-setuppy)
+- [Deprecations](#deprecations)
 - [Per-File Opt-In/Opt-Out](#per-file-opt-inopt-out)
-- [Integration using `setup.py`](#integration-using-setuppy)
 - [Automatic Conversions](#automatic-conversions)
 - [Motivation](#motivation)
 - [How it works](#how-it-works)
 - [Contributing](#contributing)
-- [Project Status (as of 2020-09-01): Beta](#project-status-as-of-2020-09-01-beta)
+- [Project Status (as of 2021-01-01): Beta](#project-status-as-of-2021-01-01-beta)
 - [Future Work](#future-work)
 - [Alternatives](#alternatives)
 - [FAQ](#faq)
-
 
 [](TOC)
 
@@ -99,7 +99,7 @@ The test-suite for the transpiler is run using:
 - Python 3.7
 - PyPy 3.7
 
-The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.4`, but these are not tested.
+The compiled output may work with other versions of python, such as `<=2.6` or `>=3.0 <=3.6`, but these are not tested.
 
 
 ## Usage Caveats
