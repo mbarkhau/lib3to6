@@ -7,7 +7,7 @@
  - Add fixer for Union Operator `'x: A | B` -> `x: typing.Union[A, B]`
 
 
-## v202110.1049
+## v202110.1050
 
  - Add new default integration method: [`lib3to6.Distribution`][href_readme_integration]
  - Deprecate old integration method (had issues with package data).
