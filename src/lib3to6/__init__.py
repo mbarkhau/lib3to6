@@ -8,7 +8,6 @@ from .utils import parsedump_ast
 from .utils import parsedump_source
 from .packaging import Distribution
 from .packaging import fix
-from .packaging import build_py
 from .transpile import transpile_module
 
 __version__ = "v202109.1049-b0"
@@ -18,6 +17,5 @@ __all__ = [
     'transpile_module',
     'parsedump_ast',
     'parsedump_source',
-    'build_py',
     'Distribution',
 ]

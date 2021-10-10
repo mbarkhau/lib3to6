@@ -9,7 +9,7 @@
 
 pathlib2
 astor
-typing;python_version<"3.5"
+typing;python_version < "3.5"
 click<8.0; python_version < "3.6"
 click; python_version >= "3.6"
 wheel

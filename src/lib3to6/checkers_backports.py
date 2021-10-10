@@ -30,6 +30,13 @@ class ModuleVersionInfo(typ.NamedTuple):
     backport_package: typ.Optional[str]
 
 
+def parse_version(version: str) -> typ.Any:
+    # pylint: disable=import-outside-toplevel; lazy import to speed up --help
+    import pkg_resources
+
+    return pkg_resources.parse_version(version)
+
+
 MAYBE_UNUSABLE_MODULES = {
     # case 1 (simple). Always error because no backport available
     'asyncio': ModuleVersionInfo("3.4", None, None),
@@ -103,7 +110,7 @@ class NoUnusableImportsChecker(cb.CheckerBase):
         target_version = ctx.cfg.target_version
         for node in ast.iter_child_nodes(tree):
             for mname, vnfo in _iter_maybe_unusable_modules(node):
-                if target_version >= vnfo.available_since:
+                if parse_version(target_version) >= parse_version(vnfo.available_since):
                     # target supports the newer name
                     continue
 

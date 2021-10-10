@@ -188,8 +188,12 @@ def fix(
 class build_py(_build_py.build_py):
     # pylint: disable=invalid-name      ; following the convention of setuptools
 
+    def _get_outputs(self) -> typ.List[str]:
+        outputs = _build_py.orig.build_py.get_outputs(self, include_bytecode=0)  # type: ignore[attr-defined]
+        return typ.cast(typ.List[str], outputs)
+
     def run_3to6(self) -> None:
-        outputs = _build_py.orig.build_py.get_outputs(self, include_bytecode=0)
+        outputs = self._get_outputs()
         dist    = self.distribution
         pyreq   = dist.python_requires
 
@@ -234,11 +238,11 @@ class build_py(_build_py.build_py):
 
         # Only compile actual .py files, using our base class' idea of what our
         # output files are.
-        self.byte_compile(_build_py.orig.build_py.get_outputs(self, include_bytecode=0))
+        self.byte_compile(self._get_outputs())
 
 
 class Distribution(setuptools.dist.Distribution):
-    def __init__(self, attrs=None):
+    def __init__(self, attrs=None) -> None:
         # NOTE (mb 2021-08-20): Distutils removes all requirements
         #   that are not needed for the current python version. We
         #   need the original requirements for validation, so we
@@ -246,11 +250,11 @@ class Distribution(setuptools.dist.Distribution):
         self._lib3to6_install_requires = attrs.get('install_requires')
         super().__init__(attrs)
 
-    def get_command_class(self, command):
+    def get_command_class(self, command: str) -> typ.Any:
         if command in self.cmdclass:
             return self.cmdclass[command]
         elif command == 'build_py':
             self.cmdclass[command] = build_py
             return build_py
         else:
-            return super().get_command_class(command)
+            return super().get_command_class(command)  # type: ignore[no-untyped-call]

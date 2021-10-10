@@ -201,7 +201,7 @@ Before `v202108.1048` the recomendation was to use
 This approach did not make use of metadata already provided to
 `setuptools.setup()` and also caused issues when using
 `include_package_data=True`. Use the above described
-`lib3to6.build_py` instead.
+`lib3to6.Distribution` instead.
 
 
 ## Per-File Opt-In/Opt-Out
@@ -241,14 +241,14 @@ have to use the `lib3to6_default_mode` option:
 # setup.py
 try:
     import lib3to6
-    cmdclass = {'build_py': lib3to6.build_py}
+    distclass = lib3to6.Distribution
 except ImportError:
-    cmdclass = {}
+    distclass = setuptools.dist.Distribution
 
 
 setuptools.setup(
     ...
-    cmdclass=cmdclass,
+    distclass=distclass,
     lib3to6_default_mode='disabled',     # default: enabled
 )
 ```
