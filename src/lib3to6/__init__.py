@@ -10,7 +10,7 @@ from .packaging import Distribution
 from .packaging import fix
 from .transpile import transpile_module
 
-__version__ = "v202109.1049-b0"
+__version__ = "v202110.1050-b0"
 
 __all__ = [
     'fix',

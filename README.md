@@ -15,7 +15,7 @@ Project/Repo:
 
 [![MIT License][license_img]][license_ref]
 [![Supported Python Versions][pyversions_img]][pyversions_ref]
-[![CalVer v202109.1049-b0][version_img]][version_ref]
+[![CalVer v202110.1050-b0][version_img]][version_ref]
 [![PyPI Version][pypi_img]][pypi_ref]
 [![PyPI Downloads][downloads_img]][downloads_ref]
 
@@ -984,7 +984,7 @@ Some features that might be implemented
 [downloads_img]: https://pepy.tech/badge/lib3to6/month
 [downloads_ref]: https://pepy.tech/project/lib3to6
 
-[version_img]: https://img.shields.io/static/v1.svg?label=CalVer&message=v202109.1049-b0&color=blue
+[version_img]: https://img.shields.io/static/v1.svg?label=CalVer&message=v202110.1050-b0&color=blue
 [version_ref]: https://pypi.org/project/bumpver/
 
 [pyversions_img]: https://img.shields.io/pypi/pyversions/lib3to6.svg
