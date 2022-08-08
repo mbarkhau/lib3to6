@@ -8,7 +8,7 @@ lint:
   image: registry.gitlab.com/mbarkhau/lib3to6/base
   script:
     - make lint
-    - make mypy
+    # - make mypy
   artifacts:
     reports:
       junit:
