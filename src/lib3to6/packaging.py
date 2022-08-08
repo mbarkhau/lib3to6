@@ -9,8 +9,8 @@ import re
 import sys
 import shutil
 import typing as typ
-import pathlib as pl
 import hashlib
+import pathlib as pl
 import tempfile
 import warnings
 
