@@ -10,10 +10,10 @@ import sys
 import shutil
 import typing as typ
 import hashlib
+import pathlib as pl
 import tempfile
 import warnings
 
-import pathlib2 as pl
 import setuptools.dist
 import setuptools.command.build_py as _build_py
 
